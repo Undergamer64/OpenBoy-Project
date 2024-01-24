@@ -89,16 +89,16 @@ public:
 	{
 		switch (opcode & 0b00011000) {
 		case 0b00000000:
-			mmu.Write(registers.BC, registers.m_registers[0]);
+			//mmu.Write(registers.BC, registers.m_registers[0]);
 			break;
 		case 0b00001000:
-			mmu.Write(registers.DE, registers.m_registers[0]);
+			//mmu.Write(registers.DE, registers.m_registers[0]);
 			break;
 		case 0b00010000:
-			registers.m_registers[0] = mmu.Read(registers.BC);
+			//registers.m_registers[0] = mmu.Read(registers.BC);
 			break;
 		case 0b00011000:
-			registers.m_registers[0] = mmu.Read(registers.DE);
+			//registers.m_registers[0] = mmu.Read(registers.DE);
 			break;
 		}
 	}
@@ -137,7 +137,7 @@ public:
 // --------------------------------------------------------------------------------------
 // Arithmetique instructions
 
-class IF_ARCal_rA_r8 final
+class IF_AR_rA_r8 final
 	: public InstructionFamily
 {
 public:
