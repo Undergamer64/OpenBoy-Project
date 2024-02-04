@@ -187,24 +187,48 @@ public:
 			case 0b00000000:
 				res = registers.m_registers[0] + r_num + (registers.m_registers[1] & 0b00000001);
 				
+				if (res == 0) {
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else {
+					registers.m_registers[1] &= !0b01000000;
+				}
 
 				registers.m_registers[0] = res;
 				break;
 			case 0b00001000:
 				res = registers.m_registers[0] + r_num;
 
+				if (res == 0) {
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else {
+					registers.m_registers[1] &= !0b01000000;
+				}
 
 				registers.m_registers[0] = res;
 				break;
 			case 0b00010000:
 				res = registers.m_registers[0] - r_num - (registers.m_registers[1] & 0b00000001);
 
+				if (res == 0) {
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else {
+					registers.m_registers[1] &= !0b01000000;
+				}
 
 				registers.m_registers[0] = res;
 				break;
 			case 0b00011000:
 				res = registers.m_registers[0] - r_num;
 
+				if (res == 0) {
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else {
+					registers.m_registers[1] &= !0b01000000;
+				}
 
 				registers.m_registers[0] = res;
 				break;
@@ -220,23 +244,47 @@ public:
 			case 0b00000000:
 				res = registers.m_registers[0] & r_num;
 
+				if (res == 0) {
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else {
+					registers.m_registers[1] &= !0b01000000;
+				}
 
 				registers.m_registers[0] = res;
 				break;
 			case 0b00001000:
 				res = registers.m_registers[0] ^ r_num;
 
+				if (res == 0) {
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else {
+					registers.m_registers[1] &= !0b01000000;
+				}
 
 				registers.m_registers[0] = res;
 				break;
 			case 0b00010000:
 				res = registers.m_registers[0] | r_num ;
 
+				if (res == 0) {
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else {
+					registers.m_registers[1] &= !0b01000000;
+				}
 
 				registers.m_registers[0] = res;
 				break;
 			case 0b00011000:
 				
+				if (res == 0) {
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else {
+					registers.m_registers[1] &= !0b01000000;
+				}
 
 				break;
 			}

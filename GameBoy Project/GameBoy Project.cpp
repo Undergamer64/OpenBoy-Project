@@ -18,8 +18,6 @@ int main()
     mmu.Map(&oam, 0x9E00);
     mmu.Map(&zeroPage, 0xFF80);
 
-    mmu.Write(0xc000, 42);
-    uint8_t test = mmu.Read(0xC000);
 
     return 0;
 }
