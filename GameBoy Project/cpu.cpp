@@ -89,16 +89,16 @@ public:
 	{
 		switch (opcode & 0b00011000) {
 		case 0b00000000:
-			//mmu.Write(registers.BC, registers.m_registers[0]);
+			mmu.Write(registers.BC, registers.m_registers[0]);
 			break;
 		case 0b00001000:
-			//mmu.Write(registers.DE, registers.m_registers[0]);
+			mmu.Write(registers.DE, registers.m_registers[0]);
 			break;
 		case 0b00010000:
-			//registers.m_registers[0] = mmu.Read(registers.BC);
+			registers.m_registers[0] = mmu.Read(registers.BC);
 			break;
 		case 0b00011000:
-			//registers.m_registers[0] = mmu.Read(registers.DE);
+			registers.m_registers[0] = mmu.Read(registers.DE);
 			break;
 		}
 	}
@@ -133,7 +133,7 @@ public:
 };
 
 // --------------------------------------------------------------------------------------
-
+// --------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------
 // Arithmetique instructions
 
@@ -149,66 +149,105 @@ public:
 	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
 		uint8_t r_num;
+		
+		switch (opcode & 0b00000111)
+		{
+		case 0b00000000:
+			r_num = registers.m_registers[2];
+			break;
+		case 0b00000001:
+			r_num = registers.m_registers[3];
+			break;
+		case 0b00000010:
+			r_num = registers.m_registers[4];
+			break;
+		case 0b00000011:
+			r_num = registers.m_registers[5];
+			break;
+		case 0b00000100:
+			r_num = registers.m_registers[6];
+			break;
+		case 0b00000101:
+			r_num = registers.m_registers[7];
+			break;
+		case 0b00000110:
+			r_num = mmu.Read(registers.HL);
+			break;
+		case 0b00000111:
+			r_num = registers.m_registers[0];
+			break;
+		}
+		
 		switch (opcode & 0b00100000) 
 		{
 		case 0b00000000:
-			switch (opcode & 0b00000111) 
-			{
-			case 0b00000000:
-				r_num = registers.m_registers[2];
-				break;
-			case 0b00000001:
-				r_num = registers.m_registers[3];
-				break;
-			case 0b00000010:
-				r_num = registers.m_registers[4];
-				break;
-			case 0b00000011:
-				r_num = registers.m_registers[5];
-				break;
-			case 0b00000100:
-				r_num = registers.m_registers[6];
-				break;
-			case 0b00000101:
-				r_num = registers.m_registers[7];
-				break;
-			case 0b00000110:
-				r_num = mmu.Read(registers.HL);
-				break;
-			case 0b00000111:
-				r_num = registers.m_registers[0];
-				break;
-			}
-
+			uint8_t res;
 			switch (opcode & 0b00011000) 
 			{
 			case 0b00000000:
-				registers.m_registers[0] = registers.m_registers[0] + r_num;
+				res = registers.m_registers[0] + r_num + (registers.m_registers[1] & 0b00000001);
+				
+
+				registers.m_registers[0] = res;
 				break;
 			case 0b00001000:
-				registers.m_registers[0] = registers.m_registers[0] + r_num;
+				res = registers.m_registers[0] + r_num;
+
+
+				registers.m_registers[0] = res;
 				break;
 			case 0b00010000:
-				registers.m_registers[0] = registers.m_registers[0] - r_num;
+				res = registers.m_registers[0] - r_num - (registers.m_registers[1] & 0b00000001);
+
+
+				registers.m_registers[0] = res;
 				break;
 			case 0b00011000:
-				registers.m_registers[0] = registers.m_registers[0] - r_num;
+				res = registers.m_registers[0] - r_num;
+
+
+				registers.m_registers[0] = res;
 				break;
 			}
 			break;
+
+
 		case 0b00100000:
+
+			uint8_t res;
+			switch (opcode & 0b00011000)
+			{
+			case 0b00000000:
+				res = registers.m_registers[0] & r_num;
+
+
+				registers.m_registers[0] = res;
+				break;
+			case 0b00001000:
+				res = registers.m_registers[0] ^ r_num;
+
+
+				registers.m_registers[0] = res;
+				break;
+			case 0b00010000:
+				res = registers.m_registers[0] | r_num ;
+
+
+				registers.m_registers[0] = res;
+				break;
+			case 0b00011000:
+				
+
+				break;
+			}
+
 			break;
 		}
 		
 	}
 };
 
-
-
-//test
-
-
-
+// --------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------
 
 CPU::CPU(MMU& mmu)
@@ -237,5 +276,4 @@ void CPU::Execute()
 			break;
 		}
 	}
-
 };

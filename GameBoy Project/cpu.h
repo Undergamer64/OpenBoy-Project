@@ -5,13 +5,6 @@
 
 class MMU;
 
-class InstructionFamily
-{
-public:
-	virtual bool IsValid(uint8_t opcode) = 0;
-	virtual void Execute(uint8_t opcode, MMU& mmu, Registers& registers) = 0;
-};
-
 struct Registers
 {
 	uint8_t m_registers[8];
@@ -20,6 +13,13 @@ struct Registers
 	uint16_t& DE = *(uint16_t*)(m_registers + 4);
 	uint16_t& HL = *(uint16_t*)(m_registers + 6);
 	uint16_t SP, PC;
+};
+
+class InstructionFamily
+{
+public:
+	virtual bool IsValid(uint8_t opcode) = 0;
+	virtual void Execute(uint8_t opcode, MMU& mmu, Registers& registers) = 0;
 };
 
 class CPU 
