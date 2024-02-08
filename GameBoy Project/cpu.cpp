@@ -186,12 +186,27 @@ public:
 			{
 			case 0b00000000:
 				res = registers.m_registers[0] + r_num + (registers.m_registers[1] & 0b00000001);
-				
-				if (res == 0) {
+
+				registers.m_registers[1] &= !0b10000000; //Flag s (negatif/if sub)
+
+				if (res == 0) //Flag Z (zero)
+				{
 					registers.m_registers[1] |= 0b01000000;
 				}
-				else {
+				else 
+				{
 					registers.m_registers[1] &= !0b01000000;
+				}
+
+				if (r_num > res || registers.m_registers[0] > res) //Flag p/v (overflow) + c (Carry for the 7 bit) ONLY FOR ADDS, NOT FOR SUBS !!!
+				{
+					registers.m_registers[1] |= 0b10000000;
+					registers.m_registers[1] |= 0b00000001;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b10000000;
+					registers.m_registers[1] &= !0b00000001;
 				}
 
 				registers.m_registers[0] = res;
@@ -209,7 +224,7 @@ public:
 				registers.m_registers[0] = res;
 				break;
 			case 0b00010000:
-				res = registers.m_registers[0] - r_num - (registers.m_registers[1] & 0b00000001);
+				res = (registers.m_registers[0] - r_num) - (registers.m_registers[1] & 0b00000001);
 
 				if (res == 0) {
 					registers.m_registers[1] |= 0b01000000;
