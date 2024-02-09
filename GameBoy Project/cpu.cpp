@@ -333,10 +333,18 @@ public:
 				if ((_res & 0b10000000) == 0b10000000) {
 					registers.m_registers[1] |= 0b10000000; //Flag s (negatif)
 				}
+				else
+				{
+					registers.m_registers[1] &= !0b10000000;
+				}
 
 				if (_res == 0) //Flag Z (zero)
 				{
 					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
 				}
 
 				registers.m_registers[1] |=  0b00010000; //Flag h set
@@ -353,10 +361,18 @@ public:
 				if ((_res & 0b10000000) == 0b10000000) {
 					registers.m_registers[1] |= 0b10000000; //Flag s (negatif)
 				}
+				else
+				{
+					registers.m_registers[1] &= !0b10000000;
+				}
 
 				if (_res == 0) //Flag Z (zero)
 				{
 					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
 				}
 
 				registers.m_registers[1] &= !0b00010000; //Flag h reset
@@ -373,10 +389,18 @@ public:
 				if ((_res & 0b10000000) == 0b10000000) {
 					registers.m_registers[1] |= 0b10000000; //Flag s (negatif)
 				}
+				else
+				{
+					registers.m_registers[1] &= !0b10000000;
+				}
 
 				if (_res == 0) //Flag Z (zero)
 				{
 					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
 				}
 
 				registers.m_registers[1] &= !0b00010000; //Flag h reset
@@ -387,15 +411,24 @@ public:
 				registers.m_registers[0] = _res;
 				break;
 			case 0b00011000:
+				/*
 #pragma region Flags
 
 				if ((_res & 0b10000000) == 0b10000000) {
 					registers.m_registers[1] |= 0b10000000; //Flag s (negatif)
 				}
+				else
+				{
+					registers.m_registers[1] &= !0b10000000;
+				}
 
 				if (_res == 0) //Flag Z (zero)
 				{
 					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
 				}
 
 				registers.m_registers[1] &= !0b00010000; //Flag h reset
@@ -403,6 +436,7 @@ public:
 				registers.m_registers[1] &= !0b00000100; //Flag p/v reset
 
 #pragma endregion
+				*/
 				break;
 			}
 			break;
