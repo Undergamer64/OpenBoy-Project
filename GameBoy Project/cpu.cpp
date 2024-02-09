@@ -135,13 +135,13 @@ public:
 
 #pragma region Arithmetique Instructions
 
-class IF_AR_rA_r8 final
+class IF_AR final
 	: public InstructionFamily
 {
 public:
 	bool IsValid(uint8_t opcode) override
 	{
-		return ((opcode & 0b11100000) == 0b10000000 || (opcode & 0b11100000) == 0b10100000);
+		return ((opcode & 0b11100000) == 0b10000000 || (opcode & 0b11100000) == 0b10100000) || (opcode & 0b11000111) == 0b11000110;
 	}
 
 	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
@@ -169,7 +169,14 @@ public:
 			r_num = registers.m_registers[7];
 			break;
 		case 0b00000110:
-			r_num = mmu.Read(registers.HL);
+			if ((opcode & 0b01000000) == 0b01000000) 
+			{
+				r_num = mmu.Read(registers.PC++);
+			}
+			else 
+			{
+				r_num = mmu.Read(registers.HL);
+			}
 			break;
 		case 0b00000111:
 			r_num = registers.m_registers[0];
@@ -449,6 +456,9 @@ public:
 };
 
 #pragma endregion
+
+
+
 
 #pragma region CPU
 
