@@ -1,9 +1,7 @@
 #pragma once
+#include "alu.h"
 
 #include <cstdint>
-#include <vector>
-
-class MMU;
 
 struct Registers
 {
@@ -15,22 +13,16 @@ struct Registers
 	uint16_t SP, PC;
 };
 
-class InstructionFamily
-{
-public:
-	virtual bool IsValid(uint8_t opcode) = 0;
-	virtual void Execute(uint8_t opcode, MMU& mmu, Registers& registers) = 0;
-};
+class InstructionFamily;
 
 class CPU 
 {
 	Registers m_registers;
 	MMU& m_mmu;
-
-	std::vector<InstructionFamily*> m_instructionFamilies;
+	ALU& m_alu;
 
 public:
-	CPU(MMU& mmu);
+	CPU(MMU& mmu, ALU& alu);
 	~CPU();
 	void Execute();
 };
