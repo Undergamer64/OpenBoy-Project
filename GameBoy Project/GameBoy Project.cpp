@@ -6,9 +6,9 @@
 int main()
 {
     std::cout << "Debug" << std::endl;
-    uint8_t a = 0b11111111;
-    uint8_t res = a + a + 0b00000001;
-    std::cout << std::to_string(res) << std::endl;
+    uint16_t a = 0b0111111111111111;
+    uint8_t b = a;
+    std::cout << std::to_string(b) << std::endl;
 
     BootRom        bootRom("dmg_boot.bin");
     Memory<0x1000> internalRam;

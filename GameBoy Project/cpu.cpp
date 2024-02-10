@@ -326,7 +326,7 @@ public:
 #pragma endregion
 				break;
 			}
-			break;
+			return;
 
 #pragma endregion
 		case 0b00100000:
@@ -449,7 +449,7 @@ public:
 			break;
 #pragma endregion
 		}
-		if (!((opcode & 0b00011000) == 0b000110000)) {
+		if ((opcode & 0b00011000) != 0b000110000) {
 			registers.m_registers[0] = _res;
 		}
 	}
@@ -457,8 +457,319 @@ public:
 
 #pragma endregion
 
+#pragma region Flow Instructions
+
+class IF_FLOW_JR final
+	: public InstructionFamily
+{
+public:
+	bool IsValid(uint8_t opcode) override
+	{
+		return (opcode & 0b11111111) == 0b00011000 || (opcode & 0b11111111) == 0b00010000 || (opcode & 0b11100111) == 0b00100000;
+	}
+
+	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	{
+		int8_t e = mmu.Read(registers.PC++);
+		if ((opcode & 0b11100111) == 0b00100000)//JR with cc (if cc = true)
+		{
+			switch (opcode & 0b00011000) 
+			{
+			case 0b00000000:
+				if ((registers.m_registers[1] & 0b01000000) != 0b01000000) 
+				{
+					registers.PC -= e;
+				}
+				break;
+			case 0b00001000:
+				if ((registers.m_registers[1] & 0b01000000) == 0b01000000)
+				{
+					registers.PC -= e;
+				}
+				break;
+			case 0b00010000:
+				if ((registers.m_registers[1] & 0b00000001) != 0b00000001)
+				{
+					registers.PC -= e;
+				}
+				break;
+			case 0b00011000:
+				if ((registers.m_registers[1] & 0b00000001) == 0b00000001)
+				{
+					registers.PC -= e;
+				}
+				break;
+			}
+			return;
+		}
+		if ((opcode & 0b11111111) == 0b00010000)//JR with B (if B = 0) + B -= 1
+		{
+			if (registers.m_registers[2] == 0) 
+			{
+				registers.PC -= e;
+			}
+			return;
+		}
+		if ((opcode & 0b11111111) == 0b00011000)//Always JR
+		{
+			registers.PC -= e;
+			return;
+		}
+	}
+};
+
+class IF_FLOW_JP final
+	: public InstructionFamily
+{
+public:
+	bool IsValid(uint8_t opcode) override
+	{
+		return (opcode & 0b11111111) == 0b11000011 || (opcode & 0b11111111) == 0b11101001 || (opcode & 0b11000111) == 0b11000010;
+	}
+
+	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	{
+		if ((opcode & 0b11111111) == 0b11101001) 
+		{
+			registers.PC = registers.HL;
+			return;
+		}
+		uint16_t _nn = (mmu.Read(registers.PC++) + (mmu.Read(registers.PC++) << 8));
+		if ((opcode & 0b11111111) == 0b11000011) 
+		{
+			registers.PC = _nn;
+			return;
+		}
+		if ((opcode & 0b11000111) == 0b11000010) 
+		{
+			switch (opcode & !0b11000111) 
+			{
+			case 0b00000000:
+				if ((registers.m_registers[1] & 0b01000000) != 0b01000000)
+				{
+					registers.PC = _nn;
+				}
+				break;
+			case 0b00001000:
+				if ((registers.m_registers[1] & 0b01000000) == 0b01000000)
+				{
+					registers.PC = _nn;
+				}
+				break;
+			case 0b00010000:
+				if ((registers.m_registers[1] & 0b00000001) != 0b00000001)
+				{
+					registers.PC = _nn;
+				}
+				break;
+			case 0b00011000:
+				if ((registers.m_registers[1] & 0b00000001) == 0b00000001)
+				{
+					registers.PC = _nn;
+				}
+				break;
+			case (0b00100000):
+				if ((registers.m_registers[1] & 0b00000100) != 0b00000100)
+				{
+					registers.PC = _nn;
+				}
+				break;
+			case (0b00101000):
+				if ((registers.m_registers[1] & 0b00000100) == 0b00000100)
+				{
+					registers.PC = _nn;
+				}
+				break;
+			case (0b00110000):
+				if ((registers.m_registers[1] & 0b10000000) != 0b10000000)
+				{
+					registers.PC = _nn;
+				}
+				break;
+			case (0b00111000):
+				if ((registers.m_registers[1] & 0b10000000) == 0b10000000)
+				{
+					registers.PC = _nn;
+				}
+				break;
+			}
+			return;
+		}
+		return;
+	}
+};
+
+class IF_FLOW_CALL final
+	: public InstructionFamily
+{
+public:
+	bool IsValid(uint8_t opcode) override
+	{
+		return (opcode & 0b11111111) == 0b11001101 || (opcode & 0b11000111) == 0b11000100;
+	}
+
+	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	{
+		uint16_t _nn = (mmu.Read(registers.PC++) + (mmu.Read(registers.PC++) << 8));
+		bool condition = false;
+		if ((opcode & 0b11111111) == 0b11001101)
+		{
+			condition = true;
+		}
+		else 
+		{
+			switch (opcode & 0b00111000)
+			{
+			case 0b00000000:
+				if ((registers.m_registers[1] & 0b01000000) != 0b01000000)
+				{
+					condition = true;
+				}
+				break;
+			case 0b00001000:
+				if ((registers.m_registers[1] & 0b01000000) == 0b01000000)
+				{
+					condition = true;
+				}
+				break;
+			case 0b00010000:
+				if ((registers.m_registers[1] & 0b00000001) != 0b00000001)
+				{
+					condition = true;
+				}
+				break;
+			case 0b00011000:
+				if ((registers.m_registers[1] & 0b00000001) == 0b00000001)
+				{
+					condition = true;
+				}
+				break;
+			case (0b00100000):
+				if ((registers.m_registers[1] & 0b00000100) != 0b00000100)
+				{
+					condition = true;
+				}
+				break;
+			case (0b00101000):
+				if ((registers.m_registers[1] & 0b00000100) == 0b00000100)
+				{
+					condition = true;
+				}
+				break;
+			case (0b00110000):
+				if ((registers.m_registers[1] & 0b10000000) != 0b10000000)
+				{
+					condition = true;
+				}
+				break;
+			case (0b00111000):
+				if ((registers.m_registers[1] & 0b10000000) == 0b10000000)
+				{
+					condition = true;
+				}
+				break;
+			}
+		}
+		if (condition)
+		{
+			mmu.Write(registers.SP - 1, registers.PC >> 8);
+			mmu.Write(registers.SP - 2, registers.PC);
+			registers.SP -= 2;
+		}
+		registers.PC = _nn;
+		return;
+	}
+};
+
+class IF_FLOW_RET final
+	: public InstructionFamily
+{
+public:
+	bool IsValid(uint8_t opcode) override
+	{
+		return (opcode & 0b11111111) == 0b11001001 || (opcode & 0b11000111) == 0b11000000;
+	}
+
+	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	{
+		uint16_t _nn = (mmu.Read(registers.PC++) + (mmu.Read(registers.PC++) << 8));
+		bool condition = false;
+		if ((opcode & 0b11111111) == 0b11001001)
+		{
+			condition = true;
+		}
+		else
+		{
+			switch (opcode & 0b00111000)
+			{
+			case 0b00000000:
+				if ((registers.m_registers[1] & 0b01000000) != 0b01000000)
+				{
+					condition = true;
+				}
+				break;
+			case 0b00001000:
+				if ((registers.m_registers[1] & 0b01000000) == 0b01000000)
+				{
+					condition = true;
+				}
+				break;
+			case 0b00010000:
+				if ((registers.m_registers[1] & 0b00000001) != 0b00000001)
+				{
+					condition = true;
+				}
+				break;
+			case 0b00011000:
+				if ((registers.m_registers[1] & 0b00000001) == 0b00000001)
+				{
+					condition = true;
+				}
+				break;
+			case (0b00100000):
+				if ((registers.m_registers[1] & 0b00000100) != 0b00000100)
+				{
+					condition = true;
+				}
+				break;
+			case (0b00101000):
+				if ((registers.m_registers[1] & 0b00000100) == 0b00000100)
+				{
+					condition = true;
+				}
+				break;
+			case (0b00110000):
+				if ((registers.m_registers[1] & 0b10000000) != 0b10000000)
+				{
+					condition = true;
+				}
+				break;
+			case (0b00111000):
+				if ((registers.m_registers[1] & 0b10000000) == 0b10000000)
+				{
+					condition = true;
+				}
+				break;
+			}
+		}
+		if (condition)
+		{
+			registers.PC = ((mmu.Read(registers.SP + 1) << 8) + mmu.Read(registers.SP));
+		}
+		registers.SP += 2;
+		return;
+	}
+};
+
+#pragma endregion
+
+#pragma region CB Prefix
 
 
+
+
+
+#pragma endregion
 
 #pragma region CPU
 
