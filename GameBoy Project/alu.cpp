@@ -764,7 +764,13 @@ public:
 
 #pragma endregion
 
-#pragma region CB Prefix
+#pragma region CB Prefix Instructions
+
+
+
+#pragma endregion
+
+#pragma region INC/DEC Instructions
 
 
 

@@ -129,12 +129,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="alu.cpp" />
     <ClCompile Include="BootRom.cpp" />
     <ClCompile Include="cpu.cpp" />
     <ClCompile Include="GameBoy Project.cpp" />
     <ClCompile Include="mmu.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="alu.h" />
     <ClInclude Include="BootRom.h" />
     <ClInclude Include="cpu.h" />
     <ClInclude Include="mmu.h" />
