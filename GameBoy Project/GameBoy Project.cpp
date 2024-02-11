@@ -10,9 +10,8 @@ int main()
     //// TEST OF THEORIES
 
     std::cout << "Debug" << std::endl;
-    uint16_t a = 0b0111111111111111;
-    uint8_t b = a;
-    std::cout << std::to_string(b) << std::endl;
+    uint8_t b = 0b00010000;
+    std::cout << std::to_string(b << 3) << std::endl;
 
     ////
 

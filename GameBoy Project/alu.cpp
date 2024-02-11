@@ -147,40 +147,40 @@ public:
 
 	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
-		uint8_t r_num;
+		uint8_t _r_num;
 
 		switch (opcode & 0b00000111)
 		{
 		case 0b00000000:
-			r_num = registers.m_registers[2];
+			_r_num = registers.m_registers[2];
 			break;
 		case 0b00000001:
-			r_num = registers.m_registers[3];
+			_r_num = registers.m_registers[3];
 			break;
 		case 0b00000010:
-			r_num = registers.m_registers[4];
+			_r_num = registers.m_registers[4];
 			break;
 		case 0b00000011:
-			r_num = registers.m_registers[5];
+			_r_num = registers.m_registers[5];
 			break;
 		case 0b00000100:
-			r_num = registers.m_registers[6];
+			_r_num = registers.m_registers[6];
 			break;
 		case 0b00000101:
-			r_num = registers.m_registers[7];
+			_r_num = registers.m_registers[7];
 			break;
 		case 0b00000110:
 			if ((opcode & 0b01000000) == 0b01000000)
 			{
-				r_num = mmu.Read(registers.PC++);
+				_r_num = mmu.Read(registers.PC++);
 			}
 			else
 			{
-				r_num = mmu.Read(registers.HL);
+				_r_num = mmu.Read(registers.HL);
 			}
 			break;
 		case 0b00000111:
-			r_num = registers.m_registers[0];
+			_r_num = registers.m_registers[0];
 			break;
 		}
 
@@ -193,7 +193,7 @@ public:
 			switch (opcode & 0b00011000)
 			{
 			case 0b00000000:
-				_res = registers.m_registers[0] + r_num + (registers.m_registers[1] & 0b00000001);
+				_res = registers.m_registers[0] + _r_num + (registers.m_registers[1] & 0b00000001);
 #pragma region Flags
 
 				if ((_res & 0b10000000) == 0b10000000) {
@@ -209,7 +209,7 @@ public:
 					registers.m_registers[1] &= !0b01000000;
 				}
 
-				if (r_num > _res - (registers.m_registers[1] & 0b00000001) || registers.m_registers[0] > _res - (registers.m_registers[1] & 0b00000001)) //Flag p/v (overflow) + c (Carry for the 7 bit) ONLY FOR ADDS, NOT FOR SUBS !!!
+				if (_r_num > _res - (registers.m_registers[1] & 0b00000001) || registers.m_registers[0] > _res - (registers.m_registers[1] & 0b00000001)) //Flag p/v (overflow) + c (Carry for the 7 bit) ONLY FOR ADDS, NOT FOR SUBS !!!
 				{
 					registers.m_registers[1] |= 0b10000000;
 					registers.m_registers[1] |= 0b00000001;
@@ -220,7 +220,7 @@ public:
 					registers.m_registers[1] &= !0b00000001;
 				}
 
-				if ((r_num & 0b00001111) > ((_res - (registers.m_registers[1] & 0b00000001)) & 0b00001111) || (registers.m_registers[0] & 0b00001111) > ((_res - (registers.m_registers[1] & 0b00000001)) & 0b00001111)) //Flag h (half-carry) same method as Flag p/v but with mask
+				if ((_r_num & 0b00001111) > ((_res - (registers.m_registers[1] & 0b00000001)) & 0b00001111) || (registers.m_registers[0] & 0b00001111) > ((_res - (registers.m_registers[1] & 0b00000001)) & 0b00001111)) //Flag h (half-carry) same method as Flag p/v but with mask
 				{
 					registers.m_registers[1] |= 0b00010000;
 				}
@@ -232,7 +232,7 @@ public:
 #pragma endregion
 				break;
 			case 0b00001000:
-				_res = registers.m_registers[0] + r_num;
+				_res = registers.m_registers[0] + _r_num;
 #pragma region Flags
 
 				if ((_res & 0b10000000) == 0b10000000) {
@@ -248,7 +248,7 @@ public:
 					registers.m_registers[1] &= !0b01000000;
 				}
 
-				if ((r_num & 0b00001111) > (_res & 0b00001111) || (registers.m_registers[0] & 0b00001111) > (_res & 0b00001111)) //Flag h (half-carry) same method as Flag p/v but with mask
+				if ((_r_num & 0b00001111) > (_res & 0b00001111) || (registers.m_registers[0] & 0b00001111) > (_res & 0b00001111)) //Flag h (half-carry) same method as Flag p/v but with mask
 				{
 					registers.m_registers[1] |= 0b00010000;
 				}
@@ -260,7 +260,7 @@ public:
 #pragma endregion
 				break;
 			case 0b00010000:
-				_res = (registers.m_registers[0] - r_num) - (registers.m_registers[1] & 0b00000001);
+				_res = (registers.m_registers[0] - _r_num) - (registers.m_registers[1] & 0b00000001);
 #pragma region Negatif_Flags
 
 				if ((_res & 0b10000000) == 0b10000000) {
@@ -276,7 +276,7 @@ public:
 					registers.m_registers[1] &= !0b01000000;
 				}
 
-				if (r_num < _res + (registers.m_registers[1] & 0b00000001) || registers.m_registers[0] < _res + (registers.m_registers[1] & 0b00000001)) //Flag p/v (overflow) + c (Borrow for the 7 bit) ONLY FOR SUBS, NOT FOR ADDS !!!
+				if (_r_num < _res + (registers.m_registers[1] & 0b00000001) || registers.m_registers[0] < _res + (registers.m_registers[1] & 0b00000001)) //Flag p/v (overflow) + c (Borrow for the 7 bit) ONLY FOR SUBS, NOT FOR ADDS !!!
 				{
 					registers.m_registers[1] |= 0b10000000;
 					registers.m_registers[1] |= 0b00000001;
@@ -287,7 +287,7 @@ public:
 					registers.m_registers[1] &= !0b00000001;
 				}
 
-				if ((r_num & 0b00001111) < ((_res + (registers.m_registers[1] & 0b00000001)) & 0b00001111) || (registers.m_registers[0] & 0b00001111) < ((_res + (registers.m_registers[1] & 0b00000001)) & 0b00001111)) //Flag h (half-borrow) same method as Flag p/v but with mask
+				if ((_r_num & 0b00001111) < ((_res + (registers.m_registers[1] & 0b00000001)) & 0b00001111) || (registers.m_registers[0] & 0b00001111) < ((_res + (registers.m_registers[1] & 0b00000001)) & 0b00001111)) //Flag h (half-borrow) same method as Flag p/v but with mask
 				{
 					registers.m_registers[1] |= 0b00010000;
 				}
@@ -299,7 +299,7 @@ public:
 #pragma endregion
 				break;
 			case 0b00011000:
-				_res = registers.m_registers[0] - r_num;
+				_res = registers.m_registers[0] - _r_num;
 #pragma region Negatif_Flags
 
 				if ((_res & 0b10000000) == 0b10000000) {
@@ -315,7 +315,7 @@ public:
 					registers.m_registers[1] &= !0b01000000;
 				}
 
-				if ((r_num & 0b00001111) < (_res & 0b00001111) || (registers.m_registers[0] & 0b00001111) < (_res & 0b00001111)) //Flag h (half-borrow) same method as Flag p/v but with mask
+				if ((_r_num & 0b00001111) < (_res & 0b00001111) || (registers.m_registers[0] & 0b00001111) < (_res & 0b00001111)) //Flag h (half-borrow) same method as Flag p/v but with mask
 				{
 					registers.m_registers[1] |= 0b00010000;
 				}
@@ -335,7 +335,7 @@ public:
 			switch (opcode & 0b00011000)
 			{
 			case 0b00000000:
-				_res = registers.m_registers[0] & r_num;
+				_res = registers.m_registers[0] & _r_num;
 #pragma region Flags
 
 				if ((_res & 0b10000000) == 0b10000000) {
@@ -363,7 +363,7 @@ public:
 				registers.m_registers[0] = _res;
 				break;
 			case 0b00001000:
-				_res = registers.m_registers[0] ^ r_num;
+				_res = registers.m_registers[0] ^ _r_num;
 #pragma region Flags
 
 				if ((_res & 0b10000000) == 0b10000000) {
@@ -391,7 +391,7 @@ public:
 				registers.m_registers[0] = _res;
 				break;
 			case 0b00010000:
-				_res = registers.m_registers[0] | r_num;
+				_res = registers.m_registers[0] | _r_num;
 #pragma region Flags
 
 				if ((_res & 0b10000000) == 0b10000000) {
@@ -767,11 +767,434 @@ public:
 #pragma region CB Prefix Instructions
 
 
+class IF_CB_Prefix final
+	: public InstructionFamily
+{
+public:
+	bool IsValid(uint8_t opcode) override
+	{
+		return opcode == 0xCB;
+	}
+
+	void Execute(uint8_t _, MMU& mmu, Registers& registers) override
+	{
+		uint8_t _opcode = mmu.Read(registers.PC++);
+		if ((_opcode & 0b11000000) == 0b00000000) 
+		{
+
+			return;
+		}
+		if ((_opcode & 0b11000000) == 0b01000000) 
+		{
+			registers.m_registers[1] |= 0b00010000;
+			registers.m_registers[1] &= !0b00000010;
+
+			int _offset_bit;
+			switch (_opcode & 0b00111000)
+			{
+			case 0b00000000:
+				_offset_bit = 0;
+				break;
+			case 0b00001000:
+				_offset_bit = 1;
+				break;
+			case 0b00010000:
+				_offset_bit = 2;
+				break;
+			case 0b00011000:
+				_offset_bit = 3;
+				break;
+			case 0b00100000:
+				_offset_bit = 4;
+				break;
+			case 0b00101000:
+				_offset_bit = 5;
+				break;
+			case 0b00110000:
+				_offset_bit = 6;
+				break;
+			case 0b00111000:
+				_offset_bit = 7;
+				break;
+			}
+
+			switch (_opcode & 0b00000111)
+			{
+			case 0b00000000:
+				if ((registers.m_registers[2] & (0b00000001 << _offset_bit)) == 0)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+				break;
+			case 0b00000001:
+				if ((registers.m_registers[3] & (0b00000001 << _offset_bit)) == 0)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+				break;
+			case 0b00000010:
+				if ((registers.m_registers[4] & (0b00000001 << _offset_bit)) == 0)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+				break;
+			case 0b00000011:
+				if ((registers.m_registers[5] & (0b00000001 << _offset_bit)) == 0)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+				break;
+			case 0b00000100:
+
+				if ((registers.m_registers[6] & (0b00000001 << _offset_bit)) == 0)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+				break;
+			case 0b00000101:
+				if ((registers.m_registers[7] & (0b00000001 << _offset_bit)) == 0)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+				break;
+			case 0b00000110:
+				if ((mmu.Read(registers.HL) & (0b00000001 << _offset_bit)) == 0)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+				break;
+			case 0b00000111:
+				if ((registers.m_registers[0] & (0b00000001 << _offset_bit)) == 0)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+				break;
+			}
+
+			return;
+		}
+		if ((_opcode & 0b11000000) == 0b11000000 || (_opcode & 0b11000000) == 0b10000000)
+		{
+			int _offset_bit;
+			switch (_opcode & 0b00111000) 
+			{
+			case 0b00000000:
+				_offset_bit = 0;
+				break;
+			case 0b00001000:
+				_offset_bit = 1;
+				break;
+			case 0b00010000:
+				_offset_bit = 2;
+				break;
+			case 0b00011000:
+				_offset_bit = 3;
+				break;
+			case 0b00100000:
+				_offset_bit = 4;
+				break;
+			case 0b00101000:
+				_offset_bit = 5;
+				break;
+			case 0b00110000:
+				_offset_bit = 6;
+				break;
+			case 0b00111000:
+				_offset_bit = 7;
+				break;
+			}
+
+			switch (_opcode & 0b00000111)
+			{
+			case 0b00000000:
+				if ((registers.m_registers[2] & (0b00000001 << _offset_bit)) == 0)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+				if ((_opcode & 0b01000000) == 0b01000000)
+				{
+					registers.m_registers[2] |= (0b00000001 << _offset_bit);
+				}
+				else 
+				{
+					uint8_t _res = (0b00000001 << _offset_bit);
+					registers.m_registers[2] &= !_res;
+				}
+				break;
+			case 0b00000001:
+				if ((registers.m_registers[3] & (0b00000001 << _offset_bit)) == 0)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+				if ((_opcode & 0b01000000) == 0b01000000)
+				{
+					registers.m_registers[3] |= (0b00000001 << _offset_bit);
+				}
+				else
+				{
+					uint8_t _res = (0b00000001 << _offset_bit);
+					registers.m_registers[3] &= !_res;
+				}
+				break;
+			case 0b00000010:
+				if ((registers.m_registers[4] & (0b00000001 << _offset_bit)) == 0)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+				if ((_opcode & 0b01000000) == 0b01000000)
+				{
+					registers.m_registers[4] |= (0b00000001 << _offset_bit);
+				}
+				else
+				{
+					uint8_t _res = (0b00000001 << _offset_bit);
+					registers.m_registers[4] &= !_res;
+				}
+				break;
+			case 0b00000011:
+				if ((registers.m_registers[5] & (0b00000001 << _offset_bit)) == 0)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+				if ((_opcode & 0b01000000) == 0b01000000)
+				{
+					registers.m_registers[5] |= (0b00000001 << _offset_bit);
+				}
+				else
+				{
+					uint8_t _res = (0b00000001 << _offset_bit);
+					registers.m_registers[5] &= !_res;
+				}
+				break;
+			case 0b00000100:
+
+				if ((registers.m_registers[6] & (0b00000001 << _offset_bit)) == 0)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+				if ((_opcode & 0b01000000) == 0b01000000)
+				{
+					registers.m_registers[6] |= (0b00000001 << _offset_bit);
+				}
+				else
+				{
+					uint8_t _res = (0b00000001 << _offset_bit);
+					registers.m_registers[6] &= !_res;
+				}
+				break;
+			case 0b00000101:
+				if ((registers.m_registers[7] & (0b00000001 << _offset_bit)) == 0)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+				if ((_opcode & 0b01000000) == 0b01000000)
+				{
+					registers.m_registers[7] |= (0b00000001 << _offset_bit);
+				}
+				else
+				{
+					uint8_t _res = (0b00000001 << _offset_bit);
+					registers.m_registers[7] &= !_res;
+				}
+				break;
+			case 0b00000110:
+				if ((mmu.Read(registers.HL) & (0b00000001 << _offset_bit)) == 0)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+				if ((_opcode & 0b01000000) == 0b01000000)
+				{
+					mmu.Write(registers.HL, mmu.Read(registers.HL) | (0b00000001 << _offset_bit));
+				}
+				else
+				{
+					uint8_t _res = (0b00000001 << _offset_bit);
+					mmu.Write(registers.HL, mmu.Read(registers.HL) & !_res);
+				}
+				break;
+			case 0b00000111:
+				if ((registers.m_registers[0] & (0b00000001 << _offset_bit)) == 0)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+				if ((_opcode & 0b01000000) == 0b01000000)
+				{
+					registers.m_registers[0] |= (0b00000001 << _offset_bit);
+				}
+				else
+				{
+					uint8_t _res = (0b00000001 << _offset_bit);
+					registers.m_registers[0] &= !_res;
+				}
+				break;
+			}
+			return;
+		}
+	}
+};
 
 #pragma endregion
 
 #pragma region INC/DEC Instructions
 
+class IF_INC_DEC final
+	: public InstructionFamily
+{
+public:
+	bool IsValid(uint8_t opcode) override
+	{
+		return (opcode & 0b11000111) == 0b00000011 || (opcode & 0b11000110) == 0b00000100;
+	}
 
+	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	{
+		if ((opcode & 0b11000111) == 0b00000011) 
+		{
+			int D = (opcode & 0b00001000) >> 3;
+			int _res;
+			if (D == 0)
+			{
+				_res = 1;
+			}
+			else if (D == 1)
+			{
+				_res = -1;
+			}
+			else
+			{
+				throw std::exception("INC/DEC opcode problem !");
+				_res = 1;
+			}
+
+			switch (opcode & 0b00110000) 
+			{
+			case 0b00000000:
+				registers.BC += _res;
+				break;
+			case 0b00010000:
+				registers.DE += _res;
+				break;
+			case 0b00100000:
+				registers.HL += _res;
+				break;
+			case 0b00110000:
+				registers.m_registers[0] += _res;
+				break;
+			}
+			return;
+		}
+		if ((opcode & 0b11000110) == 0b00000100) 
+		{
+			int D = (opcode & 0b00000001);
+			int _res;
+			if (D == 0)
+			{
+				_res = 1;
+			}
+			else if (D == 1)
+			{
+				_res = -1;
+			}
+			else
+			{
+				throw std::exception("INC/DEC opcode problem !");
+				_res = 1;
+			}
+
+			switch (opcode & 0b00111000)
+			{
+			case 0b00000000:
+				registers.m_registers[2] += _res;
+				break;
+			case 0b00001000:
+				registers.m_registers[3] += _res;
+				break;
+			case 0b00010000:
+				registers.m_registers[4] += _res;
+				break;
+			case 0b00011000:
+				registers.m_registers[5] += _res;
+				break;
+			case 0b00100000:
+				registers.m_registers[6] += _res;
+				break;
+			case 0b00101000:
+				registers.m_registers[7] += _res;
+				break;
+			case 0b00110000:
+				mmu.Write(registers.HL, mmu.Read(registers.HL) + _res);
+				break;
+			case 0b00111000:
+				registers.m_registers[0] += _res;
+				break;
+			}
+			return;
+		}
+	}
+};
 
 #pragma endregion
