@@ -764,6 +764,46 @@ public:
 
 #pragma endregion
 
+#pragma region Rotate Instructions
+
+class IF_ROTATE final
+	: public InstructionFamily
+{
+public:
+	bool IsValid(uint8_t opcode) override
+	{
+		return (opcode & 0b11100111) == 0b00000111;
+	}
+
+	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	{
+		switch (opcode & 0b00001000) 
+		{
+		case 0b00000000: // Left
+			if ((opcode & 0b00010000) == 0b00010000) 
+			{
+
+			}
+			else 
+			{
+				registers.m_registers[1] &= 0b11111110;
+				registers.m_registers[1] |= (registers.m_registers[0] & 0b10000000) >> 7;
+				registers.m_registers[0] = (registers.m_registers[0] << 1) + ((registers.m_registers[0] & 0b10000000) >> 7);
+			}
+
+			break;
+
+		case 0b00001000: // Right
+
+
+
+			break;
+		}
+	}
+};
+
+#pragma endregion
+
 #pragma region CB Prefix Instructions
 
 
