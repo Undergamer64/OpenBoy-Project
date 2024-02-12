@@ -782,6 +782,10 @@ public:
 		case 0b00000000: // Left
 			if ((opcode & 0b00010000) == 0b00010000) 
 			{
+				uint8_t _temp_carry = (registers.m_registers[1] & 0b00000001);
+				registers.m_registers[1] &= 0b11111110;
+				registers.m_registers[1] |= (registers.m_registers[0] & 0b10000000) >> 7;
+				registers.m_registers[0] = (registers.m_registers[0] << 1) + (_temp_carry);
 
 			}
 			else 
@@ -790,6 +794,44 @@ public:
 				registers.m_registers[1] |= (registers.m_registers[0] & 0b10000000) >> 7;
 				registers.m_registers[0] = (registers.m_registers[0] << 1) + ((registers.m_registers[0] & 0b10000000) >> 7);
 			}
+
+#pragma region Flags
+
+			if ((registers.m_registers[0] & 0b10000000) == 0b10000000) {
+				registers.m_registers[1] |= 0b10000000; //Flag s (negatif)
+			}
+
+			if (registers.m_registers[0] == 0) //Flag Z (zero)
+			{
+				registers.m_registers[1] |= 0b01000000;
+			}
+			else
+			{
+				registers.m_registers[1] &= !0b01000000;
+			}
+
+			registers.m_registers[1] &= !0b00010000; //Flag H reset
+
+			bool even = (((registers.m_registers[0] & 0b00000001) >> 0) 
+				+ ((registers.m_registers[0] & 0b00000010) >> 1) 
+				+ ((registers.m_registers[0] & 0b00000100) >> 2) 
+				+ ((registers.m_registers[0] & 0b00001000) >> 3) 
+				+ ((registers.m_registers[0] & 0b00010000) >> 4)
+				+ ((registers.m_registers[0] & 0b00100000) >> 5)
+				+ ((registers.m_registers[0] & 0b01000000) >> 6)
+				+ ((registers.m_registers[0] & 0b10000000) >> 7)) % 2 == 0;
+
+
+			if (_even) //Flag P/V (even = 1, odd = 0)
+			{
+
+			}
+			else
+			{
+
+			}
+
+#pragma endregion
 
 			break;
 
@@ -805,7 +847,6 @@ public:
 #pragma endregion
 
 #pragma region CB Prefix Instructions
-
 
 class IF_CB_Prefix final
 	: public InstructionFamily
