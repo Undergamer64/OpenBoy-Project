@@ -419,15 +419,12 @@ public:
 				registers.m_registers[0] = _res;
 				break;
 			case 0b00011000:
-				/*
-#pragma region Flags
+				_res = (registers.m_registers[0] - _r_num) - (registers.m_registers[1] & 0b00000001);
+
+#pragma region Negatif_Flags
 
 				if ((_res & 0b10000000) == 0b10000000) {
 					registers.m_registers[1] |= 0b10000000; //Flag s (negatif)
-				}
-				else
-				{
-					registers.m_registers[1] &= !0b10000000;
 				}
 
 				if (_res == 0) //Flag Z (zero)
@@ -439,12 +436,28 @@ public:
 					registers.m_registers[1] &= !0b01000000;
 				}
 
-				registers.m_registers[1] &= !0b00010000; //Flag h reset
-				registers.m_registers[1] &= !0b00000001; //Flag c reset
-				registers.m_registers[1] &= !0b00000100; //Flag p/v reset
+				if (_r_num < _res + (registers.m_registers[1] & 0b00000001) || registers.m_registers[0] < _res + (registers.m_registers[1] & 0b00000001)) //Flag p/v (overflow) + c (Borrow for the 7 bit) ONLY FOR SUBS, NOT FOR ADDS !!!
+				{
+					registers.m_registers[1] |= 0b10000000;
+					registers.m_registers[1] |= 0b00000001;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b10000000;
+					registers.m_registers[1] &= !0b00000001;
+				}
+
+				if ((_r_num & 0b00001111) < ((_res + (registers.m_registers[1] & 0b00000001)) & 0b00001111) || (registers.m_registers[0] & 0b00001111) < ((_res + (registers.m_registers[1] & 0b00000001)) & 0b00001111)) //Flag h (half-borrow) same method as Flag p/v but with mask
+				{
+					registers.m_registers[1] |= 0b00010000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b00010000;
+				}
 
 #pragma endregion
-				*/
+
 				break;
 			}
 			break;
@@ -543,7 +556,7 @@ public:
 		}
 		if ((opcode & 0b11000111) == 0b11000010)
 		{
-			switch (opcode & !0b11000111)
+			switch (opcode & 0b00111000)
 			{
 			case 0b00000000:
 				if ((registers.m_registers[1] & 0b01000000) != 0b01000000)
@@ -816,8 +829,12 @@ public:
 
 #pragma region Flags
 
-		if ((registers.m_registers[0] & 0b10000000) == 0b10000000) {
-			registers.m_registers[1] |= 0b10000000; //Flag s (negatif)
+		if ((registers.m_registers[0] & 0b10000000) == 0b10000000) {//Flag s (negatif)
+			registers.m_registers[1] |= 0b10000000; 
+		}
+		else 
+		{
+			registers.m_registers[1] &= !0b10000000;
 		}
 
 		if (registers.m_registers[0] == 0) //Flag Z (zero)
@@ -924,6 +941,49 @@ public:
 						}
 					}
 				}
+
+#pragma region Flags
+
+				if ((registers.m_registers[2] & 0b10000000) == 0b10000000) {//Flag s (negatif)
+					registers.m_registers[1] |= 0b10000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b10000000;
+				}
+
+				if (registers.m_registers[2] == 0) //Flag Z (zero)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+
+				registers.m_registers[1] &= !0b00010000; //Flag H reset
+
+				bool _even = (((registers.m_registers[2] & 0b00000001) >> 0)
+					+ ((registers.m_registers[2] & 0b00000010) >> 1)
+					+ ((registers.m_registers[2] & 0b00000100) >> 2)
+					+ ((registers.m_registers[2] & 0b00001000) >> 3)
+					+ ((registers.m_registers[2] & 0b00010000) >> 4)
+					+ ((registers.m_registers[2] & 0b00100000) >> 5)
+					+ ((registers.m_registers[2] & 0b01000000) >> 6)
+					+ ((registers.m_registers[2] & 0b10000000) >> 7)) % 2 == 0;
+
+
+				if (_even) //Flag P/V (even = 1, odd = 0)
+				{
+					registers.m_registers[1] |= 0b00000100;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b00000100;
+				}
+
+#pragma endregion
+
 				break;
 			case 0b00000001:
 				if ((_opcode & 0b00001000) == 0b00000000)// Left
@@ -974,6 +1034,49 @@ public:
 						}
 					}
 				}
+
+#pragma region Flags
+
+				if ((registers.m_registers[3] & 0b10000000) == 0b10000000) {//Flag s (negatif)
+					registers.m_registers[1] |= 0b10000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b10000000;
+				}
+
+				if (registers.m_registers[3] == 0) //Flag Z (zero)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+
+				registers.m_registers[1] &= !0b00010000; //Flag H reset
+
+				bool _even = (((registers.m_registers[3] & 0b00000001) >> 0)
+					+ ((registers.m_registers[3] & 0b00000010) >> 1)
+					+ ((registers.m_registers[3] & 0b00000100) >> 2)
+					+ ((registers.m_registers[3] & 0b00001000) >> 3)
+					+ ((registers.m_registers[3] & 0b00010000) >> 4)
+					+ ((registers.m_registers[3] & 0b00100000) >> 5)
+					+ ((registers.m_registers[3] & 0b01000000) >> 6)
+					+ ((registers.m_registers[3] & 0b10000000) >> 7)) % 2 == 0;
+
+
+				if (_even) //Flag P/V (even = 1, odd = 0)
+				{
+					registers.m_registers[1] |= 0b00000100;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b00000100;
+				}
+
+#pragma endregion
+
 				break;
 			case 0b00000010:
 				if ((_opcode & 0b00001000) == 0b00000000)// Left
@@ -1024,6 +1127,49 @@ public:
 						}
 					}
 				}
+
+#pragma region Flags
+
+				if ((registers.m_registers[4] & 0b10000000) == 0b10000000) {//Flag s (negatif)
+					registers.m_registers[1] |= 0b10000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b10000000;
+				}
+
+				if (registers.m_registers[4] == 0) //Flag Z (zero)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+
+				registers.m_registers[1] &= !0b00010000; //Flag H reset
+
+				bool _even = (((registers.m_registers[4] & 0b00000001) >> 0)
+					+ ((registers.m_registers[4] & 0b00000010) >> 1)
+					+ ((registers.m_registers[4] & 0b00000100) >> 2)
+					+ ((registers.m_registers[4] & 0b00001000) >> 3)
+					+ ((registers.m_registers[4] & 0b00010000) >> 4)
+					+ ((registers.m_registers[4] & 0b00100000) >> 5)
+					+ ((registers.m_registers[4] & 0b01000000) >> 6)
+					+ ((registers.m_registers[4] & 0b10000000) >> 7)) % 2 == 0;
+
+
+				if (_even) //Flag P/V (even = 1, odd = 0)
+				{
+					registers.m_registers[1] |= 0b00000100;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b00000100;
+				}
+
+#pragma endregion
+
 				break;
 			case 0b00000011:
 				if ((_opcode & 0b00001000) == 0b00000000)// Left
@@ -1074,6 +1220,49 @@ public:
 						}
 					}
 				}
+
+#pragma region Flags
+
+				if ((registers.m_registers[5] & 0b10000000) == 0b10000000) {//Flag s (negatif)
+					registers.m_registers[1] |= 0b10000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b10000000;
+				}
+
+				if (registers.m_registers[5] == 0) //Flag Z (zero)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+
+				registers.m_registers[1] &= !0b00010000; //Flag H reset
+
+				bool _even = (((registers.m_registers[5] & 0b00000001) >> 0)
+					+ ((registers.m_registers[5] & 0b00000010) >> 1)
+					+ ((registers.m_registers[5] & 0b00000100) >> 2)
+					+ ((registers.m_registers[5] & 0b00001000) >> 3)
+					+ ((registers.m_registers[5] & 0b00010000) >> 4)
+					+ ((registers.m_registers[5] & 0b00100000) >> 5)
+					+ ((registers.m_registers[5] & 0b01000000) >> 6)
+					+ ((registers.m_registers[5] & 0b10000000) >> 7)) % 2 == 0;
+
+
+				if (_even) //Flag P/V (even = 1, odd = 0)
+				{
+					registers.m_registers[1] |= 0b00000100;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b00000100;
+				}
+
+#pragma endregion
+
 				break;
 			case 0b00000100:
 				if ((_opcode & 0b00001000) == 0b00000000)// Left
@@ -1124,6 +1313,49 @@ public:
 						}
 					}
 				}
+
+#pragma region Flags
+
+				if ((registers.m_registers[6] & 0b10000000) == 0b10000000) {//Flag s (negatif)
+					registers.m_registers[1] |= 0b10000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b10000000;
+				}
+
+				if (registers.m_registers[6] == 0) //Flag Z (zero)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+
+				registers.m_registers[1] &= !0b00010000; //Flag H reset
+
+				bool _even = (((registers.m_registers[6] & 0b00000001) >> 0)
+					+ ((registers.m_registers[6] & 0b00000010) >> 1)
+					+ ((registers.m_registers[6] & 0b00000100) >> 2)
+					+ ((registers.m_registers[6] & 0b00001000) >> 3)
+					+ ((registers.m_registers[6] & 0b00010000) >> 4)
+					+ ((registers.m_registers[6] & 0b00100000) >> 5)
+					+ ((registers.m_registers[6] & 0b01000000) >> 6)
+					+ ((registers.m_registers[6] & 0b10000000) >> 7)) % 2 == 0;
+
+
+				if (_even) //Flag P/V (even = 1, odd = 0)
+				{
+					registers.m_registers[1] |= 0b00000100;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b00000100;
+				}
+
+#pragma endregion
+
 				break;
 			case 0b00000101:
 				if ((_opcode & 0b00001000) == 0b00000000)// Left
@@ -1175,6 +1407,49 @@ public:
 						}
 					}
 				}
+
+#pragma region Flags
+
+				if ((registers.m_registers[7] & 0b10000000) == 0b10000000) {//Flag s (negatif)
+					registers.m_registers[1] |= 0b10000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b10000000;
+				}
+
+				if (registers.m_registers[7] == 0) //Flag Z (zero)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+
+				registers.m_registers[1] &= !0b00010000; //Flag H reset
+
+				bool _even = (((registers.m_registers[7] & 0b00000001) >> 0)
+					+ ((registers.m_registers[7] & 0b00000010) >> 1)
+					+ ((registers.m_registers[7] & 0b00000100) >> 2)
+					+ ((registers.m_registers[7] & 0b00001000) >> 3)
+					+ ((registers.m_registers[7] & 0b00010000) >> 4)
+					+ ((registers.m_registers[7] & 0b00100000) >> 5)
+					+ ((registers.m_registers[7] & 0b01000000) >> 6)
+					+ ((registers.m_registers[7] & 0b10000000) >> 7)) % 2 == 0;
+
+
+				if (_even) //Flag P/V (even = 1, odd = 0)
+				{
+					registers.m_registers[1] |= 0b00000100;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b00000100;
+				}
+
+#pragma endregion
+
 				break;
 			case 0b00000110:
 				if ((_opcode & 0b00001000) == 0b00000000)// Left
@@ -1225,6 +1500,49 @@ public:
 						}
 					}
 				}
+
+#pragma region Flags
+
+				if ((mmu.Read(registers.HL) & 0b10000000) == 0b10000000) {//Flag s (negatif)
+					registers.m_registers[1] |= 0b10000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b10000000;
+				}
+
+				if (mmu.Read(registers.HL) == 0) //Flag Z (zero)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+
+				registers.m_registers[1] &= !0b00010000; //Flag H reset
+
+				bool _even = (((mmu.Read(registers.HL) & 0b00000001) >> 0)
+					+ ((mmu.Read(registers.HL) & 0b00000010) >> 1)
+					+ ((mmu.Read(registers.HL) & 0b00000100) >> 2)
+					+ ((mmu.Read(registers.HL) & 0b00001000) >> 3)
+					+ ((mmu.Read(registers.HL) & 0b00010000) >> 4)
+					+ ((mmu.Read(registers.HL) & 0b00100000) >> 5)
+					+ ((mmu.Read(registers.HL) & 0b01000000) >> 6)
+					+ ((mmu.Read(registers.HL) & 0b10000000) >> 7)) % 2 == 0;
+
+
+				if (_even) //Flag P/V (even = 1, odd = 0)
+				{
+					registers.m_registers[1] |= 0b00000100;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b00000100;
+				}
+
+#pragma endregion
+
 				break;
 			case 0b00000111:
 				if ((_opcode & 0b00001000) == 0b00000000)// Left
@@ -1275,6 +1593,49 @@ public:
 						}
 					}
 				}
+
+#pragma region Flags
+
+				if ((registers.m_registers[0] & 0b10000000) == 0b10000000) {//Flag s (negatif)
+					registers.m_registers[1] |= 0b10000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b10000000;
+				}
+
+				if (registers.m_registers[0] == 0) //Flag Z (zero)
+				{
+					registers.m_registers[1] |= 0b01000000;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b01000000;
+				}
+
+				registers.m_registers[1] &= !0b00010000; //Flag H reset
+
+				bool _even = (((registers.m_registers[0] & 0b00000001) >> 0)
+					+ ((registers.m_registers[0] & 0b00000010) >> 1)
+					+ ((registers.m_registers[0] & 0b00000100) >> 2)
+					+ ((registers.m_registers[0] & 0b00001000) >> 3)
+					+ ((registers.m_registers[0] & 0b00010000) >> 4)
+					+ ((registers.m_registers[0] & 0b00100000) >> 5)
+					+ ((registers.m_registers[0] & 0b01000000) >> 6)
+					+ ((registers.m_registers[0] & 0b10000000) >> 7)) % 2 == 0;
+
+
+				if (_even) //Flag P/V (even = 1, odd = 0)
+				{
+					registers.m_registers[1] |= 0b00000100;
+				}
+				else
+				{
+					registers.m_registers[1] &= !0b00000100;
+				}
+
+#pragma endregion
+
 				break;
 			}
 			return;
