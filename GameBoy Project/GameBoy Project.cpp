@@ -7,14 +7,6 @@
 
 int main()
 {
-    //// TEST OF THEORIES
-
-    std::cout << "Debug" << std::endl;
-    uint8_t b = 0b00010000;
-    std::cout << std::to_string(b << 3) << std::endl;
-
-    ////
-
     BootRom        bootRom("dmg_boot.bin");
     Memory<0x1000> internalRam;
     Memory<0x2000> vram;

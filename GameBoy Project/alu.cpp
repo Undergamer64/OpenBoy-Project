@@ -2054,3 +2054,72 @@ public:
 };
 
 #pragma endregion
+
+#pragma region Push/Pop Instructions
+
+class IF_PUSH_POP final
+	: public InstructionFamily
+{
+public:
+	bool IsValid(uint8_t opcode) override
+	{
+		return (opcode & 0b11001011) == 0b11000001;
+	}
+
+	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	{
+		switch (opcode & 0b00110000)
+		{
+		case 0b00000000:
+			if ((opcode & 0b00000100) == 0b00000000) 
+			{
+				registers.BC = (((mmu.Read(registers.SP--)) << 4) + mmu.Read(registers.SP--));
+			}
+			else 
+			{
+				mmu.Write(registers.SP - 1, registers.BC >> 4);
+				mmu.Write(registers.SP, registers.BC);
+				registers.BC = (((mmu.Read(registers.SP - 1)) << 4) + mmu.Read(registers.SP - 2));
+			}
+			break;
+		case 0b00010000:
+			if ((opcode & 0b00000100) == 0b00000000)
+			{
+				registers.DE = (((mmu.Read(registers.SP--)) << 4) + mmu.Read(registers.SP--));
+			}
+			else
+			{
+				mmu.Write(registers.SP - 1, registers.DE >> 4);
+				mmu.Write(registers.SP, registers.DE);
+				registers.DE = (((mmu.Read(registers.SP - 1)) << 4) + mmu.Read(registers.SP - 2));
+			}
+			break;
+		case 0b00100000:
+			if ((opcode & 0b00000100) == 0b00000000)
+			{
+				registers.HL = (((mmu.Read(registers.SP--)) << 4) + mmu.Read(registers.SP--));
+			}
+			else
+			{
+				mmu.Write(registers.SP - 1, registers.HL >> 4);
+				mmu.Write(registers.SP, registers.HL);
+				registers.HL = (((mmu.Read(registers.SP - 1)) << 4) + mmu.Read(registers.SP - 2));
+			}
+			break;
+		case 0b00110000:
+			if ((opcode & 0b00000100) == 0b00000000)
+			{
+				registers.AF = (((mmu.Read(registers.SP--)) << 4) + mmu.Read(registers.SP--));
+			}
+			else
+			{
+				mmu.Write(registers.SP - 1, registers.AF >> 4);
+				mmu.Write(registers.SP, registers.AF);
+				registers.AF = (((mmu.Read(registers.SP - 1)) << 4) + mmu.Read(registers.SP - 2));
+			}
+			break;
+		}
+	}
+};
+
+#pragma endregion
