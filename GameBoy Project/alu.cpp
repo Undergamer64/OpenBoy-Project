@@ -794,53 +794,64 @@ public:
 				registers.m_registers[1] |= (registers.m_registers[0] & 0b10000000) >> 7;
 				registers.m_registers[0] = (registers.m_registers[0] << 1) + ((registers.m_registers[0] & 0b10000000) >> 7);
 			}
-
-#pragma region Flags
-
-			if ((registers.m_registers[0] & 0b10000000) == 0b10000000) {
-				registers.m_registers[1] |= 0b10000000; //Flag s (negatif)
-			}
-
-			if (registers.m_registers[0] == 0) //Flag Z (zero)
-			{
-				registers.m_registers[1] |= 0b01000000;
-			}
-			else
-			{
-				registers.m_registers[1] &= !0b01000000;
-			}
-
-			registers.m_registers[1] &= !0b00010000; //Flag H reset
-
-			bool even = (((registers.m_registers[0] & 0b00000001) >> 0) 
-				+ ((registers.m_registers[0] & 0b00000010) >> 1) 
-				+ ((registers.m_registers[0] & 0b00000100) >> 2) 
-				+ ((registers.m_registers[0] & 0b00001000) >> 3) 
-				+ ((registers.m_registers[0] & 0b00010000) >> 4)
-				+ ((registers.m_registers[0] & 0b00100000) >> 5)
-				+ ((registers.m_registers[0] & 0b01000000) >> 6)
-				+ ((registers.m_registers[0] & 0b10000000) >> 7)) % 2 == 0;
-
-
-			if (_even) //Flag P/V (even = 1, odd = 0)
-			{
-
-			}
-			else
-			{
-
-			}
-
-#pragma endregion
-
 			break;
 
 		case 0b00001000: // Right
+			if ((opcode & 0b00010000) == 0b00010000)
+			{
+				uint8_t _temp_carry = (registers.m_registers[1] & 0b00000001);
+				registers.m_registers[1] &= 0b11111110;
+				registers.m_registers[1] |= (registers.m_registers[0] & 0b00000001);
+				registers.m_registers[0] = (registers.m_registers[0] >> 1) + (_temp_carry << 7);
 
-
-
+			}
+			else
+			{
+				registers.m_registers[1] &= 0b11111110;
+				registers.m_registers[1] |= (registers.m_registers[0] & 0b00000001);
+				registers.m_registers[0] = (registers.m_registers[0] >> 1) + ((registers.m_registers[0] & 0b00000001) << 7);
+			}
 			break;
 		}
+
+#pragma region Flags
+
+		if ((registers.m_registers[0] & 0b10000000) == 0b10000000) {
+			registers.m_registers[1] |= 0b10000000; //Flag s (negatif)
+		}
+
+		if (registers.m_registers[0] == 0) //Flag Z (zero)
+		{
+			registers.m_registers[1] |= 0b01000000;
+		}
+		else
+		{
+			registers.m_registers[1] &= !0b01000000;
+		}
+
+		registers.m_registers[1] &= !0b00010000; //Flag H reset
+
+		bool _even = (((registers.m_registers[0] & 0b00000001) >> 0)
+			+ ((registers.m_registers[0] & 0b00000010) >> 1)
+			+ ((registers.m_registers[0] & 0b00000100) >> 2)
+			+ ((registers.m_registers[0] & 0b00001000) >> 3)
+			+ ((registers.m_registers[0] & 0b00010000) >> 4)
+			+ ((registers.m_registers[0] & 0b00100000) >> 5)
+			+ ((registers.m_registers[0] & 0b01000000) >> 6)
+			+ ((registers.m_registers[0] & 0b10000000) >> 7)) % 2 == 0;
+
+
+		if (_even) //Flag P/V (even = 1, odd = 0)
+		{
+			registers.m_registers[1] |= 0b00000100;
+		}
+		else
+		{
+			registers.m_registers[1] &= !0b00000100;
+		}
+
+#pragma endregion
+
 	}
 };
 
@@ -862,7 +873,379 @@ public:
 		uint8_t _opcode = mmu.Read(registers.PC++);
 		if ((_opcode & 0b11000000) == 0b00000000) 
 		{
+			switch (_opcode & 0b00000111)
+			{
+			case 0b00000000:
+				if ((_opcode & 0b00001000) == 0b00000000)// Left
+				{
+					if ((_opcode & 0b00010000) == 0b00010000)
+					{
+						uint8_t _temp_carry = (registers.m_registers[1] & 0b00000001);
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[2] & 0b10000000) >> 7;
+						registers.m_registers[2] = (registers.m_registers[2] << 1);
+						if ((_opcode & 0b00100000) == 0b00000000) 
+						{
+							registers.m_registers[2] += (_temp_carry);
+						}
+					}
+					else
+					{
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[2] & 0b10000000) >> 7;
+						registers.m_registers[2] = (registers.m_registers[2] << 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[2] += ((registers.m_registers[2] & 0b10000000) >> 7);
+						}
+					}
+				}
+				else if ((_opcode & 0b00001000) == 0b00001000)// Right
+				{
+					if ((_opcode & 0b00010000) == 0b00010000)
+					{
+						uint8_t _temp_carry = (registers.m_registers[1] & 0b00000001);
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[2] & 0b00000001);
+						registers.m_registers[2] = (registers.m_registers[2] >> 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[3] += (_temp_carry << 7);
+						}
+					}
+					else
+					{
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[2] & 0b00000001);
+						registers.m_registers[2] = (registers.m_registers[2] >> 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[3] += ((registers.m_registers[2] & 0b00000001) << 7);
+						}
+					}
+				}
+				break;
+			case 0b00000001:
+				if ((_opcode & 0b00001000) == 0b00000000)// Left
+				{
+					if ((_opcode & 0b00010000) == 0b00010000)
+					{
+						uint8_t _temp_carry = (registers.m_registers[1] & 0b00000001);
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[3] & 0b10000000) >> 7;
+						registers.m_registers[3] = (registers.m_registers[3] << 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[3] += (_temp_carry);
+						}
+					}
+					else
+					{
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[3] & 0b10000000) >> 7;
+						registers.m_registers[3] = (registers.m_registers[3] << 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[3] += ((registers.m_registers[3] & 0b10000000) >> 7);
+						}
+					}
+				}
+				else if ((_opcode & 0b00001000) == 0b00001000)// Right
+				{
+					if ((_opcode & 0b00010000) == 0b00010000)
+					{
+						uint8_t _temp_carry = (registers.m_registers[1] & 0b00000001);
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[3] & 0b00000001);
+						registers.m_registers[3] = (registers.m_registers[3] >> 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[2] += (_temp_carry << 7);
+						}
+					}
+					else
+					{
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[3] & 0b00000001);
+						registers.m_registers[3] = (registers.m_registers[3] >> 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[2] += ((registers.m_registers[3] & 0b00000001) << 7);
+						}
+					}
+				}
+				break;
+			case 0b00000010:
+				if ((_opcode & 0b00001000) == 0b00000000)// Left
+				{
+					if ((_opcode & 0b00010000) == 0b00010000)
+					{
+						uint8_t _temp_carry = (registers.m_registers[1] & 0b00000001);
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[4] & 0b10000000) >> 7;
+						registers.m_registers[4] = (registers.m_registers[4] << 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[4] += (_temp_carry);
+						}
+					}
+					else
+					{
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[4] & 0b10000000) >> 7;
+						registers.m_registers[4] = (registers.m_registers[4] << 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[4] += ((registers.m_registers[4] & 0b10000000) >> 7);
+						}
+					}
+				}
+				else if ((_opcode & 0b00001000) == 0b00001000)// Right
+				{
+					if ((_opcode & 0b00010000) == 0b00010000)
+					{
+						uint8_t _temp_carry = (registers.m_registers[1] & 0b00000001);
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[4] & 0b00000001);
+						registers.m_registers[4] = (registers.m_registers[4] >> 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[4] += (_temp_carry << 7);
+						}
+					}
+					else
+					{
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[4] & 0b00000001);
+						registers.m_registers[4] = (registers.m_registers[4] >> 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[4] += ((registers.m_registers[4] & 0b00000001) << 7);
+						}
+					}
+				}
+				break;
+			case 0b00000011:
+				if ((_opcode & 0b00001000) == 0b00000000)// Left
+				{
+					if ((_opcode & 0b00010000) == 0b00010000)
+					{
+						uint8_t _temp_carry = (registers.m_registers[1] & 0b00000001);
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[5] & 0b10000000) >> 7;
+						registers.m_registers[5] = (registers.m_registers[5] << 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[5] += (_temp_carry);
+						}
+					}
+					else
+					{
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[5] & 0b10000000) >> 7;
+						registers.m_registers[5] = (registers.m_registers[5] << 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[5] += ((registers.m_registers[5] & 0b10000000) >> 7);
+						}
+					}
+				}
+				else if ((_opcode & 0b00001000) == 0b00001000)// Right
+				{
+					if ((_opcode & 0b00010000) == 0b00010000)
+					{
+						uint8_t _temp_carry = (registers.m_registers[1] & 0b00000001);
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[5] & 0b00000001);
+						registers.m_registers[5] = (registers.m_registers[5] >> 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[5] += (_temp_carry << 7);
+						}
+					}
+					else
+					{
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[5] & 0b00000001);
+						registers.m_registers[5] = (registers.m_registers[5] >> 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[5] += ((registers.m_registers[5] & 0b00000001) << 7);
+						}
+					}
+				}
+				break;
+			case 0b00000100:
+				if ((_opcode & 0b00001000) == 0b00000000)// Left
+				{
+					if ((_opcode & 0b00010000) == 0b00010000)
+					{
+						uint8_t _temp_carry = (registers.m_registers[1] & 0b00000001);
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[6] & 0b10000000) >> 7;
+						registers.m_registers[6] = (registers.m_registers[6] << 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[6] += (_temp_carry);
+						}
+					}
+					else
+					{
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[6] & 0b10000000) >> 7;
+						registers.m_registers[6] = (registers.m_registers[6] << 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[6] += ((registers.m_registers[6] & 0b10000000) >> 7);
+						}
+					}
+				}
+				else if ((_opcode & 0b00001000) == 0b00001000)// Right
+				{
+					if ((_opcode & 0b00010000) == 0b00010000)
+					{
+						uint8_t _temp_carry = (registers.m_registers[1] & 0b00000001);
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[6] & 0b00000001);
+						registers.m_registers[6] = (registers.m_registers[6] >> 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[6] += (_temp_carry << 7);
+						}
+					}
+					else
+					{
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[6] & 0b00000001);
+						registers.m_registers[6] = (registers.m_registers[6] >> 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							registers.m_registers[6] += ((registers.m_registers[6] & 0b00000001) << 7);
+						}
+					}
+				}
+				break;
+			case 0b00000101:
+				if ((_opcode & 0b00001000) == 0b00000000)// Left
+				{
+					if ((_opcode & 0b00010000) == 0b00010000)
+					{
+						uint8_t _temp_carry = (registers.m_registers[1] & 0b00000001);
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[7] & 0b10000000) >> 7;
+						registers.m_registers[7] = (registers.m_registers[7] << 1) + (_temp_carry);
+					}
+					else
+					{
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[7] & 0b10000000) >> 7;
+						registers.m_registers[7] = (registers.m_registers[7] << 1) + ((registers.m_registers[7] & 0b10000000) >> 7);
+					}
+				}
+				else if ((_opcode & 0b00001000) == 0b00001000)// Right
+				{
+					if ((_opcode & 0b00010000) == 0b00010000)
+					{
+						uint8_t _temp_carry = (registers.m_registers[1] & 0b00000001);
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[7] & 0b00000001);
+						registers.m_registers[7] = (registers.m_registers[7] >> 1) + (_temp_carry << 7);
 
+					}
+					else
+					{
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[7] & 0b00000001);
+						registers.m_registers[7] = (registers.m_registers[7] >> 1) + ((registers.m_registers[7] & 0b00000001) << 7);
+					}
+				}
+				break;
+			case 0b00000110:
+				if ((_opcode & 0b00001000) == 0b00000000)// Left
+				{
+					if ((_opcode & 0b00010000) == 0b00010000)
+					{
+						uint8_t _temp_carry = (registers.m_registers[1] & 0b00000001);
+						mmu.Write(registers.HL, mmu.Read(registers.HL) & 0b11111110);
+						registers.m_registers[1] |= (mmu.Read(registers.HL) & 0b10000000) >> 7;
+						mmu.Write(registers.HL, (mmu.Read(registers.HL) << 1));
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							mmu.Write(registers.HL, mmu.Read(registers.HL) + (_temp_carry));
+						}
+					}
+					else
+					{
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (mmu.Read(registers.HL) & 0b10000000) >> 7;
+						mmu.Write(registers.HL, (mmu.Read(registers.HL) << 1));
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							mmu.Write(registers.HL, mmu.Read(registers.HL) + (mmu.Read(registers.HL) & 0b10000000) >> 7);
+						}
+					}
+				}
+				else if ((_opcode & 0b00001000) == 0b00001000)// Right
+				{
+					if ((_opcode & 0b00010000) == 0b00010000)
+					{
+						uint8_t _temp_carry = (registers.m_registers[1] & 0b00000001);
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (mmu.Read(registers.HL) & 0b00000001);
+						mmu.Write(registers.HL, mmu.Read(registers.HL) >> 1);
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							mmu.Write(registers.HL, mmu.Read(registers.HL) + (_temp_carry << 7));
+						}
+					}
+					else
+					{
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (mmu.Read(registers.HL) & 0b00000001);
+						mmu.Write(registers.HL, (mmu.Read(registers.HL) >> 1));
+						if ((_opcode & 0b00100000) == 0b00000000)
+						{
+							mmu.Write(registers.HL, mmu.Read(registers.HL) + (mmu.Read(registers.HL) & 0b00000001) << 7);
+						}
+					}
+				}
+				break;
+			case 0b00000111:
+				if ((_opcode & 0b00001000) == 0b00000000)// Left
+				{
+					if ((_opcode & 0b00010000) == 0b00010000)
+					{
+						uint8_t _temp_carry = (registers.m_registers[1] & 0b00000001);
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[0] & 0b10000000) >> 7;
+						registers.m_registers[0] = (registers.m_registers[0] << 1) + (_temp_carry);
+					}
+					else
+					{
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[0] & 0b10000000) >> 7;
+						registers.m_registers[0] = (registers.m_registers[0] << 1) + ((registers.m_registers[0] & 0b10000000) >> 7);
+					}
+				}
+				else if ((_opcode & 0b00001000) == 0b00001000)// Right
+				{
+					if ((_opcode & 0b00010000) == 0b00010000)
+					{
+						uint8_t _temp_carry = (registers.m_registers[1] & 0b00000001);
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[0] & 0b00000001);
+						registers.m_registers[0] = (registers.m_registers[0] >> 1) + (_temp_carry << 7);
+
+					}
+					else
+					{
+						registers.m_registers[1] &= 0b11111110;
+						registers.m_registers[1] |= (registers.m_registers[0] & 0b00000001);
+						registers.m_registers[0] = (registers.m_registers[0] >> 1) + ((registers.m_registers[0] & 0b00000001) << 7);
+					}
+				}
+				break;
+			}
 			return;
 		}
 		if ((_opcode & 0b11000000) == 0b01000000) 
