@@ -12,17 +12,20 @@ CPU::CPU(MMU& mmu, ALU& alu)
 
 CPU::~CPU()
 {
-	for (InstructionFamily* f : m_alu.m_instructionFamilies)
-	{
-		delete f;
-	}
 };
+
+
+CPU& CPU::operator+=(InstrFamilyPtr&& f)
+{
+	m_alu.m_instructionFamilies.push_back(std::move(f));
+	return *this;
+}
 
 void CPU::Execute()
 {
 	uint8_t opcode = m_mmu.Read(m_registers.PC++);
 
-	for (InstructionFamily* f : m_alu.m_instructionFamilies)
+	for (auto& f : m_alu.m_instructionFamilies)
 	{
 		if (f->IsValid(opcode)) 
 		{
@@ -31,5 +34,12 @@ void CPU::Execute()
 		}
 	}
 };
+
+
+CPU& CPU::operator()() 
+{
+	Execute();
+	return *this;
+}
 
 #pragma endregion

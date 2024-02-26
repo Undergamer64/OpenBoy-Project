@@ -1,6 +1,6 @@
 #pragma once
 #include "alu.h"
-
+#include <memory>
 #include <cstdint>
 
 struct Registers
@@ -19,10 +19,17 @@ class CPU
 {
 	Registers m_registers;
 	MMU& m_mmu;
+
+	using InstrFamilyPtr = std::unique_ptr<InstructionFamily>;
 	ALU& m_alu;
 
 public:
 	CPU(MMU& mmu, ALU& alu);
 	~CPU();
+
+	CPU& operator+=(InstrFamilyPtr&& f);
+
 	void Execute();
+
+	CPU& operator()();
 };

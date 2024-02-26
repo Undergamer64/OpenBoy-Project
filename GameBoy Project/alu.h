@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 class MMU;
@@ -15,5 +16,6 @@ public:
 class ALU 
 {
 public:
-	std::vector<InstructionFamily*> m_instructionFamilies;
+	~ALU();
+	std::vector<std::unique_ptr<InstructionFamily>> m_instructionFamilies;
 };

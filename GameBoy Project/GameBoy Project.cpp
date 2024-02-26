@@ -20,7 +20,15 @@ int main()
     mmu.Map(&oam, 0x9E00);
     mmu.Map(&zeroPage, 0xFF80);
 
-    
+    ALU alu;
+
+    CPU cpu(mmu, alu);
+
+    while (true)
+    {
+        cpu();
+    }
+
 
     return 0;
 }

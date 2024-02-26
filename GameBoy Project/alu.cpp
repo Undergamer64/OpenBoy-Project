@@ -2,6 +2,21 @@
 #include "cpu.h"
 #include "mmu.h"
 
+
+
+#define READ8() ([&]() { \
+	/* Timing Here */    \
+	return mmu.Read(registers.PC++); })()
+
+#define READ16(REG) {\
+	registers.REG = READ8(); \
+	registers.REG += READ8() << 8; }
+	
+
+ALU::~ALU() 
+{
+}
+
 #pragma region Load Instructions
 
 class IF_LD_r16_imm16 final
@@ -17,20 +32,16 @@ public:
 	{
 		switch (opcode & 0b00110000) {
 		case 0b00000000:
-			registers.BC = mmu.Read(registers.PC++);
-			registers.BC += mmu.Read(registers.PC++) << 8;
+			READ16(BC);
 			break;
 		case 0b00010000:
-			registers.DE = mmu.Read(registers.PC++);
-			registers.DE += mmu.Read(registers.PC++) << 8;
+			READ16(DE);
 			break;
 		case 0b00100000:
-			registers.HL = mmu.Read(registers.PC++);
-			registers.HL += mmu.Read(registers.PC++) << 8;
+			READ16(HL);
 			break;
 		case 0b00110000:
-			registers.SP = mmu.Read(registers.PC++);
-			registers.SP += mmu.Read(registers.PC++) << 8;
+			READ16(SP);
 			break;
 		}
 	}
@@ -49,28 +60,28 @@ public:
 	{
 		switch (opcode & 0b00111000) {
 		case 0b00000000:
-			registers.m_registers[2] = mmu.Read(registers.PC++);
+			registers.m_registers[2] = READ8();
 			break;
 		case 0b00001000:
-			registers.m_registers[3] = mmu.Read(registers.PC++);
+			registers.m_registers[3] = READ8();
 			break;
 		case 0b00010000:
-			registers.m_registers[4] = mmu.Read(registers.PC++);
+			registers.m_registers[4] = READ8();
 			break;
 		case 0b00011000:
-			registers.m_registers[5] = mmu.Read(registers.PC++);
+			registers.m_registers[5] = READ8();
 			break;
 		case 0b00100000:
-			registers.m_registers[6] = mmu.Read(registers.PC++);
+			registers.m_registers[6] = READ8();
 			break;
 		case 0b00101000:
-			registers.m_registers[7] = mmu.Read(registers.PC++);
+			registers.m_registers[7] = READ8();
 			break;
 		case 0b00110000:
-			mmu.Write(registers.HL, mmu.Read(registers.PC++));
+			mmu.Write(registers.HL, READ8());
 			break;
 		case 0b00111000:
-			registers.m_registers[0] = mmu.Read(registers.PC++);
+			registers.m_registers[0] = READ8();
 			break;
 		}
 	}
@@ -117,16 +128,16 @@ public:
 	{
 		switch (opcode & 0b00011000) {
 		case 0b00000000:
-			mmu.Write((mmu.Read(registers.PC++) + (mmu.Read(registers.PC++) << 8)), registers.HL);
+			mmu.Write((READ8() + (READ8() << 8)), registers.HL);
 			break;
 		case 0b00001000:
-			mmu.Write((mmu.Read(registers.PC++) + (mmu.Read(registers.PC++) << 8)), registers.m_registers[0]);
+			mmu.Write((READ8() + (READ8() << 8)), registers.m_registers[0]);
 			break;
 		case 0b00010000:
-			registers.HL = mmu.Read((mmu.Read(registers.PC++) + (mmu.Read(registers.PC++) << 8)));
+			registers.HL = mmu.Read((READ8() + (READ8() << 8)));
 			break;
 		case 0b00011000:
-			registers.m_registers[0] = mmu.Read((mmu.Read(registers.PC++) + (mmu.Read(registers.PC++) << 8)));;
+			registers.m_registers[0] = mmu.Read((READ8() + (READ8() << 8)));;
 			break;
 		}
 	}
@@ -172,7 +183,7 @@ public:
 		case 0b00000110:
 			if ((opcode & 0b01000000) == 0b01000000)
 			{
-				_r_num = mmu.Read(registers.PC++);
+				_r_num = READ8();
 			}
 			else
 			{
@@ -484,7 +495,7 @@ public:
 
 	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
-		int8_t e = mmu.Read(registers.PC++);
+		int8_t e = READ8();
 		if ((opcode & 0b11100111) == 0b00100000)//JR with cc (if cc = true)
 		{
 			switch (opcode & 0b00011000)
@@ -548,7 +559,7 @@ public:
 			registers.PC = registers.HL;
 			return;
 		}
-		uint16_t _nn = (mmu.Read(registers.PC++) + (mmu.Read(registers.PC++) << 8));
+		uint16_t _nn = (READ8() + (READ8() << 8));
 		if ((opcode & 0b11111111) == 0b11000011)
 		{
 			registers.PC = _nn;
@@ -624,7 +635,7 @@ public:
 
 	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
-		uint16_t _nn = (mmu.Read(registers.PC++) + (mmu.Read(registers.PC++) << 8));
+		uint16_t _nn = (READ8() + (READ8() << 8));
 		bool condition = false;
 		if ((opcode & 0b11111111) == 0b11001101)
 		{
@@ -706,7 +717,7 @@ public:
 
 	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
-		uint16_t _nn = (mmu.Read(registers.PC++) + (mmu.Read(registers.PC++) << 8));
+		uint16_t _nn = (READ8() + (READ8() << 8));
 		bool condition = false;
 		if ((opcode & 0b11111111) == 0b11001001)
 		{
@@ -887,9 +898,10 @@ public:
 
 	void Execute(uint8_t _, MMU& mmu, Registers& registers) override
 	{
-		uint8_t _opcode = mmu.Read(registers.PC++);
+		uint8_t _opcode = READ8();
 		if ((_opcode & 0b11000000) == 0b00000000) 
 		{
+			bool _even;
 			switch (_opcode & 0b00000111)
 			{
 			case 0b00000000:
@@ -963,7 +975,7 @@ public:
 
 				registers.m_registers[1] &= !0b00010000; //Flag H reset
 
-				bool _even = (((registers.m_registers[2] & 0b00000001) >> 0)
+				_even = (((registers.m_registers[2] & 0b00000001) >> 0)
 					+ ((registers.m_registers[2] & 0b00000010) >> 1)
 					+ ((registers.m_registers[2] & 0b00000100) >> 2)
 					+ ((registers.m_registers[2] & 0b00001000) >> 3)
@@ -1056,7 +1068,7 @@ public:
 
 				registers.m_registers[1] &= !0b00010000; //Flag H reset
 
-				bool _even = (((registers.m_registers[3] & 0b00000001) >> 0)
+				_even = (((registers.m_registers[3] & 0b00000001) >> 0)
 					+ ((registers.m_registers[3] & 0b00000010) >> 1)
 					+ ((registers.m_registers[3] & 0b00000100) >> 2)
 					+ ((registers.m_registers[3] & 0b00001000) >> 3)
@@ -1149,7 +1161,7 @@ public:
 
 				registers.m_registers[1] &= !0b00010000; //Flag H reset
 
-				bool _even = (((registers.m_registers[4] & 0b00000001) >> 0)
+				_even = (((registers.m_registers[4] & 0b00000001) >> 0)
 					+ ((registers.m_registers[4] & 0b00000010) >> 1)
 					+ ((registers.m_registers[4] & 0b00000100) >> 2)
 					+ ((registers.m_registers[4] & 0b00001000) >> 3)
@@ -1242,7 +1254,7 @@ public:
 
 				registers.m_registers[1] &= !0b00010000; //Flag H reset
 
-				bool _even = (((registers.m_registers[5] & 0b00000001) >> 0)
+				_even = (((registers.m_registers[5] & 0b00000001) >> 0)
 					+ ((registers.m_registers[5] & 0b00000010) >> 1)
 					+ ((registers.m_registers[5] & 0b00000100) >> 2)
 					+ ((registers.m_registers[5] & 0b00001000) >> 3)
@@ -1335,7 +1347,7 @@ public:
 
 				registers.m_registers[1] &= !0b00010000; //Flag H reset
 
-				bool _even = (((registers.m_registers[6] & 0b00000001) >> 0)
+				_even = (((registers.m_registers[6] & 0b00000001) >> 0)
 					+ ((registers.m_registers[6] & 0b00000010) >> 1)
 					+ ((registers.m_registers[6] & 0b00000100) >> 2)
 					+ ((registers.m_registers[6] & 0b00001000) >> 3)
@@ -1429,7 +1441,7 @@ public:
 
 				registers.m_registers[1] &= !0b00010000; //Flag H reset
 
-				bool _even = (((registers.m_registers[7] & 0b00000001) >> 0)
+				_even = (((registers.m_registers[7] & 0b00000001) >> 0)
 					+ ((registers.m_registers[7] & 0b00000010) >> 1)
 					+ ((registers.m_registers[7] & 0b00000100) >> 2)
 					+ ((registers.m_registers[7] & 0b00001000) >> 3)
@@ -1522,7 +1534,7 @@ public:
 
 				registers.m_registers[1] &= !0b00010000; //Flag H reset
 
-				bool _even = (((mmu.Read(registers.HL) & 0b00000001) >> 0)
+				_even = (((mmu.Read(registers.HL) & 0b00000001) >> 0)
 					+ ((mmu.Read(registers.HL) & 0b00000010) >> 1)
 					+ ((mmu.Read(registers.HL) & 0b00000100) >> 2)
 					+ ((mmu.Read(registers.HL) & 0b00001000) >> 3)
@@ -1615,7 +1627,7 @@ public:
 
 				registers.m_registers[1] &= !0b00010000; //Flag H reset
 
-				bool _even = (((registers.m_registers[0] & 0b00000001) >> 0)
+				_even = (((registers.m_registers[0] & 0b00000001) >> 0)
 					+ ((registers.m_registers[0] & 0b00000010) >> 1)
 					+ ((registers.m_registers[0] & 0b00000100) >> 2)
 					+ ((registers.m_registers[0] & 0b00001000) >> 3)
