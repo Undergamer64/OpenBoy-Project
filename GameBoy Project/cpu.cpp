@@ -35,7 +35,6 @@ void CPU::Execute()
 	}
 };
 
-
 CPU& CPU::operator()() 
 {
 	Execute();

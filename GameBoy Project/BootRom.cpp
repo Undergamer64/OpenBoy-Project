@@ -23,12 +23,10 @@ size_t BootRom::Size() const
 
 uint8_t BootRom::Read(uint16_t address) const
 {
-	{
-		if (address < 256) {
-			return m_bytes[address];
-		}
-		return 0;
-	};
+	if (address < 256) {
+		return m_bytes[address];
+	}
+	return 0;
 };
 
 void BootRom::Write(uint16_t address, uint8_t value)

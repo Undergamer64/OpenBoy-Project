@@ -4,7 +4,7 @@
 #include <vector>
 
 class MMU;
-class Registers;
+struct Registers;
 
 class InstructionFamily
 {
