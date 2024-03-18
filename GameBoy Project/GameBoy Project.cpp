@@ -14,11 +14,11 @@ int main()
     Memory<0x007F> zeroPage;
 
     MMU mmu;
-    mmu.Map(&bootRom, 0x0000);
-    mmu.Map(&vram, 0x8000);
+    mmu.Map(&bootRom    , 0x0000);
+    mmu.Map(&vram       , 0x8000);
     mmu.Map(&internalRam, 0xC000);
-    mmu.Map(&oam, 0x9E00);
-    mmu.Map(&zeroPage, 0xFF80);
+    mmu.Map(&oam        , 0x9E00);
+    mmu.Map(&zeroPage   , 0xFF80);
 
     ALU alu;
 

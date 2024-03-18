@@ -113,7 +113,7 @@ public:
 	}
 };
 
-class IF_LD_r16_immmemory16 final
+class IF_LD_rA_rHL final
 	: public InstructionFamily
 {
 public:
@@ -126,16 +126,16 @@ public:
 	{
 		switch (opcode & 0b00011000) {
 		case 0b00000000:
-			mmu.Write((READ8() + (READ8() << 8)), registers.HL);
+			mmu.Write(registers.HL--, registers.m_registers[0]);
 			break;
 		case 0b00001000:
-			mmu.Write((READ8() + (READ8() << 8)), registers.m_registers[0]);
+			registers.m_registers[0] = mmu.Read(registers.HL--);
 			break;
 		case 0b00010000:
-			registers.HL = mmu.Read((READ8() + (READ8() << 8)));
+			mmu.Write(registers.HL++, registers.m_registers[0]);
 			break;
 		case 0b00011000:
-			registers.m_registers[0] = mmu.Read((READ8() + (READ8() << 8)));;
+			registers.m_registers[0] = mmu.Read(registers.HL++);
 			break;
 		}
 	}
