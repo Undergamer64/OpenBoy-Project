@@ -29,7 +29,7 @@ public:
 
 	CPU& operator+=(InstrFamilyPtr&& f);
 
-	void Execute();
+	int Execute();
 
-	CPU& operator()();
+	int operator()();
 };

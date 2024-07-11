@@ -3,13 +3,23 @@
 #include "mmu.h"
 
 
-#define READ8() ([&]() { \
-	/* Timing Here */    \
+#define PCREAD8() ([&]() { \
+	currentCycles += 4; \
 	return mmu.Read(registers.PC++); })()
 
-#define READ16(REG) {\
-	registers.REG = READ8(); \
-	registers.REG += READ8() << 8; }
+#define MMUREAD8(REG) ([&]() { \
+	currentCycles += 4; \
+	return mmu.Read(registers.REG); })()
+
+#define READ16() ([&]() {\
+	return PCREAD8() + (PCREAD8() << 8); })()
+
+#define MMUWRITE8(ADDR, VAL) {\
+	currentCycles += 4; \
+	mmu.Write(ADDR, VAL); }
+
+#define WRITE16(REG, VAL) {\
+	registers.REG = VAL; }
 
 ALU::~ALU() 
 {
@@ -21,27 +31,32 @@ class IF_LD_r16_imm16 final
 	: public InstructionFamily
 {
 public:
+
 	bool IsValid(uint8_t opcode) override
 	{
 		return (opcode & 0b11001111) == 0b00000001;
 	}
 
-	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
+		int currentCycles = 0;
+
 		switch (opcode & 0b00110000) {
-		case 0b00000000:
-			READ16(BC);
-			break;
-		case 0b00010000:
-			READ16(DE);
-			break;
-		case 0b00100000:
-			READ16(HL);
-			break;
-		case 0b00110000:
-			READ16(SP);
-			break;
+			case 0b00000000:
+				WRITE16(BC, READ16());
+				break;
+			case 0b00010000:
+				WRITE16(DE, READ16());
+				break;
+			case 0b00100000:
+				WRITE16(HL, READ16());
+				break;
+			case 0b00110000:
+				WRITE16(SP, READ16());
+				break;
 		}
+
+		return currentCycles;
 	}
 };
 
@@ -54,16 +69,20 @@ public:
 		return (opcode & 0b11000111) == 0b00000110;
 	}
 
-	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
+		int currentCycles = 0;
+
 		if ((opcode & 0b00111000) != 0b0011000) 
 		{
-			registers.m_registers[(opcode & 0b00111000) >> 3] = READ8();
+			registers.m_registers[(opcode & 0b00111000) >> 3] = PCREAD8();
 		}
 		else 
 		{
-			mmu.Write(registers.HL, READ8());
+			MMUWRITE8(registers.HL, PCREAD8());
 		}
+
+		return currentCycles;
 	}
 };
 
@@ -76,22 +95,27 @@ public:
 		return (opcode & 0b11100111) == 0b00000010;
 	}
 
-	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
-		switch (opcode & 0b00011000) {
-		case 0b00000000:
-			mmu.Write(registers.BC, registers.m_registers[6]);
-			break;
-		case 0b00001000:
-			mmu.Write(registers.DE, registers.m_registers[6]);
-			break;
-		case 0b00010000:
-			registers.m_registers[6] = mmu.Read(registers.BC);
-			break;
-		case 0b00011000:
-			registers.m_registers[6] = mmu.Read(registers.DE);
-			break;
+		int currentCycles = 0;
+
+		switch (opcode & 0b00011000) 
+		{
+			case 0b00000000:
+				MMUWRITE8(registers.BC, registers.m_registers[6]);
+				break;
+			case 0b00001000:
+				MMUWRITE8(registers.DE, registers.m_registers[6]);
+				break;
+			case 0b00010000:
+				registers.m_registers[6] = MMUREAD8(BC);
+				break;
+			case 0b00011000:
+				registers.m_registers[6] = MMUREAD8(DE);
+				break;
 		}
+
+		return currentCycles;
 	}
 };
 
@@ -104,22 +128,27 @@ public:
 		return (opcode & 0b11100111) == 0b00100010;
 	}
 
-	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
-		switch (opcode & 0b00011000) {
-		case 0b00000000:
-			mmu.Write(registers.HL--, registers.m_registers[6]);
-			break;
-		case 0b00001000:
-			registers.m_registers[6] = mmu.Read(registers.HL--);
-			break;
-		case 0b00010000:
-			mmu.Write(registers.HL++, registers.m_registers[6]);
-			break;
-		case 0b00011000:
-			registers.m_registers[6] = mmu.Read(registers.HL++);
-			break;
+		int currentCycles = 0;
+
+		switch (opcode & 0b00011000) 
+		{
+			case 0b00000000:
+				MMUWRITE8(registers.HL--, registers.m_registers[6]);
+				break;
+			case 0b00001000:
+				registers.m_registers[6] = MMUREAD8(HL--);
+				break;
+			case 0b00010000:
+				MMUWRITE8(registers.HL++, registers.m_registers[6]);
+				break;
+			case 0b00011000:
+				registers.m_registers[6] = MMUREAD8(HL++);
+				break;
 		}
+
+		return currentCycles;
 	}
 };
 
@@ -136,17 +165,19 @@ public:
 		return ((opcode & 0b11100000) == 0b10000000 || (opcode & 0b11100000) == 0b10100000) || (opcode & 0b11000111) == 0b11000110;
 	}
 
-	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
+		int currentCycles = 0;
+
 		uint8_t _r_num = registers.m_registers[(opcode & 0b00000111)];
 		if ((opcode & 0b00000111) == 0b00000110) {
 			if ((opcode & 0b01000000) == 0b01000000)
 			{
-				_r_num = READ8();
+				_r_num = PCREAD8();
 			}
 			else
 			{
-				_r_num = mmu.Read(registers.HL);
+				_r_num = MMUREAD8(HL);
 			}
 		}
 		uint8_t _res = 0;
@@ -314,7 +345,6 @@ public:
 #pragma endregion
 				break;
 			}
-			return;
 
 #pragma endregion
 		case 0b00100000:
@@ -441,7 +471,8 @@ public:
 		if ((opcode & 0b00111000) != 0b0011100) {
 			registers.m_registers[6] = _res;
 		}
-		
+
+		return currentCycles;
 	}
 };
 
@@ -458,9 +489,11 @@ public:
 		return (opcode & 0b11111111) == 0b00011000 || (opcode & 0b11111111) == 0b00010000 || (opcode & 0b11100111) == 0b00100000;
 	}
 
-	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
-		int8_t e = READ8();
+		int currentCycles = 0;
+
+		int8_t e = PCREAD8();
 		if ((opcode & 0b11100111) == 0b00100000)//JR with cc (if cc = true)
 		{
 			switch (opcode & 0b00011000)
@@ -469,42 +502,47 @@ public:
 				if ((registers.m_registers[7] & 0b01000000) != 0b01000000)
 				{
 					registers.PC -= e;
+					currentCycles += 4;
 				}
 				break;
 			case 0b00001000:
 				if ((registers.m_registers[7] & 0b01000000) == 0b01000000)
 				{
 					registers.PC -= e;
+					currentCycles += 4;
 				}
 				break;
 			case 0b00010000:
 				if ((registers.m_registers[7] & 0b00000001) != 0b00000001)
 				{
 					registers.PC -= e;
+					currentCycles += 4;
 				}
 				break;
 			case 0b00011000:
 				if ((registers.m_registers[7] & 0b00000001) == 0b00000001)
 				{
 					registers.PC -= e;
+					currentCycles += 4;
 				}
 				break;
 			}
-			return;
 		}
-		if ((opcode & 0b11111111) == 0b00010000)//JR with B (if B = 0) + B -= 1
+		else if ((opcode & 0b11111111) == 0b00010000)//JR with B (if B = 0) + B -= 1
 		{
 			if (registers.m_registers[2] == 0)
 			{
 				registers.PC -= e;
+				currentCycles += 4;
 			}
-			return;
 		}
-		if ((opcode & 0b11111111) == 0b00011000)//Always JR
+		else if ((opcode & 0b11111111) == 0b00011000)//Always JR
 		{
 			registers.PC -= e;
-			return;
+			currentCycles += 4;
 		}
+
+		return currentCycles;
 	}
 };
 
@@ -517,75 +555,86 @@ public:
 		return (opcode & 0b11111111) == 0b11000011 || (opcode & 0b11111111) == 0b11101001 || (opcode & 0b11000111) == 0b11000010;
 	}
 
-	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
+		int currentCycles = 0;
+
 		if ((opcode & 0b11111111) == 0b11101001)
 		{
 			registers.PC = registers.HL;
-			return;
 		}
-		uint16_t _nn = (READ8() + (READ8() << 8));
-		if ((opcode & 0b11111111) == 0b11000011)
+		else 
 		{
-			registers.PC = _nn;
-			return;
-		}
-		if ((opcode & 0b11000111) == 0b11000010)
-		{
-			switch (opcode & 0b00111000)
+			uint16_t _nn = READ16();
+			if ((opcode & 0b11111111) == 0b11000011)
 			{
-			case 0b00000000:
-				if ((registers.m_registers[7] & 0b01000000) != 0b01000000)
-				{
-					registers.PC = _nn;
-				}
-				break;
-			case 0b00001000:
-				if ((registers.m_registers[7] & 0b01000000) == 0b01000000)
-				{
-					registers.PC = _nn;
-				}
-				break;
-			case 0b00010000:
-				if ((registers.m_registers[7] & 0b00000001) != 0b00000001)
-				{
-					registers.PC = _nn;
-				}
-				break;
-			case 0b00011000:
-				if ((registers.m_registers[7] & 0b00000001) == 0b00000001)
-				{
-					registers.PC = _nn;
-				}
-				break;
-			case (0b00100000):
-				if ((registers.m_registers[7] & 0b00000100) != 0b00000100)
-				{
-					registers.PC = _nn;
-				}
-				break;
-			case (0b00101000):
-				if ((registers.m_registers[7] & 0b00000100) == 0b00000100)
-				{
-					registers.PC = _nn;
-				}
-				break;
-			case (0b00110000):
-				if ((registers.m_registers[7] & 0b10000000) != 0b10000000)
-				{
-					registers.PC = _nn;
-				}
-				break;
-			case (0b00111000):
-				if ((registers.m_registers[7] & 0b10000000) == 0b10000000)
-				{
-					registers.PC = _nn;
-				}
-				break;
+				registers.PC = _nn;
+				currentCycles += 4;
 			}
-			return;
+			else if ((opcode & 0b11000111) == 0b11000010)
+			{
+				switch (opcode & 0b00111000)
+				{
+				case 0b00000000:
+					if ((registers.m_registers[7] & 0b01000000) != 0b01000000)
+					{
+						registers.PC = _nn;
+						currentCycles += 4;
+					}
+					break;
+				case 0b00001000:
+					if ((registers.m_registers[7] & 0b01000000) == 0b01000000)
+					{
+						registers.PC = _nn;
+						currentCycles += 4;
+					}
+					break;
+				case 0b00010000:
+					if ((registers.m_registers[7] & 0b00000001) != 0b00000001)
+					{
+						registers.PC = _nn;
+						currentCycles += 4;
+					}
+					break;
+				case 0b00011000:
+					if ((registers.m_registers[7] & 0b00000001) == 0b00000001)
+					{
+						registers.PC = _nn;
+						currentCycles += 4;
+					}
+					break;
+				case (0b00100000):
+					if ((registers.m_registers[7] & 0b00000100) != 0b00000100)
+					{
+						registers.PC = _nn;
+						currentCycles += 4;
+					}
+					break;
+				case (0b00101000):
+					if ((registers.m_registers[7] & 0b00000100) == 0b00000100)
+					{
+						registers.PC = _nn;
+						currentCycles += 4;
+					}
+					break;
+				case (0b00110000):
+					if ((registers.m_registers[7] & 0b10000000) != 0b10000000)
+					{
+						registers.PC = _nn;
+						currentCycles += 4;
+					}
+					break;
+				case (0b00111000):
+					if ((registers.m_registers[7] & 0b10000000) == 0b10000000)
+					{
+						registers.PC = _nn;
+						currentCycles += 4;
+					}
+					break;
+				}
+			}
 		}
-		return;
+		return currentCycles;
 	}
 };
 
@@ -598,9 +647,11 @@ public:
 		return (opcode & 0b11111111) == 0b11001101 || (opcode & 0b11000111) == 0b11000100;
 	}
 
-	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
-		uint16_t _nn = (READ8() + (READ8() << 8));
+		int currentCycles = 0;
+		
+		uint16_t _nn = READ16();
 		bool condition = false;
 		if ((opcode & 0b11111111) == 0b11001101)
 		{
@@ -662,9 +713,10 @@ public:
 		}
 		if (condition)
 		{
-			mmu.Write(registers.SP - 1, registers.PC >> 8);
-			mmu.Write(registers.SP - 2, registers.PC);
+			MMUWRITE8(registers.SP - 1, registers.PC >> 8);
+			MMUWRITE8(registers.SP - 2, registers.PC);
 			registers.SP -= 2;
+			currentCycles += 4;
 		}
 		registers.PC = _nn;
 		return;
@@ -680,9 +732,10 @@ public:
 		return (opcode & 0b11111111) == 0b11001001 || (opcode & 0b11000111) == 0b11000000;
 	}
 
-	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
-		uint16_t _nn = (READ8() + (READ8() << 8));
+		int currentCycles = 0;
+
 		bool condition = false;
 		if ((opcode & 0b11111111) == 0b11001001)
 		{
@@ -744,7 +797,7 @@ public:
 		}
 		if (condition)
 		{
-			registers.PC = ((mmu.Read(registers.SP + 1) << 8) + mmu.Read(registers.SP));
+			registers.PC = ((MMUREAD8(SP + 1) << 8) + MMUREAD8(SP));
 		}
 		registers.SP += 2;
 		return;
@@ -764,8 +817,10 @@ public:
 		return (opcode & 0b11100111) == 0b00000111;
 	}
 
-	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
+		int currentCycles = 0;
+
 		switch (opcode & 0b00001000) 
 		{
 		case 0b00000000: // Left
@@ -827,9 +882,11 @@ public:
 		return opcode == 0xCB;
 	}
 
-	void Execute(uint8_t _, MMU& mmu, Registers& registers) override
+	int Execute(uint8_t _, MMU& mmu, Registers& registers) override
 	{
-		uint8_t _opcode = READ8();
+		int currentCycles = 0;
+
+		uint8_t _opcode = PCREAD8();
 		if ((_opcode & 0b11000000) == 0b00000000) //Rotate
 		{
 			bool _even;
@@ -1024,8 +1081,10 @@ public:
 		return (opcode & 0b11000111) == 0b00000011 || (opcode & 0b11000110) == 0b00000100;
 	}
 
-	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
+		int currentCycles = 0;
+
 		if ((opcode & 0b11000111) == 0b00000011) 
 		{
 			int D = (opcode & 0b00001000) >> 3;
@@ -1147,8 +1206,10 @@ public:
 		return (opcode & 0b11001011) == 0b11000001;
 	}
 
-	void Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
+		int currentCycles = 0;
+
 		switch (opcode & 0b00110000)
 		{
 		case 0b00000000:

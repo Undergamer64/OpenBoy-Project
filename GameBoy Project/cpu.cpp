@@ -21,7 +21,7 @@ CPU& CPU::operator+=(InstrFamilyPtr&& f)
 	return *this;
 }
 
-void CPU::Execute()
+int CPU::Execute()
 {
 	uint8_t opcode = m_mmu.Read(m_registers.PC++);
 
@@ -29,16 +29,14 @@ void CPU::Execute()
 	{
 		if (f->IsValid(opcode)) 
 		{
-			f->Execute(opcode, m_mmu, m_registers);
-			break;
+			return f->Execute(opcode, m_mmu, m_registers);
 		}
 	}
 };
 
-CPU& CPU::operator()() 
+int CPU::operator()() 
 {
-	Execute();
-	return *this;
+	return Execute();
 }
 
 #pragma endregion

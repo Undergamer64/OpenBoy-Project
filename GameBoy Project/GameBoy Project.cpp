@@ -26,9 +26,10 @@ int main()
 
     while (true)
     {
-        cpu();
+        //Sleep for 4 cycles
+        int cycles = cpu();
+        //Sleep for "cycles" cycles time
     }
-
 
     return 0;
 }
