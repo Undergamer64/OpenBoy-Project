@@ -719,7 +719,7 @@ public:
 			currentCycles += 4;
 		}
 		registers.PC = _nn;
-		return;
+		return currentCycles;
 	}
 };
 
@@ -743,6 +743,7 @@ public:
 		}
 		else
 		{
+			currentCycles += 4;
 			switch (opcode & 0b00111000)
 			{
 			case 0b00000000:
@@ -798,9 +799,10 @@ public:
 		if (condition)
 		{
 			registers.PC = ((MMUREAD8(SP + 1) << 8) + MMUREAD8(SP));
+			currentCycles += 4;
 		}
 		registers.SP += 2;
-		return;
+		return currentCycles;
 	}
 };
 
@@ -839,7 +841,6 @@ public:
 				registers.m_registers[6] = (registers.m_registers[6] << 1) + ((registers.m_registers[6] & 0b10000000) >> 7);
 			}
 			break;
-
 		case 0b00001000: // Right
 			if ((opcode & 0b00010000) == 0b00010000)
 			{
@@ -897,6 +898,7 @@ public:
 			}
 			else 
 			{
+				currentCycles += 8;
 				if ((_opcode & 0b00001000) == 0b00000000)// Left
 				{
 					if ((_opcode & 0b00010000) == 0b00010000)
@@ -921,7 +923,7 @@ public:
 						}
 					}
 				}
-				else if ((_opcode & 0b00001000) == 0b00001000)// Right
+				else // Right
 				{
 					if ((_opcode & 0b00010000) == 0b00010000)
 					{
@@ -961,8 +963,6 @@ public:
 				registers.m_registers[7] &= !0b00010000; //Flag H reset
 #pragma endregion
 			}
-
-
 			if ((_opcode & 0b00000111) != 0b00000110) //if register is not (HL)
 			{
 				if ((_opcode & 0b00001000) == 0b00000000)// Left
@@ -1029,9 +1029,8 @@ public:
 				registers.m_registers[7] &= !0b00010000; //Flag H reset
 #pragma endregion
 			}
-			return;
 		}
-		if ((_opcode & 0b11000000) == 0b01000000) //BIT
+		else if ((_opcode & 0b11000000) == 0b01000000) //BIT
 		{
 			registers.m_registers[7] |= 0b00010000;
 			registers.m_registers[7] &= !0b10000000;
@@ -1047,10 +1046,8 @@ public:
 			{
 				registers.m_registers[7] &= !0b01000000;
 			}
-
-			return;
 		}
-		if ((_opcode & 0b11000000) == 0b11000000 || (_opcode & 0b11000000) == 0b10000000) //SET RESET
+		else if ((_opcode & 0b11000000) == 0b11000000 || (_opcode & 0b11000000) == 0b10000000) //SET RESET
 		{
 			int _offset_bit = (_opcode & 0b00111000) >> 3;
 
@@ -1063,8 +1060,8 @@ public:
 				uint8_t _res = (0b00000001 << _offset_bit);
 				registers.m_registers[(_opcode & 0b00000111)] &= !_res;
 			}
-			return;
 		}
+		return currentCycles;
 	}
 };
 
