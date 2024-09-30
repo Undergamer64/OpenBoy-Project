@@ -734,7 +734,7 @@ public:
 
 	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
-		int currentCycles = 0;
+		int currentCycles = 8;
 
 		bool condition = false;
 		if ((opcode & 0b11111111) == 0b11001001)
@@ -821,7 +821,7 @@ public:
 
 	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
-		int currentCycles = 0;
+		int currentCycles = 4;
 
 		switch (opcode & 0b00001000) 
 		{
@@ -867,6 +867,7 @@ public:
 		registers.m_registers[7] &= !0b00010000; //Flag H reset
 
 #pragma endregion
+		return currentCycles;
 	}
 };
 
