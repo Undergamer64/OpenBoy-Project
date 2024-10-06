@@ -5,6 +5,63 @@
 #include "cpu.h"
 #include "BootRom.h"
 
+#pragma region TEST
+///TEST///
+#define PCREAD8() ([&]() { \
+	currentCycles += 4; \
+	return mmu.Read(registers.PC++); })()
+
+#define MMUREAD8(REG) ([&]() { \
+	currentCycles += 4; \
+	return mmu.Read(registers.REG); })()
+
+#define READ16() ([&]() {\
+	return PCREAD8() + (PCREAD8() << 8); })()
+
+#define MMUWRITE8(ADDR, VAL) {\
+	currentCycles += 4; \
+	mmu.Write(ADDR, VAL); }
+
+#define WRITE16(REG, VAL) {\
+	registers.REG = VAL; }
+
+class IF_LD_r16_imm16 final
+    : public InstructionFamily
+{
+public:
+
+    bool IsValid(uint8_t opcode) override
+    {
+        return (opcode & 0b11001111) == 0b00000001;
+    }
+
+    int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+    {
+        int currentCycles = 0;
+
+        std::cout << "Start";
+
+        switch (opcode & 0b00110000) {
+        case 0b00000000:
+            WRITE16(BC, READ16());
+            break;
+        case 0b00010000:
+            WRITE16(DE, READ16());
+            break;
+        case 0b00100000:
+            WRITE16(HL, READ16());
+            break;
+        case 0b00110000:
+            WRITE16(SP, READ16());
+            break;
+        }
+
+        return currentCycles;
+    }
+};
+///TEST///
+#pragma endregion
+
 int main()
 {
 
@@ -27,7 +84,7 @@ int main()
 
     CPU cpu(mmu, alu);
 
-    //cpu += ;
+    //cpu += std::unique_ptr<IF_LD_r16_imm16>();
 
     while (true)
     {
@@ -35,10 +92,9 @@ int main()
 
         while (cyclesThisUpdate < MAXCYCLES)
         {
-            //Sleep for 4 cycles
             int cycles = cpu();
+            
             //Sleep for "cycles" cycles time
-
             
             cyclesThisUpdate += cycles;
             //UpdateTimers(cycles);

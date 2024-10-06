@@ -7,7 +7,7 @@ BootRom::BootRom(const std::string& filepath)
 	std::ifstream ifs(filepath);
 	if (ifs.good()) 
 	{
-		ifs.read(reinterpret_cast<char*>(m_bytes.data()), 256);
+		ifs.read(reinterpret_cast<char*>(m_bytes.data()), 258);
 		ifs.close();
 	}
 	else 
@@ -18,12 +18,12 @@ BootRom::BootRom(const std::string& filepath)
 
 size_t BootRom::Size() const
 {
-	return 256;
+	return 258;
 };
 
 uint8_t BootRom::Read(uint16_t address) const
 {
-	if (address < 256) {
+	if (address < 258) {
 		return m_bytes[address];
 	}
 	return 0;

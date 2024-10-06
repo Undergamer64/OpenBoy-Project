@@ -1302,5 +1302,4 @@ public:
 	}
 };
 
-
 #pragma endregion
