@@ -886,7 +886,7 @@ public:
 
 	int Execute(uint8_t _, MMU& mmu, Registers& registers) override
 	{
-		int currentCycles = 0;
+		int currentCycles = 4;
 
 		uint8_t _opcode = PCREAD8();
 		if ((_opcode & 0b11000000) == 0b00000000) //Rotate
@@ -1047,6 +1047,10 @@ public:
 			{
 				registers.m_registers[7] &= !0b01000000;
 			}
+			if (registers.m_registers[(_opcode & 0b00000111)] == 0b0110) 
+			{
+				currentCycles += 4;
+			}
 		}
 		else if ((_opcode & 0b11000000) == 0b11000000 || (_opcode & 0b11000000) == 0b10000000) //SET RESET
 		{
@@ -1060,6 +1064,10 @@ public:
 			{
 				uint8_t _res = (0b00000001 << _offset_bit);
 				registers.m_registers[(_opcode & 0b00000111)] &= !_res;
+			}
+			if (registers.m_registers[(_opcode & 0b00000111)] == 0b0110)
+			{
+				currentCycles += 4;
 			}
 		}
 		return currentCycles;
@@ -1081,7 +1089,7 @@ public:
 
 	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
-		int currentCycles = 0;
+		int currentCycles = 4;
 
 		if ((opcode & 0b11000111) == 0b00000011) 
 		{
@@ -1148,6 +1156,7 @@ public:
 			{
 				_r_num = mmu.Read(registers.HL);
 				mmu.Write(registers.HL, mmu.Read(registers.HL) + _res);
+				currentCycles += 8;
 			}
 #pragma region Flags
 #pragma region Flag_Z
@@ -1206,7 +1215,7 @@ public:
 
 	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
-		int currentCycles = 0;
+		int currentCycles = 12;
 
 		switch (opcode & 0b00110000)
 		{
@@ -1220,6 +1229,7 @@ public:
 				mmu.Write(registers.SP - 1, registers.BC >> 4);
 				mmu.Write(registers.SP, registers.BC);
 				registers.BC = (((mmu.Read(registers.SP - 1)) << 4) + mmu.Read(registers.SP - 2));
+				currentCycles += 4;
 			}
 			break;
 		case 0b00010000:
@@ -1232,6 +1242,7 @@ public:
 				mmu.Write(registers.SP - 1, registers.DE >> 4);
 				mmu.Write(registers.SP, registers.DE);
 				registers.DE = (((mmu.Read(registers.SP - 1)) << 4) + mmu.Read(registers.SP - 2));
+				currentCycles += 4;
 			}
 			break;
 		case 0b00100000:
@@ -1244,6 +1255,7 @@ public:
 				mmu.Write(registers.SP - 1, registers.HL >> 4);
 				mmu.Write(registers.SP, registers.HL);
 				registers.HL = (((mmu.Read(registers.SP - 1)) << 4) + mmu.Read(registers.SP - 2));
+				currentCycles += 4;
 			}
 			break;
 		case 0b00110000:
@@ -1256,6 +1268,7 @@ public:
 				mmu.Write(registers.SP - 1, registers.AF >> 4);
 				mmu.Write(registers.SP, registers.AF);
 				registers.AF = (((mmu.Read(registers.SP - 1)) << 4) + mmu.Read(registers.SP - 2));
+				currentCycles += 4;
 			}
 			break;
 		}
