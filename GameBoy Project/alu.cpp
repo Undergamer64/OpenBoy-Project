@@ -41,6 +41,8 @@ public:
 	{
 		int currentCycles = 0;
 
+		std::cout << "Start";
+
 		switch (opcode & 0b00110000) {
 			case 0b00000000:
 				WRITE16(BC, READ16());
@@ -1124,7 +1126,7 @@ public:
 				registers.m_registers[6] += _res;
 				break;
 			}
-			return;
+			return currentCycles;
 		}
 		if ((opcode & 0b11000110) == 0b00000100) 
 		{
@@ -1195,7 +1197,7 @@ public:
 			
 #pragma endregion
 #pragma endregion
-			return;
+			return currentCycles;
 		}
 	}
 };
@@ -1272,7 +1274,33 @@ public:
 			}
 			break;
 		}
+		return currentCycles;
 	}
 };
+
+#pragma endregion
+
+#pragma region Custom Instruction
+
+class IF_Finish final
+	: public InstructionFamily
+{
+public:
+
+	bool IsValid(uint8_t opcode) override
+	{
+		return (opcode & 0b11111111) == 0xFD;
+	}
+
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+	{
+		int currentCycles = 0;
+
+		std::cout << "End of BootRom";
+
+		return currentCycles;
+	}
+};
+
 
 #pragma endregion

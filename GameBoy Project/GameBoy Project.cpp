@@ -7,6 +7,9 @@
 
 int main()
 {
+
+    const int MAXCYCLES = 4194304 / 60; // (number of cycles / frame rate)
+
     BootRom        bootRom("dmg_boot.bin");
     Memory<0x1000> internalRam;
     Memory<0x2000> vram;
@@ -24,11 +27,25 @@ int main()
 
     CPU cpu(mmu, alu);
 
+    //cpu += ;
+
     while (true)
     {
-        //Sleep for 4 cycles
-        int cycles = cpu();
-        //Sleep for "cycles" cycles time
+        int cyclesThisUpdate = 0;
+
+        while (cyclesThisUpdate < MAXCYCLES)
+        {
+            //Sleep for 4 cycles
+            int cycles = cpu();
+            //Sleep for "cycles" cycles time
+
+            
+            cyclesThisUpdate += cycles;
+            //UpdateTimers(cycles);
+            //UpdateGraphics(cycles);
+            //DoInterupts();
+        }
+        //RenderScreen();
     }
 
     return 0;
