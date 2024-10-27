@@ -893,7 +893,6 @@ public:
 		uint8_t _opcode = PCREAD8();
 		if ((_opcode & 0b11000000) == 0b00000000) //Rotate
 		{
-			bool _even;
 			uint8_t* _r_num = &registers.m_registers[2];
 			if ((_opcode & 0b00000111) != 0b0110) 
 			{
@@ -1294,7 +1293,7 @@ public:
 
 	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
 	{
-		int currentCycles = 0;
+		int currentCycles = -2;
 
 		std::cout << "End of BootRom";
 

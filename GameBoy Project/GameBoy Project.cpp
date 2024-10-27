@@ -39,7 +39,7 @@ public:
     {
         int currentCycles = 0;
 
-        std::cout << "Start";
+        //std::cout << "Start";
 
         switch (opcode & 0b00110000) {
         case 0b00000000:
@@ -59,6 +59,27 @@ public:
         return currentCycles;
     }
 };
+
+class IF_Finish final
+    : public InstructionFamily
+{
+public:
+
+    bool IsValid(uint8_t opcode) override
+    {
+        return (opcode & 0b11111111) == 0xFD;
+    }
+
+    int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
+    {
+        int currentCycles = 0;
+
+        std::cout << "End of BootRom";
+
+        return currentCycles;
+    }
+};
+
 ///TEST///
 #pragma endregion
 
@@ -84,15 +105,27 @@ int main()
 
     CPU cpu(mmu, alu);
 
-    //cpu += std::unique_ptr<IF_LD_r16_imm16>();
+    cpu += std::unique_ptr<IF_LD_r16_imm16>(new IF_LD_r16_imm16());
+    cpu += std::unique_ptr<IF_Finish>(new IF_Finish());
 
     while (true)
     {
         int cyclesThisUpdate = 0;
+        int cycles = 0;
 
         while (cyclesThisUpdate < MAXCYCLES)
         {
-            int cycles = cpu();
+            cycles = cpu();
+            
+            if (cycles == -1)
+            {
+                //std::cout << "  Error : No Valide Instruction Family For Value !";
+                cycles = 8;
+            }
+            else if (cycles == -2) 
+            {
+                break;
+            }
             
             //Sleep for "cycles" cycles time
             
@@ -101,7 +134,14 @@ int main()
             //UpdateGraphics(cycles);
             //DoInterupts();
         }
+        if (cycles == -2) 
+        {
+            break;
+        }
+        cycles = 0;
+
         //RenderScreen();
+        std::cout << "\nRefresh\n";
     }
 
     return 0;
