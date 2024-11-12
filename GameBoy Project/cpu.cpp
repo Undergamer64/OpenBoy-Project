@@ -30,6 +30,11 @@ int CPU::Execute()
 {
 	uint8_t opcode = m_mmu.Read(m_registers.PC++);
 
+	if (opcode == 0xFD) 
+	{
+		std::cout << "End";
+	}
+
 	for (auto& f : m_alu.m_instructionFamilies)
 	{
 		if (f == std::nullptr_t()) 

@@ -5,84 +5,6 @@
 #include "cpu.h"
 #include "BootRom.h"
 
-#pragma region TEST
-///TEST///
-#define PCREAD8() ([&]() { \
-	currentCycles += 4; \
-	return mmu.Read(registers.PC++); })()
-
-#define MMUREAD8(REG) ([&]() { \
-	currentCycles += 4; \
-	return mmu.Read(registers.REG); })()
-
-#define READ16() ([&]() {\
-	return PCREAD8() + (PCREAD8() << 8); })()
-
-#define MMUWRITE8(ADDR, VAL) {\
-	currentCycles += 4; \
-	mmu.Write(ADDR, VAL); }
-
-#define WRITE16(REG, VAL) {\
-	registers.REG = VAL; }
-
-class IF_LD_r16_imm16 final
-    : public InstructionFamily
-{
-public:
-
-    bool IsValid(uint8_t opcode) override
-    {
-        return (opcode & 0b11001111) == 0b00000001;
-    }
-
-    int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
-    {
-        int currentCycles = 0;
-
-        //std::cout << "Start";
-
-        switch (opcode & 0b00110000) {
-        case 0b00000000:
-            WRITE16(BC, READ16());
-            break;
-        case 0b00010000:
-            WRITE16(DE, READ16());
-            break;
-        case 0b00100000:
-            WRITE16(HL, READ16());
-            break;
-        case 0b00110000:
-            WRITE16(SP, READ16());
-            break;
-        }
-
-        return currentCycles;
-    }
-};
-
-class IF_Finish final
-    : public InstructionFamily
-{
-public:
-
-    bool IsValid(uint8_t opcode) override
-    {
-        return (opcode & 0b11111111) == 0xFD;
-    }
-
-    int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override
-    {
-        int currentCycles = 0;
-
-        std::cout << "End of BootRom";
-
-        return currentCycles;
-    }
-};
-
-///TEST///
-#pragma endregion
-
 int main()
 {
 
@@ -104,9 +26,23 @@ int main()
     ALU alu;
 
     CPU cpu(mmu, alu);
-
+    
+#pragma region OpcodeDef
     cpu += std::unique_ptr<IF_LD_r16_imm16>(new IF_LD_r16_imm16());
+    cpu += std::unique_ptr<IF_LD_r8_imm8>(new IF_LD_r8_imm8());
+    cpu += std::unique_ptr<IF_LD_rA_memory>(new IF_LD_rA_memory());
+    cpu += std::unique_ptr<IF_LD_rA_rHL>(new IF_LD_rA_rHL());
+    cpu += std::unique_ptr<IF_AR>(new IF_AR());
+    cpu += std::unique_ptr<IF_FLOW_JR>(new IF_FLOW_JR());
+    cpu += std::unique_ptr<IF_FLOW_JP>(new IF_FLOW_JP());
+    cpu += std::unique_ptr<IF_FLOW_CALL>(new IF_FLOW_CALL());
+    cpu += std::unique_ptr<IF_FLOW_RET>(new IF_FLOW_RET());
+    cpu += std::unique_ptr<IF_ROTATE>(new IF_ROTATE());
+    cpu += std::unique_ptr<IF_CB_Prefix>(new IF_CB_Prefix());
+    cpu += std::unique_ptr<IF_INC_DEC>(new IF_INC_DEC());
+    cpu += std::unique_ptr<IF_PUSH_POP>(new IF_PUSH_POP());
     cpu += std::unique_ptr<IF_Finish>(new IF_Finish());
+#pragma endregion
 
     while (true)
     {
@@ -119,8 +55,9 @@ int main()
             
             if (cycles == -1)
             {
-                //std::cout << "  Error : No Valide Instruction Family For Value !";
-                cycles = 8;
+                std::cout << "  Error : No Valide Instruction Family For Value !";
+                cycles = -2;
+                break;
             }
             else if (cycles == -2) 
             {
@@ -141,7 +78,7 @@ int main()
         cycles = 0;
 
         //RenderScreen();
-        std::cout << "\nRefresh\n";
+        //std::cout << "\nRefresh\n";
     }
 
     return 0;
