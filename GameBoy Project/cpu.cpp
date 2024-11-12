@@ -30,9 +30,9 @@ int CPU::Execute()
 {
 	uint8_t opcode = m_mmu.Read(m_registers.PC++);
 
-	if (opcode == 0xFD) 
+	if (m_registers.PC > 258) 
 	{
-		std::cout << "End";
+		return -2;
 	}
 
 	for (auto& f : m_alu.m_instructionFamilies)
@@ -47,6 +47,7 @@ int CPU::Execute()
 			return f->Execute(opcode, m_mmu, m_registers);
 		}
 	}
+	std::cout << (int)opcode + "\n";
 	return -1;
 };
 

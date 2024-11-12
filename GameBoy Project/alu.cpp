@@ -38,8 +38,6 @@ int IF_LD_r16_imm16::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
 	int currentCycles = 0;
 
-	std::cout << "Start";
-
 	switch (opcode & 0b00110000) {
 		case 0b00000000:
 			WRITE16(BC, READ16());
