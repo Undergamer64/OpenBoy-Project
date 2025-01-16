@@ -129,16 +129,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="alu.cpp" />
     <ClCompile Include="BootRom.cpp" />
     <ClCompile Include="cpu.cpp" />
+    <ClCompile Include="emulator.cpp" />
     <ClCompile Include="GameBoy Project.cpp" />
     <ClCompile Include="mmu.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="alu.h" />
     <ClInclude Include="BootRom.h" />
     <ClInclude Include="cpu.h" />
+    <ClInclude Include="emulator.h" />
     <ClInclude Include="mmu.h" />
     <ClInclude Include="ram.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="dmg_boot.bin" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
