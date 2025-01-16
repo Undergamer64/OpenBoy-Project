@@ -147,6 +147,43 @@ int IF_LD_rA_rHL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 
 #pragma endregion
 
+#pragma region IF_LD_r_r
+
+bool IF_LD_r_r::IsValid(uint8_t opcode)
+{
+	return (opcode & 0b11000000) == 0b01000000;
+}
+
+int IF_LD_r_r::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
+{
+	int currentCycles = 4;
+
+	uint8_t _r_num1 = registers.m_registers[(opcode & 0b00111000)];
+	registers.m_registers[(opcode & 0b00111000)] = _r_num1;
+
+	return currentCycles;
+}
+
+#pragma endregion
+
+#pragma region IF_LD_SP_HL
+
+bool IF_LD_SP_HL::IsValid(uint8_t opcode)
+{
+	return opcode == 0b10011111;
+}
+
+int IF_LD_SP_HL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
+{
+	int currentCycles = 8;
+
+	registers.SP = registers.HL;
+
+	return currentCycles;
+}
+
+#pragma endregion
+
 #pragma endregion
 
 #pragma region Arithmetique Instruction
@@ -1076,7 +1113,7 @@ int IF_INC_DEC::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		}
 		else
 		{
-			throw std::exception("INC/DEC opcode problem !");
+			//throw std::exception("INC/DEC opcode problem !");
 			_res = 1;
 		}
 
@@ -1113,7 +1150,7 @@ int IF_INC_DEC::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		}
 		else
 		{
-			throw std::exception("INC/DEC opcode problem !");
+			//throw std::exception("INC/DEC opcode problem !");
 			_res = 1;
 		}
 

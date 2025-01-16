@@ -59,6 +59,24 @@ public:
 	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override;
 };
 
+class IF_LD_r_r final
+	: public InstructionFamily
+{
+public:
+	bool IsValid(uint8_t opcode) override;
+
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override;
+};
+
+class IF_LD_SP_HL final
+	: public InstructionFamily
+{
+public:
+	bool IsValid(uint8_t opcode) override;
+
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override;
+};
+
 #pragma endregion
 
 #pragma region Arithmetique Instructions

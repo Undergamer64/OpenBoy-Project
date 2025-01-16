@@ -32,7 +32,7 @@ bool Emulator::operator()()
             std::cout << "  Error : No Valide Instruction Family For Value !";
             return false;
         }
-        else if (cycles == -2)
+        if (cycles == -2)
         {
             return false;
         }

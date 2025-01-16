@@ -44,10 +44,7 @@ int CPU::Execute()
 		}
 		if (f->IsValid(opcode)) 
 		{
-			std::cout << opcode << std::endl;
-			int cycles = f->Execute(opcode, m_mmu, m_registers);
-			std::cout << cycles << std::endl;
-			return cycles;
+			return f->Execute(opcode, m_mmu, m_registers);
 		}
 	}
 	std::cout << static_cast<int>(opcode) << std::endl;

@@ -27,27 +27,30 @@ int main() {
 
 #pragma region OpcodeDef
     emulator.m_cpu += std::make_unique<IF_LD_r16_imm16>();
-    emulator.m_cpu += std::make_unique<IF_LD_r8_imm8>();
-    emulator.m_cpu += std::make_unique<IF_LD_rA_memory>();
-    emulator.m_cpu += std::make_unique<IF_LD_rA_rHL>();
-    emulator.m_cpu += std::make_unique<IF_LD_r_r>();
-    emulator.m_cpu += std::make_unique<IF_LD_SP_HL>();
     emulator.m_cpu += std::make_unique<IF_AR>();
+    emulator.m_cpu += std::make_unique<IF_LD_rA_rHL>();
+    emulator.m_cpu += std::make_unique<IF_CB_Prefix>();
     emulator.m_cpu += std::make_unique<IF_FLOW_JR>();
+    emulator.m_cpu += std::make_unique<IF_LD_r8_imm8>();
     emulator.m_cpu += std::make_unique<IF_FLOW_JP>();
+    /*
+    emulator.m_cpu += std::make_unique<IF_LD_r_r>();
+    emulator.m_cpu += std::make_unique<IF_LD_rA_memory>();
+    emulator.m_cpu += std::make_unique<IF_LD_SP_HL>();
     emulator.m_cpu += std::make_unique<IF_FLOW_CALL>();
     emulator.m_cpu += std::make_unique<IF_FLOW_RET>();
     emulator.m_cpu += std::make_unique<IF_ROTATE>();
-    emulator.m_cpu += std::make_unique<IF_CB_Prefix>();
     emulator.m_cpu += std::make_unique<IF_INC_DEC>();
     emulator.m_cpu += std::make_unique<IF_PUSH_POP>();
     emulator.m_cpu += std::make_unique<IF_Finish>();
+    */
 #pragma endregion
 
     while (true)
     {
         if (!emulator()) 
         {
+            std::cout << "Emulator End" << std::endl;
             break;
         }
     }
