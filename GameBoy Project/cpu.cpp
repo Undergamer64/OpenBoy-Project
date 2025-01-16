@@ -44,10 +44,16 @@ int CPU::Execute()
 		}
 		if (f->IsValid(opcode)) 
 		{
-			return f->Execute(opcode, m_mmu, m_registers);
+			std::cout << opcode << std::endl;
+			int cycles = f->Execute(opcode, m_mmu, m_registers);
+			std::cout << cycles << std::endl;
+			return cycles;
 		}
 	}
-	std::cout << (int)opcode + "\n";
+	std::cout << static_cast<int>(opcode) << std::endl;
+	std::cout << static_cast<int>(m_registers.PC) << std::endl;
+	m_registers.PC--;
+	std::cout << static_cast<int>(m_mmu.Read(m_registers.PC)) << std::endl;
 	return -1;
 };
 

@@ -144,6 +144,9 @@
     <ClInclude Include="mmu.h" />
     <ClInclude Include="ram.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="dmg_boot.bin" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -12,7 +12,7 @@ BootRom::BootRom(const std::string& filepath)
 	}
 	else 
 	{
-		throw std::exception("BootRom is Invalid !");
+		//throw std::exception("BootRom is Invalid !");
 	}
 };
 
