@@ -12,7 +12,14 @@
 	return mmu.Read(registers.REG); })()
 
 #define READ16() ([&]() {\
-	return PCREAD8() + (PCREAD8() << 8); })()
+	std::cout << registers.PC << std::endl;\
+	uint8_t n = PCREAD8();\
+	std::cout << registers.PC << std::endl;\
+	uint8_t nn = (PCREAD8());\
+	std::cout << registers.PC << std::endl;\
+	std::cout << static_cast<int>(n) << std::endl;\
+	std::cout << static_cast<int>(nn) << std::endl;\
+	return n + nn << 8; })()
 
 #define MMUWRITE8(ADDR, VAL) {\
 	currentCycles += 4; \
@@ -166,6 +173,24 @@ int IF_LD_r_r::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 
 #pragma endregion
 
+#pragma region IF_LD_HL_r
+
+bool IF_LD_HL_r::IsValid(uint8_t opcode)
+{
+	return (opcode & 0b11000111) == 0b01000111;
+}
+
+int IF_LD_HL_r::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
+{
+	int currentCycles = 8;
+
+	mmu.Write(registers.HL, registers.m_registers[(opcode & 0b00111000) >> 3]);
+
+	return currentCycles;
+}
+
+#pragma endregion
+
 #pragma region IF_LD_SP_HL
 
 bool IF_LD_SP_HL::IsValid(uint8_t opcode)
@@ -178,6 +203,72 @@ int IF_LD_SP_HL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	int currentCycles = 8;
 
 	registers.SP = registers.HL;
+
+	return currentCycles;
+}
+
+#pragma endregion
+
+#pragma region IF_LD_ADR_r
+
+bool IF_LD_ADR_r::IsValid(uint8_t opcode)
+{
+	return (opcode & 0b11100111) == 0b11100010;
+}
+
+int IF_LD_ADR_r::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
+{
+	int currentCycles = 8;
+
+	uint16_t address;
+
+	switch (opcode & 0b00011000)
+	{
+	case 0b00000000:
+		mmu.Write(0xFF00 + registers.m_registers[1], registers.m_registers[6]);
+		break;
+	case 0b00001000:
+		address = READ16();
+		mmu.Write(address, registers.m_registers[6]);
+		break;
+	case 0b00010000:
+		registers.m_registers[6] = mmu.Read(0xFF00 + registers.m_registers[1]);
+		break;
+	case 0b00011000:
+		address = READ16();
+		registers.m_registers[6] = mmu.Read(address);
+		break;
+	}	
+
+	return currentCycles;
+}
+
+#pragma endregion
+
+#pragma endregion
+
+#pragma region IF_LD_ADRIMM_r
+
+bool IF_LD_ADRIMM_r::IsValid(uint8_t opcode)
+{
+	return (opcode & 0b11101111) == 0b11100000;
+}
+
+int IF_LD_ADRIMM_r::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
+{
+	int currentCycles = 8;
+
+	uint8_t address = PCREAD8();
+
+	switch (opcode & 0b00010000)
+	{
+	case 0b00000000:
+		mmu.Write(0xFF00 + address, registers.m_registers[6]);
+		break;
+	case 0b00010000:
+		registers.m_registers[6] = mmu.Read(0xFF00 + address);
+		break;
+	}	
 
 	return currentCycles;
 }
@@ -576,7 +667,7 @@ int IF_FLOW_JR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 
 bool IF_FLOW_JP::IsValid(uint8_t opcode)
 {
-	return (opcode & 0b11111111) == 0b11000011 || (opcode & 0b11111111) == 0b11101001 || (opcode & 0b11000111) == 0b11000010;
+	return (opcode & 0b11111111) == 0b11000011 || (opcode & 0b11111111) == 0b11101001 || (opcode & 0b11100111) == 0b11000010;
 }
 
 int IF_FLOW_JP::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
@@ -589,15 +680,15 @@ int IF_FLOW_JP::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	}
 	else 
 	{
-		uint16_t _nn = READ16();
+		uint16_t _nn = PCREAD8();
 		if ((opcode & 0b11111111) == 0b11000011)
 		{
 			registers.PC = _nn;
 			currentCycles += 4;
 		}
-		else if ((opcode & 0b11000111) == 0b11000010)
+		else if ((opcode & 0b11100111) == 0b11000010)
 		{
-			switch (opcode & 0b00111000)
+			switch (opcode & 0b00011000)
 			{
 			case 0b00000000:
 				if ((registers.m_registers[7] & 0b01000000) != 0b01000000)
@@ -627,34 +718,6 @@ int IF_FLOW_JP::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 					currentCycles += 4;
 				}
 				break;
-			case (0b00100000):
-				if ((registers.m_registers[7] & 0b00000100) != 0b00000100)
-				{
-					registers.PC = _nn;
-					currentCycles += 4;
-				}
-				break;
-			case (0b00101000):
-				if ((registers.m_registers[7] & 0b00000100) == 0b00000100)
-				{
-					registers.PC = _nn;
-					currentCycles += 4;
-				}
-				break;
-			case (0b00110000):
-				if ((registers.m_registers[7] & 0b10000000) != 0b10000000)
-				{
-					registers.PC = _nn;
-					currentCycles += 4;
-				}
-				break;
-			case (0b00111000):
-				if ((registers.m_registers[7] & 0b10000000) == 0b10000000)
-				{
-					registers.PC = _nn;
-					currentCycles += 4;
-				}
-				break;
 			}
 		}
 	}
@@ -672,11 +735,14 @@ bool IF_FLOW_CALL::IsValid(uint8_t opcode)
 
 int IF_FLOW_CALL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
+	std::cout << "CALL" << std::endl;
+	
 	int currentCycles = 0;
 		
 	uint16_t _nn = READ16();
 	bool condition = false;
-	if ((opcode & 0b11111111) == 0b11001101)
+	
+	if (opcode == 0b11001101)
 	{
 		condition = true;
 	}
@@ -708,25 +774,25 @@ int IF_FLOW_CALL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 				condition = true;
 			}
 			break;
-		case (0b00100000):
+		case 0b00100000:
 			if ((registers.m_registers[7] & 0b00000100) != 0b00000100)
 			{
 				condition = true;
 			}
 			break;
-		case (0b00101000):
+		case 0b00101000:
 			if ((registers.m_registers[7] & 0b00000100) == 0b00000100)
 			{
 				condition = true;
 			}
 			break;
-		case (0b00110000):
+		case 0b00110000:
 			if ((registers.m_registers[7] & 0b10000000) != 0b10000000)
 			{
 				condition = true;
 			}
 			break;
-		case (0b00111000):
+		case 0b00111000:
 			if ((registers.m_registers[7] & 0b10000000) == 0b10000000)
 			{
 				condition = true;
@@ -736,8 +802,8 @@ int IF_FLOW_CALL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	}
 	if (condition)
 	{
-		MMUWRITE8(registers.SP - 1, registers.PC >> 8);
-		MMUWRITE8(registers.SP - 2, registers.PC);
+		MMUWRITE8(registers.SP - 1, registers.PC >> 8)
+		MMUWRITE8(registers.SP - 2, registers.PC)
 		registers.SP -= 2;
 		currentCycles += 4;
 	}
@@ -751,7 +817,7 @@ int IF_FLOW_CALL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 
 bool IF_FLOW_RET::IsValid(uint8_t opcode) 
 {
-	return (opcode & 0b11111111) == 0b11001001 || (opcode & 0b11000111) == 0b11000000;
+	return (opcode & 0b11111111) == 0b11001001 || (opcode & 0b11100111) == 0b11000000;
 }
 
 int IF_FLOW_RET::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
@@ -766,7 +832,7 @@ int IF_FLOW_RET::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	else
 	{
 		currentCycles += 4;
-		switch (opcode & 0b00111000)
+		switch (opcode & 0b00011000)
 		{
 		case 0b00000000:
 			if ((registers.m_registers[7] & 0b01000000) != 0b01000000)
@@ -788,30 +854,6 @@ int IF_FLOW_RET::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			break;
 		case 0b00011000:
 			if ((registers.m_registers[7] & 0b00000001) == 0b00000001)
-			{
-				condition = true;
-			}
-			break;
-		case (0b00100000):
-			if ((registers.m_registers[7] & 0b00000100) != 0b00000100)
-			{
-				condition = true;
-			}
-			break;
-		case (0b00101000):
-			if ((registers.m_registers[7] & 0b00000100) == 0b00000100)
-			{
-				condition = true;
-			}
-			break;
-		case (0b00110000):
-			if ((registers.m_registers[7] & 0b10000000) != 0b10000000)
-			{
-				condition = true;
-			}
-			break;
-		case (0b00111000):
-			if ((registers.m_registers[7] & 0b10000000) == 0b10000000)
 			{
 				condition = true;
 			}

@@ -32,6 +32,7 @@ int CPU::Execute()
 
 	if (m_registers.PC > 258) 
 	{
+		std::cout << static_cast<int>(m_registers.PC) << std::endl;
 		return -2;
 	}
 
@@ -44,13 +45,11 @@ int CPU::Execute()
 		}
 		if (f->IsValid(opcode)) 
 		{
+			std::cout << static_cast<int>(m_registers.PC) << std::endl;
 			return f->Execute(opcode, m_mmu, m_registers);
 		}
 	}
 	std::cout << static_cast<int>(opcode) << std::endl;
-	std::cout << static_cast<int>(m_registers.PC) << std::endl;
-	m_registers.PC--;
-	std::cout << static_cast<int>(m_mmu.Read(m_registers.PC)) << std::endl;
 	return -1;
 };
 
