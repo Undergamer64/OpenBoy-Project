@@ -11,6 +11,8 @@ class Emulator
 	MMU& m_mmu;
 
 public:
+	bool m_debug = false;
+	
 	Emulator(MMU& mmu, ALU& alu, CPU& cpu);
 	~Emulator();
 

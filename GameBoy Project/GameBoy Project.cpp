@@ -38,17 +38,19 @@ int main() {
     emulator.m_cpu += std::make_unique<IF_LD_HL_r>();
     emulator.m_cpu += std::make_unique<IF_LD_ADRIMM_r>();
     emulator.m_cpu += std::make_unique<IF_FLOW_CALL>();
+    emulator.m_cpu += std::make_unique<IF_LD_rA_memory>();
+    emulator.m_cpu += std::make_unique<IF_PUSH_POP>();
+    emulator.m_cpu += std::make_unique<IF_ROTATE>();
+    emulator.m_cpu += std::make_unique<IF_FLOW_RET>();
     /*
     emulator.m_cpu += std::make_unique<IF_LD_r_r>();
-    emulator.m_cpu += std::make_unique<IF_LD_rA_memory>();
     emulator.m_cpu += std::make_unique<IF_LD_SP_HL>();
-    emulator.m_cpu += std::make_unique<IF_FLOW_RET>();
-    emulator.m_cpu += std::make_unique<IF_ROTATE>();
-    emulator.m_cpu += std::make_unique<IF_PUSH_POP>();
     emulator.m_cpu += std::make_unique<IF_Finish>();
     */
 #pragma endregion
 
+    //emulator.m_debug = true;
+    
     while (true)
     {
         if (!emulator()) 

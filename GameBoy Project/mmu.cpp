@@ -7,7 +7,7 @@ void MMU::Map(MemoryBase* mem, uint16_t address)
 		m_allMaps[address] = mem;
 	}
 	else {
-		//throw std::exception("This address is already mapped");
+		throw std::exception("This address is already mapped");
 	}
 }
 

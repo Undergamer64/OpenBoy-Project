@@ -29,6 +29,8 @@ public:
 
 	CPU& operator+=(InstrFamilyPtr&& f);
 
+	void BootDump();
+	
 	int Execute();
 
 	int operator()();

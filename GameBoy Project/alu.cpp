@@ -12,14 +12,9 @@
 	return mmu.Read(registers.REG); })()
 
 #define READ16() ([&]() {\
-	std::cout << registers.PC << std::endl;\
 	uint8_t n = PCREAD8();\
-	std::cout << registers.PC << std::endl;\
-	uint8_t nn = (PCREAD8());\
-	std::cout << registers.PC << std::endl;\
-	std::cout << static_cast<int>(n) << std::endl;\
-	std::cout << static_cast<int>(nn) << std::endl;\
-	return n + nn << 8; })()
+	uint16_t nn = (PCREAD8());\
+	return n + (nn << 8); })()
 
 #define MMUWRITE8(ADDR, VAL) {\
 	currentCycles += 4; \
@@ -43,20 +38,21 @@ bool IF_LD_r16_imm16::IsValid(uint8_t opcode)
 
 int IF_LD_r16_imm16::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
+	std::cout << "LOAD" << std::endl;
 	int currentCycles = 0;
 
 	switch (opcode & 0b00110000) {
 		case 0b00000000:
-			WRITE16(BC, READ16());
+			WRITE16(BC, READ16())
 			break;
 		case 0b00010000:
-			WRITE16(DE, READ16());
+			WRITE16(DE, READ16())
 			break;
 		case 0b00100000:
-			WRITE16(HL, READ16());
+			WRITE16(HL, READ16())
 			break;
 		case 0b00110000:
-			WRITE16(SP, READ16());
+			WRITE16(SP, READ16())
 			break;
 	}
 
@@ -74,6 +70,7 @@ bool IF_LD_r8_imm8::IsValid(uint8_t opcode)
 
 int IF_LD_r8_imm8::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
+	std::cout << "LOAD" << std::endl;
 	int currentCycles = 0;
 
 	if ((opcode & 0b00111000) != 0b0011000) 
@@ -99,6 +96,7 @@ bool IF_LD_rA_memory::IsValid(uint8_t opcode)
 
 int IF_LD_rA_memory::Execute(uint8_t opcode, MMU& mmu, Registers& registers) 
 {
+	std::cout << "LOAD" << std::endl;
 	int currentCycles = 0;
 
 	switch (opcode & 0b00011000) 
@@ -114,6 +112,7 @@ int IF_LD_rA_memory::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			break;
 		case 0b00011000:
 			registers.m_registers[6] = MMUREAD8(DE);
+			std::cout << mmu.Read(registers.DE) << std::endl;
 			break;
 	}
 
@@ -131,6 +130,7 @@ bool IF_LD_rA_rHL::IsValid(uint8_t opcode)
 
 int IF_LD_rA_rHL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
+	std::cout << "LOAD" << std::endl;
 	int currentCycles = 0;
 
 	switch (opcode & 0b00011000) 
@@ -163,6 +163,7 @@ bool IF_LD_r_r::IsValid(uint8_t opcode)
 
 int IF_LD_r_r::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
+	std::cout << "LOAD" << std::endl;
 	int currentCycles = 4;
 
 	uint8_t _r_num1 = registers.m_registers[(opcode & 0b00111000)];
@@ -182,6 +183,7 @@ bool IF_LD_HL_r::IsValid(uint8_t opcode)
 
 int IF_LD_HL_r::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
+	std::cout << "LOAD" << std::endl;
 	int currentCycles = 8;
 
 	mmu.Write(registers.HL, registers.m_registers[(opcode & 0b00111000) >> 3]);
@@ -200,6 +202,7 @@ bool IF_LD_SP_HL::IsValid(uint8_t opcode)
 
 int IF_LD_SP_HL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
+	std::cout << "LOAD" << std::endl;
 	int currentCycles = 8;
 
 	registers.SP = registers.HL;
@@ -218,6 +221,7 @@ bool IF_LD_ADR_r::IsValid(uint8_t opcode)
 
 int IF_LD_ADR_r::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
+	std::cout << "LOAD" << std::endl;
 	int currentCycles = 8;
 
 	uint16_t address;
@@ -245,8 +249,6 @@ int IF_LD_ADR_r::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 
 #pragma endregion
 
-#pragma endregion
-
 #pragma region IF_LD_ADRIMM_r
 
 bool IF_LD_ADRIMM_r::IsValid(uint8_t opcode)
@@ -256,6 +258,7 @@ bool IF_LD_ADRIMM_r::IsValid(uint8_t opcode)
 
 int IF_LD_ADRIMM_r::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
+	std::cout << "LOAD" << std::endl;
 	int currentCycles = 8;
 
 	uint8_t address = PCREAD8();
@@ -286,6 +289,7 @@ bool IF_AR::IsValid(uint8_t opcode)
 
 int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
+	std::cout << "ARR" << std::endl;
 	int currentCycles = 0;
 
 	uint8_t _r_num = registers.m_registers[(opcode & 0b00000111)];
@@ -311,7 +315,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			_res = registers.m_registers[6] + _r_num + (registers.m_registers[7] & 0b00000001);
 #pragma region Flags
 #pragma region Flag_S
-			registers.m_registers[7] &= !0b10000000; //Flag s (negatif)
+			registers.m_registers[7] &= ~0b10000000; //Flag s (negatif)
 #pragma endregion
 #pragma region Flag_Z
 			if (_res == 0) //Flag Z (zero)
@@ -320,7 +324,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b01000000;
+				registers.m_registers[7] &= ~0b01000000;
 			}
 #pragma endregion
 #pragma region Flag_C
@@ -330,7 +334,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b00000001;
+				registers.m_registers[7] &= ~0b00000001;
 			}
 #pragma endregion
 #pragma region Flag_H
@@ -340,7 +344,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b00010000;
+				registers.m_registers[7] &= ~0b00010000;
 			}
 #pragma endregion
 #pragma endregion
@@ -349,7 +353,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			_res = registers.m_registers[6] + _r_num;
 #pragma region Flags
 #pragma region Flag_S
-			registers.m_registers[7] &= !0b10000000; //Flag s (negatif)
+			registers.m_registers[7] &= ~0b10000000; //Flag s (negatif)
 #pragma endregion
 #pragma region Flag_Z
 			if (_res == 0) //Flag Z (zero)
@@ -358,7 +362,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b01000000;
+				registers.m_registers[7] &= ~0b01000000;
 			}
 #pragma endregion
 #pragma region Flag_C
@@ -368,7 +372,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b00000001;
+				registers.m_registers[7] &= ~0b00000001;
 			}
 #pragma endregion
 #pragma region Flag_H
@@ -378,7 +382,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b00010000;
+				registers.m_registers[7] &= ~0b00010000;
 			}
 #pragma endregion
 #pragma endregion
@@ -396,7 +400,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b01000000;
+				registers.m_registers[7] &= ~0b01000000;
 			}
 #pragma endregion
 #pragma region Flag_C
@@ -407,8 +411,8 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b10000000;
-				registers.m_registers[7] &= !0b00000001;
+				registers.m_registers[7] &= ~0b10000000;
+				registers.m_registers[7] &= ~0b00000001;
 			}
 #pragma endregion
 #pragma region Flag_H
@@ -418,7 +422,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b00010000;
+				registers.m_registers[7] &= ~0b00010000;
 			}
 #pragma endregion
 #pragma endregion
@@ -436,7 +440,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b01000000;
+				registers.m_registers[7] &= ~0b01000000;
 			}
 #pragma endregion
 #pragma region Flag_C
@@ -447,8 +451,8 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b10000000;
-				registers.m_registers[7] &= !0b00000001;
+				registers.m_registers[7] &= ~0b10000000;
+				registers.m_registers[7] &= ~0b00000001;
 			}
 #pragma endregion
 #pragma region Flag_H
@@ -458,7 +462,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b00010000;
+				registers.m_registers[7] &= ~0b00010000;
 			}
 #pragma endregion
 #pragma endregion
@@ -474,7 +478,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			_res = registers.m_registers[6] & _r_num;
 #pragma region Flags
 #pragma region Flag_S
-			registers.m_registers[7] &= !0b10000000; //Flag s (negatif)
+			registers.m_registers[7] &= ~0b10000000; //Flag s (negatif)
 #pragma endregion
 #pragma region Flag_Z
 			if (_res == 0) //Flag Z (zero)
@@ -483,11 +487,11 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b01000000;
+				registers.m_registers[7] &= ~0b01000000;
 			}
 #pragma endregion
 #pragma region Flag_C
-			registers.m_registers[7] &= !0b00000001;
+			registers.m_registers[7] &= ~0b00000001;
 #pragma endregion
 #pragma region Flag_H
 			registers.m_registers[7] |= 0b00010000;
@@ -499,7 +503,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			_res = registers.m_registers[6] ^ _r_num;
 #pragma region Flags
 #pragma region Flag_S
-			registers.m_registers[7] &= !0b10000000; //Flag s (negatif)
+			registers.m_registers[7] &= ~0b10000000; //Flag s (negatif)
 #pragma endregion
 #pragma region Flag_Z
 			if (_res == 0) //Flag Z (zero)
@@ -508,14 +512,14 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b01000000;
+				registers.m_registers[7] &= ~0b01000000;
 			}
 #pragma endregion
 #pragma region Flag_C
-			registers.m_registers[7] &= !0b00000001;
+			registers.m_registers[7] &= ~0b00000001;
 #pragma endregion
 #pragma region Flag_H
-			registers.m_registers[7] &= !0b00010000;
+			registers.m_registers[7] &= ~0b00010000;
 #pragma endregion
 #pragma endregion
 			registers.m_registers[6] = _res;
@@ -524,7 +528,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			_res = registers.m_registers[6] | _r_num;
 #pragma region Flags
 #pragma region Flag_S
-			registers.m_registers[7] &= !0b10000000; //Flag s (negatif)
+			registers.m_registers[7] &= ~0b10000000; //Flag s (negatif)
 #pragma endregion
 #pragma region Flag_Z
 			if (_res == 0) //Flag Z (zero)
@@ -533,14 +537,14 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b01000000;
+				registers.m_registers[7] &= ~0b01000000;
 			}
 #pragma endregion
 #pragma region Flag_C
-			registers.m_registers[7] &= !0b00000001;
+			registers.m_registers[7] &= ~0b00000001;
 #pragma endregion
 #pragma region Flag_H
-			registers.m_registers[7] &= !0b00010000;
+			registers.m_registers[7] &= ~0b00010000;
 #pragma endregion
 #pragma endregion
 			registers.m_registers[6] = _res;
@@ -558,7 +562,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b01000000;
+				registers.m_registers[7] &= ~0b01000000;
 			}
 #pragma endregion
 #pragma region Flag_C
@@ -568,7 +572,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b00000001;
+				registers.m_registers[7] &= ~0b00000001;
 			}
 #pragma endregion
 #pragma region Flag_H
@@ -578,7 +582,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b00010000;
+				registers.m_registers[7] &= ~0b00010000;
 			}
 #pragma endregion
 #pragma endregion
@@ -587,7 +591,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		break;
 #pragma endregion
 	}
-	if ((opcode & 0b00111000) != 0b0011100) {
+	if ((opcode & 0b00111000) != 0b00111000) {
 		registers.m_registers[6] = _res;
 	}
 
@@ -607,6 +611,7 @@ bool IF_FLOW_JR::IsValid(uint8_t opcode)
 
 int IF_FLOW_JR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
+	std::cout << "JUMP R" << std::endl;
 	int currentCycles = 0;
 
 	int8_t e = PCREAD8();
@@ -615,30 +620,31 @@ int IF_FLOW_JR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		switch (opcode & 0b00011000)
 		{
 		case 0b00000000:
-			if ((registers.m_registers[7] & 0b01000000) != 0b01000000)
+			std::cout << static_cast<int>(registers.m_registers[7]) << std::endl;
+			if ((registers.m_registers[7] & 0b01000000) == 0b00000000)
 			{
-				registers.PC -= e;
+				registers.PC += e-2;
 				currentCycles += 4;
 			}
 			break;
 		case 0b00001000:
 			if ((registers.m_registers[7] & 0b01000000) == 0b01000000)
 			{
-				registers.PC -= e;
+				registers.PC += e-2;
 				currentCycles += 4;
 			}
 			break;
 		case 0b00010000:
-			if ((registers.m_registers[7] & 0b00000001) != 0b00000001)
+			if ((registers.m_registers[7] & 0b00000001) == 0b00000000)
 			{
-				registers.PC -= e;
+				registers.PC += e-2;
 				currentCycles += 4;
 			}
 			break;
 		case 0b00011000:
 			if ((registers.m_registers[7] & 0b00000001) == 0b00000001)
 			{
-				registers.PC -= e;
+				registers.PC += e-2;
 				currentCycles += 4;
 			}
 			break;
@@ -646,7 +652,7 @@ int IF_FLOW_JR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	}
 	else if ((opcode & 0b11111111) == 0b00010000)//JR with B (if B = 0) + B -= 1
 	{
-		if (registers.m_registers[2] == 0)
+		if (registers.m_registers[0] != 0)
 		{
 			registers.PC -= e;
 			currentCycles += 4;
@@ -672,6 +678,7 @@ bool IF_FLOW_JP::IsValid(uint8_t opcode)
 
 int IF_FLOW_JP::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
+	std::cout << "JUMP P" << std::endl;
 	int currentCycles = 0;
 
 	if ((opcode & 0b11111111) == 0b11101001)
@@ -740,6 +747,9 @@ int IF_FLOW_CALL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	int currentCycles = 0;
 		
 	uint16_t _nn = READ16();
+
+	std::cout << static_cast<int>(_nn) << std::endl;
+	
 	bool condition = false;
 	
 	if (opcode == 0b11001101)
@@ -802,6 +812,7 @@ int IF_FLOW_CALL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	}
 	if (condition)
 	{
+		
 		MMUWRITE8(registers.SP - 1, registers.PC >> 8)
 		MMUWRITE8(registers.SP - 2, registers.PC)
 		registers.SP -= 2;
@@ -822,6 +833,7 @@ bool IF_FLOW_RET::IsValid(uint8_t opcode)
 
 int IF_FLOW_RET::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
+	std::cout << "RET" << std::endl;
 	int currentCycles = 8;
 
 	bool condition = false;
@@ -862,7 +874,7 @@ int IF_FLOW_RET::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	}
 	if (condition)
 	{
-		registers.PC = ((MMUREAD8(SP + 1) << 8) + MMUREAD8(SP));
+		registers.PC = (MMUREAD8(SP + 1) << 8) + MMUREAD8(SP);
 		currentCycles += 4;
 	}
 	registers.SP += 2;
@@ -882,6 +894,7 @@ bool IF_ROTATE::IsValid(uint8_t opcode)
 
 int IF_ROTATE::Execute(uint8_t opcode, MMU& mmu, Registers& registers) 
 {
+	std::cout << "ROT" << std::endl;
 	int currentCycles = 4;
 
 	switch (opcode & 0b00001000) 
@@ -893,7 +906,6 @@ int IF_ROTATE::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			registers.m_registers[7] &= 0b11111110;
 			registers.m_registers[7] |= (registers.m_registers[6] & 0b10000000) >> 7; //Flags C
 			registers.m_registers[6] = (registers.m_registers[6] << 1) + (_temp_carry);
-
 		}
 		else 
 		{
@@ -921,11 +933,11 @@ int IF_ROTATE::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	}
 #pragma region Flags
 
-	registers.m_registers[7] &= !0b10000000; //Flag S reset
+	registers.m_registers[7] &= ~0b10000000; //Flag S reset
 
-	registers.m_registers[7] &= !0b01000000; //Flag Z reset
+	registers.m_registers[7] &= ~0b01000000; //Flag Z reset
 
-	registers.m_registers[7] &= !0b00010000; //Flag H reset
+	registers.m_registers[7] &= ~0b00010000; //Flag H reset
 
 #pragma endregion
 	return currentCycles;
@@ -942,6 +954,7 @@ bool IF_CB_Prefix::IsValid(uint8_t opcode)
 
 int IF_CB_Prefix::Execute(uint8_t _, MMU& mmu, Registers& registers)
 {
+	std::cout << "CB" << std::endl;
 	int currentCycles = 4;
 
 	uint8_t _opcode = PCREAD8();
@@ -1005,7 +1018,7 @@ int IF_CB_Prefix::Execute(uint8_t _, MMU& mmu, Registers& registers)
 			}
 #pragma region Flags
 
-			registers.m_registers[7] &= !0b10000000; //Flag s (negatif)
+			registers.m_registers[7] &= ~0b10000000; //Flag s (negatif)
 
 			if (mmu.Read(registers.HL) == 0) //Flag Z (zero)
 			{
@@ -1013,10 +1026,10 @@ int IF_CB_Prefix::Execute(uint8_t _, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b01000000;
+				registers.m_registers[7] &= ~0b01000000;
 			}
 
-			registers.m_registers[7] &= !0b00010000; //Flag H reset
+			registers.m_registers[7] &= ~0b00010000; //Flag H reset
 #pragma endregion
 		}
 		if ((_opcode & 0b00000111) != 0b00000110) //if register is not (HL)
@@ -1026,7 +1039,7 @@ int IF_CB_Prefix::Execute(uint8_t _, MMU& mmu, Registers& registers)
 				if ((_opcode & 0b00010000) == 0b00010000)
 				{
 					uint8_t _temp_carry = (registers.m_registers[7] & 0b00000001);
-					registers.m_registers[7] &= !0b00000001;
+					registers.m_registers[7] &= ~0b00000001;
 					registers.m_registers[7] |= (*_r_num & 0b10000000) >> 7; //Flag C
 					*_r_num = (*_r_num << 1);
 					if ((_opcode & 0b00100000) == 0b00000000)
@@ -1036,7 +1049,7 @@ int IF_CB_Prefix::Execute(uint8_t _, MMU& mmu, Registers& registers)
 				}
 				else
 				{
-					registers.m_registers[7] &= !0b00000001;
+					registers.m_registers[7] &= ~0b00000001;
 					registers.m_registers[7] |= (*_r_num & 0b10000000) >> 7; //Flag C
 					*_r_num = (*_r_num << 1);
 					if ((_opcode & 0b00100000) == 0b00000000)
@@ -1050,7 +1063,7 @@ int IF_CB_Prefix::Execute(uint8_t _, MMU& mmu, Registers& registers)
 				if ((_opcode & 0b00010000) == 0b00010000)
 				{
 					uint8_t _temp_carry = (registers.m_registers[7] & 0b00000001);
-					registers.m_registers[7] &= !0b00000001;
+					registers.m_registers[7] &= ~0b00000001;
 					registers.m_registers[7] |= (*_r_num & 0b00000001); //Flag C
 					*_r_num = (*_r_num >> 1);
 					if ((_opcode & 0b00100000) == 0b00000000)
@@ -1060,7 +1073,7 @@ int IF_CB_Prefix::Execute(uint8_t _, MMU& mmu, Registers& registers)
 				}
 				else
 				{
-					registers.m_registers[7] &= !0b00000001;
+					registers.m_registers[7] &= ~0b00000001;
 					registers.m_registers[7] |= (*_r_num & 0b00000001); //Flag C
 					*_r_num = (*_r_num >> 1);
 					if ((_opcode & 0b00100000) == 0b00000000)
@@ -1071,7 +1084,7 @@ int IF_CB_Prefix::Execute(uint8_t _, MMU& mmu, Registers& registers)
 			}
 #pragma region Flags
 
-			registers.m_registers[7] &= !0b10000000; //Flag s (negatif)
+			registers.m_registers[7] &= ~0b10000000; //Flag s (negatif)
 
 			if (_r_num == 0) //Flag Z (zero)
 			{
@@ -1079,17 +1092,17 @@ int IF_CB_Prefix::Execute(uint8_t _, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b01000000;
+				registers.m_registers[7] &= ~0b01000000;
 			}
 
-			registers.m_registers[7] &= !0b00010000; //Flag H reset
+			registers.m_registers[7] &= ~0b00010000; //Flag H reset
 #pragma endregion
 		}
 	}
 	else if ((_opcode & 0b11000000) == 0b01000000) //BIT
 	{
 		registers.m_registers[7] |= 0b00010000;
-		registers.m_registers[7] &= !0b10000000;
+		registers.m_registers[7] &= ~0b10000000;
 
 		int _offset_bit = (_opcode & 0b00111000) >> 3;
 
@@ -1100,7 +1113,7 @@ int IF_CB_Prefix::Execute(uint8_t _, MMU& mmu, Registers& registers)
 		}
 		else
 		{
-			registers.m_registers[7] &= !0b01000000;
+			registers.m_registers[7] &= ~0b01000000;
 		}
 		if (registers.m_registers[(_opcode & 0b00000111)] == 0b0110) 
 		{
@@ -1139,6 +1152,7 @@ bool IF_INC_DEC::IsValid(uint8_t opcode)
 
 int IF_INC_DEC::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
+	std::cout << "INC/DEC" << std::endl;
 	int currentCycles = 4;
 
 	if ((opcode & 0b11000111) == 0b00000011) 
@@ -1183,7 +1197,7 @@ int IF_INC_DEC::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		if (D == 0)
 		{
 			_res = 1;
-			registers.m_registers[7] &= !0b10000000;
+			registers.m_registers[7] &= ~0b10000000;
 		}
 		else if (D == 1)
 		{
@@ -1201,6 +1215,7 @@ int IF_INC_DEC::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		if ((opcode & 0b00111000) != 0b00110000) {
 			_r_num = registers.m_registers[(opcode & 0b00111000) >> 3];
 			registers.m_registers[(opcode & 0b00111000) >> 3] += _res;
+			std::cout << static_cast<int>(registers.m_registers[(opcode & 0b00111000) >> 3]) << std::endl;
 		}
 		else 
 		{
@@ -1216,7 +1231,7 @@ int IF_INC_DEC::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		}
 		else
 		{
-			registers.m_registers[7] &= !0b01000000;
+			registers.m_registers[7] &= ~0b01000000;
 		}
 #pragma endregion
 #pragma region Flag_H
@@ -1228,7 +1243,7 @@ int IF_INC_DEC::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b00010000;
+				registers.m_registers[7] &= ~0b00010000;
 			}
 		}
 		else 
@@ -1239,10 +1254,10 @@ int IF_INC_DEC::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			}
 			else
 			{
-				registers.m_registers[7] &= !0b00010000;
+				registers.m_registers[7] &= ~0b00010000;
 			}
 		}
-			
+		std::cout << static_cast<int>(registers.m_registers[7]) << std::endl;
 #pragma endregion
 #pragma endregion
 		return currentCycles;
@@ -1260,6 +1275,7 @@ bool IF_PUSH_POP::IsValid(uint8_t opcode)
 
 int IF_PUSH_POP::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
+	std::cout << "PUSH/POP" << std::endl;
 	int currentCycles = 12;
 
 	switch (opcode & 0b00110000)

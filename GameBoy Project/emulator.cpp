@@ -23,6 +23,12 @@ bool Emulator::operator()()
     int cyclesThisUpdate = 0;
     int cycles = 0;
 
+    if (m_debug)
+    {
+        m_cpu.BootDump();
+        return false;
+    }
+    
     while (cyclesThisUpdate < MAXCYCLES)
     {
         cycles = m_cpu();

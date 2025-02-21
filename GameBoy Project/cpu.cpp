@@ -26,9 +26,28 @@ CPU& CPU::operator+=(InstrFamilyPtr&& f)
 	return *this;
 }
 
+void CPU::BootDump()
+{
+	for (int i = 0; i < 16; i++)
+	{
+		for (int j = 0; j < 16; j++)
+		{
+			//std::cout << "Index : " << j + i*16 << " ; ";
+			uint8_t opcode = m_mmu.Read(j + (i*16));
+			std::cout << /*"Opcode : " <<*/ static_cast<int>(opcode);
+			std::cout << " ";
+		}
+		std::cout << std::endl;
+	}
+}
+
 int CPU::Execute()
 {
+	std::cout << "PC :";
+	std::cout << static_cast<int>(m_registers.PC) << std::endl;
 	uint8_t opcode = m_mmu.Read(m_registers.PC++);
+	std::cout << "Opcode :";
+	std::cout << static_cast<int>(opcode) << std::endl;
 
 	if (m_registers.PC > 258) 
 	{
@@ -45,7 +64,6 @@ int CPU::Execute()
 		}
 		if (f->IsValid(opcode)) 
 		{
-			std::cout << static_cast<int>(m_registers.PC) << std::endl;
 			return f->Execute(opcode, m_mmu, m_registers);
 		}
 	}
