@@ -593,7 +593,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	}
 	if ((opcode & 0b00111000) != 0b00111000) {
 		registers.m_registers[6] = _res;
-	}
+	} 
 
 	return currentCycles;
 }
@@ -620,11 +620,15 @@ int IF_FLOW_JR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		switch (opcode & 0b00011000)
 		{
 		case 0b00000000:
-			std::cout << static_cast<int>(registers.m_registers[7]) << std::endl;
+			std::cout << static_cast<int>(registers.m_registers[0]) << std::endl;
 			if ((registers.m_registers[7] & 0b01000000) == 0b00000000)
 			{
 				registers.PC += e-2;
 				currentCycles += 4;
+			}
+			else
+			{
+				std::cout << "I DIDN'T JUMP HERE !" << std::endl;
 			}
 			break;
 		case 0b00001000:
@@ -812,10 +816,10 @@ int IF_FLOW_CALL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	}
 	if (condition)
 	{
-		
 		MMUWRITE8(registers.SP - 1, registers.PC >> 8)
 		MMUWRITE8(registers.SP - 2, registers.PC)
 		registers.SP -= 2;
+		std::cout << registers.SP << std::endl;
 		currentCycles += 4;
 	}
 	registers.PC = _nn;
@@ -874,8 +878,10 @@ int IF_FLOW_RET::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	}
 	if (condition)
 	{
+		std::cout << registers.SP << std::endl;
 		registers.PC = (MMUREAD8(SP + 1) << 8) + MMUREAD8(SP);
 		currentCycles += 4;
+		return -2;
 	}
 	registers.SP += 2;
 	return currentCycles;
@@ -960,10 +966,73 @@ int IF_CB_Prefix::Execute(uint8_t _, MMU& mmu, Registers& registers)
 	uint8_t _opcode = PCREAD8();
 	if ((_opcode & 0b11000000) == 0b00000000) //Rotate
 	{
-		uint8_t* _r_num = &registers.m_registers[2];
 		if ((_opcode & 0b00000111) != 0b0110) 
 		{
-			_r_num = &registers.m_registers[(_opcode & 0b00000111)];
+			uint8_t* _r_num = &registers.m_registers[(_opcode & 0b00000111)];
+
+			if ((_opcode & 0b00001000) == 0b00000000)// Left
+			{
+				if ((_opcode & 0b00010000) == 0b00010000)
+				{
+					uint8_t _temp_carry = (registers.m_registers[7] & 0b00000001);
+					registers.m_registers[7] &= ~0b00000001;
+					registers.m_registers[7] |= (*_r_num & 0b10000000) >> 7; //Flag C
+					*_r_num = *_r_num << 1;
+					if ((_opcode & 0b00100000) == 0b00000000)
+					{
+						*_r_num += (_temp_carry);
+					}
+				}
+				else
+				{
+					registers.m_registers[7] &= ~0b00000001;
+					registers.m_registers[7] |= (*_r_num & 0b10000000) >> 7; //Flag C
+					*_r_num = (*_r_num << 1);
+					if ((_opcode & 0b00100000) == 0b00000000)
+					{
+						*_r_num += ((*_r_num & 0b10000000) >> 7);
+					}
+				}
+			}
+			else if ((_opcode & 0b00001000) == 0b00001000)// Right
+			{
+				if ((_opcode & 0b00010000) == 0b00010000)
+				{
+					uint8_t _temp_carry = (registers.m_registers[7] & 0b00000001);
+					registers.m_registers[7] &= ~0b00000001;
+					registers.m_registers[7] |= (*_r_num & 0b00000001); //Flag C
+					*_r_num = (*_r_num >> 1);
+					if ((_opcode & 0b00100000) == 0b00000000)
+					{
+						*_r_num += (_temp_carry << 7);
+					}
+				}
+				else
+				{
+					registers.m_registers[7] &= ~0b00000001;
+					registers.m_registers[7] |= (*_r_num & 0b00000001); //Flag C
+					*_r_num = (*_r_num >> 1);
+					if ((_opcode & 0b00100000) == 0b00000000)
+					{
+						*_r_num += ((*_r_num & 0b00000001) << 7);
+					}
+				}
+			}
+#pragma region Flags
+
+			registers.m_registers[7] &= ~0b10000000; //Flag s (negatif)
+
+			if (_r_num == 0) //Flag Z (zero)
+			{
+				registers.m_registers[7] |= 0b01000000;
+			}
+			else
+			{
+				registers.m_registers[7] &= ~0b01000000;
+			}
+
+			registers.m_registers[7] &= ~0b00010000; //Flag H reset
+#pragma endregion
 		}
 		else 
 		{
@@ -1021,72 +1090,6 @@ int IF_CB_Prefix::Execute(uint8_t _, MMU& mmu, Registers& registers)
 			registers.m_registers[7] &= ~0b10000000; //Flag s (negatif)
 
 			if (mmu.Read(registers.HL) == 0) //Flag Z (zero)
-			{
-				registers.m_registers[7] |= 0b01000000;
-			}
-			else
-			{
-				registers.m_registers[7] &= ~0b01000000;
-			}
-
-			registers.m_registers[7] &= ~0b00010000; //Flag H reset
-#pragma endregion
-		}
-		if ((_opcode & 0b00000111) != 0b00000110) //if register is not (HL)
-		{
-			if ((_opcode & 0b00001000) == 0b00000000)// Left
-			{
-				if ((_opcode & 0b00010000) == 0b00010000)
-				{
-					uint8_t _temp_carry = (registers.m_registers[7] & 0b00000001);
-					registers.m_registers[7] &= ~0b00000001;
-					registers.m_registers[7] |= (*_r_num & 0b10000000) >> 7; //Flag C
-					*_r_num = (*_r_num << 1);
-					if ((_opcode & 0b00100000) == 0b00000000)
-					{
-						*_r_num += (_temp_carry);
-					}
-				}
-				else
-				{
-					registers.m_registers[7] &= ~0b00000001;
-					registers.m_registers[7] |= (*_r_num & 0b10000000) >> 7; //Flag C
-					*_r_num = (*_r_num << 1);
-					if ((_opcode & 0b00100000) == 0b00000000)
-					{
-						*_r_num += ((*_r_num & 0b10000000) >> 7);
-					}
-				}
-			}
-			else if ((_opcode & 0b00001000) == 0b00001000)// Right
-			{
-				if ((_opcode & 0b00010000) == 0b00010000)
-				{
-					uint8_t _temp_carry = (registers.m_registers[7] & 0b00000001);
-					registers.m_registers[7] &= ~0b00000001;
-					registers.m_registers[7] |= (*_r_num & 0b00000001); //Flag C
-					*_r_num = (*_r_num >> 1);
-					if ((_opcode & 0b00100000) == 0b00000000)
-					{
-						*_r_num += (_temp_carry << 7);
-					}
-				}
-				else
-				{
-					registers.m_registers[7] &= ~0b00000001;
-					registers.m_registers[7] |= (*_r_num & 0b00000001); //Flag C
-					*_r_num = (*_r_num >> 1);
-					if ((_opcode & 0b00100000) == 0b00000000)
-					{
-						*_r_num += ((*_r_num & 0b00000001) << 7);
-					}
-				}
-			}
-#pragma region Flags
-
-			registers.m_registers[7] &= ~0b10000000; //Flag s (negatif)
-
-			if (_r_num == 0) //Flag Z (zero)
 			{
 				registers.m_registers[7] |= 0b01000000;
 			}
@@ -1213,9 +1216,10 @@ int IF_INC_DEC::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		uint8_t _r_num = 0;
 
 		if ((opcode & 0b00111000) != 0b00110000) {
+			std::cout << "Reg Before :" << static_cast<int>(registers.m_registers[(opcode & 0b00111000) >> 3]) << std::endl;
 			_r_num = registers.m_registers[(opcode & 0b00111000) >> 3];
 			registers.m_registers[(opcode & 0b00111000) >> 3] += _res;
-			std::cout << static_cast<int>(registers.m_registers[(opcode & 0b00111000) >> 3]) << std::endl;
+			std::cout << "Reg After :" << static_cast<int>(registers.m_registers[(opcode & 0b00111000) >> 3]) << std::endl;
 		}
 		else 
 		{
@@ -1257,7 +1261,6 @@ int IF_INC_DEC::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 				registers.m_registers[7] &= ~0b00010000;
 			}
 		}
-		std::cout << static_cast<int>(registers.m_registers[7]) << std::endl;
 #pragma endregion
 #pragma endregion
 		return currentCycles;
@@ -1283,52 +1286,48 @@ int IF_PUSH_POP::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	case 0b00000000:
 		if ((opcode & 0b00000100) == 0b00000000) 
 		{
-			registers.BC = (((mmu.Read(registers.SP--)) << 4) + mmu.Read(registers.SP--));
+			registers.BC = (mmu.Read(registers.SP++) << 4) + mmu.Read(registers.SP++);
 		}
 		else 
 		{
-			mmu.Write(registers.SP - 1, registers.BC >> 4);
-			mmu.Write(registers.SP, registers.BC);
-			registers.BC = (((mmu.Read(registers.SP - 1)) << 4) + mmu.Read(registers.SP - 2));
+			mmu.Write(--registers.SP, registers.BC >> 4);
+			mmu.Write(--registers.SP, registers.BC);
 			currentCycles += 4;
 		}
 		break;
 	case 0b00010000:
 		if ((opcode & 0b00000100) == 0b00000000)
 		{
-			registers.DE = (((mmu.Read(registers.SP--)) << 4) + mmu.Read(registers.SP--));
+			registers.DE = (mmu.Read(registers.SP++) << 4) + mmu.Read(registers.SP++);
 		}
 		else
 		{
-			mmu.Write(registers.SP - 1, registers.DE >> 4);
-			mmu.Write(registers.SP, registers.DE);
-			registers.DE = (((mmu.Read(registers.SP - 1)) << 4) + mmu.Read(registers.SP - 2));
+			mmu.Write(--registers.SP, registers.DE >> 4);
+			mmu.Write(--registers.SP, registers.DE);
 			currentCycles += 4;
 		}
 		break;
 	case 0b00100000:
 		if ((opcode & 0b00000100) == 0b00000000)
 		{
-			registers.HL = (((mmu.Read(registers.SP--)) << 4) + mmu.Read(registers.SP--));
+			registers.HL = (mmu.Read(registers.SP++) << 4) + mmu.Read(registers.SP++);
 		}
 		else
 		{
-			mmu.Write(registers.SP - 1, registers.HL >> 4);
-			mmu.Write(registers.SP, registers.HL);
-			registers.HL = (((mmu.Read(registers.SP - 1)) << 4) + mmu.Read(registers.SP - 2));
+			mmu.Write(--registers.SP, registers.HL >> 4);
+			mmu.Write(--registers.SP, registers.HL);
 			currentCycles += 4;
 		}
 		break;
 	case 0b00110000:
 		if ((opcode & 0b00000100) == 0b00000000)
 		{
-			registers.AF = (((mmu.Read(registers.SP--)) << 4) + mmu.Read(registers.SP--));
+			registers.AF = (mmu.Read(registers.SP++) << 4) + mmu.Read(registers.SP++);
 		}
 		else
 		{
-			mmu.Write(registers.SP - 1, registers.AF >> 4);
-			mmu.Write(registers.SP, registers.AF);
-			registers.AF = (((mmu.Read(registers.SP - 1)) << 4) + mmu.Read(registers.SP - 2));
+			mmu.Write(--registers.SP, registers.AF >> 4);
+			mmu.Write(--registers.SP, registers.AF);
 			currentCycles += 4;
 		}
 		break;
