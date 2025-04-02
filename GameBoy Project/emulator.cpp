@@ -28,6 +28,9 @@ bool Emulator::operator()()
         m_cpu.BootDump();
         return false;
     }
+
+    int DebugStep = 0;
+    int StepSkip = 1;
     
     while (cyclesThisUpdate < MAXCYCLES)
     {
@@ -40,15 +43,29 @@ bool Emulator::operator()()
         }
         if (cycles == -2)
         {
+            std::cout << "  Error : Force Exit !";
             return false;
         }
 
         //Sleep for "cycles" cycles time
 
-        cyclesThisUpdate += cycles;
+        //cyclesThisUpdate += cycles;
         //UpdateTimers(cycles);
         //UpdateGraphics(cycles);
         //DoInterupts();
+
+        DebugStep++;
+        /*
+        int Value = m_cpu.DumpRegisters(DebugStep < StepSkip);
+        
+        if (Value == -1)
+        {
+            return false;
+        }
+        if (Value != 1)
+        {
+            StepSkip = Value + DebugStep;
+        }*/
     }
 
     //RenderScreen();

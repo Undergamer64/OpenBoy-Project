@@ -73,15 +73,19 @@ int IF_LD_r8_imm8::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	std::cout << "LOAD" << std::endl;
 	int currentCycles = 0;
 
-	if ((opcode & 0b00111000) != 0b0011000) 
-	{
-		registers.m_registers[(opcode & 0b00111000) >> 3] = PCREAD8();
-	}
-	else 
+	if ((opcode & 0b00111000) == 0b0011000) 
 	{
 		MMUWRITE8(registers.HL, PCREAD8());
 	}
-
+	else if ((opcode & 0b00111000) == 0b00111000)
+	{
+		registers.m_registers[6] = PCREAD8();
+	}
+	else
+	{
+		registers.m_registers[(opcode & 0b00111000) >> 3] = PCREAD8();
+	}
+	
 	return currentCycles;
 }
 
@@ -136,16 +140,22 @@ int IF_LD_rA_rHL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	switch (opcode & 0b00011000) 
 	{
 		case 0b00000000:
-			MMUWRITE8(registers.HL--, registers.m_registers[6]);
+			std::cout << static_cast<int>(registers.HL) << std::endl;
+			registers.HL++;
+			MMUWRITE8(registers.HL, registers.m_registers[6]);
 			break;
 		case 0b00001000:
-			registers.m_registers[6] = MMUREAD8(HL--);
+			registers.HL++;
+			registers.m_registers[6] = MMUREAD8(HL);
 			break;
 		case 0b00010000:
-			MMUWRITE8(registers.HL++, registers.m_registers[6]);
+			std::cout << static_cast<int>(registers.HL) << std::endl;
+			registers.HL--;
+			MMUWRITE8(registers.HL, registers.m_registers[6]);
 			break;
 		case 0b00011000:
-			registers.m_registers[6] = MMUREAD8(HL++);
+			registers.HL--;
+			registers.m_registers[6] = MMUREAD8(HL);
 			break;
 	}
 
@@ -166,27 +176,33 @@ int IF_LD_r_r::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	std::cout << "LOAD" << std::endl;
 	int currentCycles = 4;
 
-	uint8_t _r_num1 = registers.m_registers[(opcode & 0b00111000)];
-	registers.m_registers[(opcode & 0b00111000)] = _r_num1;
+	uint8_t _r_num1;	
+	
+	if ((opcode & 0b00000111) == 0b00000110)
+	{
+		_r_num1 = MMUREAD8(HL);
+	}
+	else if ((opcode & 0b00000111) == 0b00000111)
+	{
+		_r_num1 = registers.m_registers[6];
+	}
+	else
+	{
+		_r_num1 = registers.m_registers[(opcode & 0b00000111)];
+	}
 
-	return currentCycles;
-}
-
-#pragma endregion
-
-#pragma region IF_LD_HL_r
-
-bool IF_LD_HL_r::IsValid(uint8_t opcode)
-{
-	return (opcode & 0b11000111) == 0b01000111;
-}
-
-int IF_LD_HL_r::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
-{
-	std::cout << "LOAD" << std::endl;
-	int currentCycles = 8;
-
-	mmu.Write(registers.HL, registers.m_registers[(opcode & 0b00111000) >> 3]);
+	if ((opcode & 0b00111000) == 0b00110000)
+	{
+		MMUWRITE8(registers.HL, _r_num1);
+	}
+	else if ((opcode & 0b00111000) == 0b00111000)
+	{
+		registers.m_registers[6] = _r_num1;
+	}
+	else
+	{
+		registers.m_registers[(opcode & 0b00111000)>>3] = _r_num1;
+	}
 
 	return currentCycles;
 }
@@ -620,35 +636,30 @@ int IF_FLOW_JR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		switch (opcode & 0b00011000)
 		{
 		case 0b00000000:
-			std::cout << static_cast<int>(registers.m_registers[0]) << std::endl;
 			if ((registers.m_registers[7] & 0b01000000) == 0b00000000)
 			{
-				registers.PC += e-2;
+				registers.PC += e;
 				currentCycles += 4;
-			}
-			else
-			{
-				std::cout << "I DIDN'T JUMP HERE !" << std::endl;
 			}
 			break;
 		case 0b00001000:
 			if ((registers.m_registers[7] & 0b01000000) == 0b01000000)
 			{
-				registers.PC += e-2;
+				registers.PC += e;
 				currentCycles += 4;
 			}
 			break;
 		case 0b00010000:
 			if ((registers.m_registers[7] & 0b00000001) == 0b00000000)
 			{
-				registers.PC += e-2;
+				registers.PC += e;
 				currentCycles += 4;
 			}
 			break;
 		case 0b00011000:
 			if ((registers.m_registers[7] & 0b00000001) == 0b00000001)
 			{
-				registers.PC += e-2;
+				registers.PC += e;
 				currentCycles += 4;
 			}
 			break;
@@ -878,12 +889,13 @@ int IF_FLOW_RET::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	}
 	if (condition)
 	{
-		std::cout << registers.SP << std::endl;
-		registers.PC = (MMUREAD8(SP + 1) << 8) + MMUREAD8(SP);
+		registers.PC = MMUREAD8(SP++) + (MMUREAD8(SP++) << 8);
 		currentCycles += 4;
-		return -2;
 	}
-	registers.SP += 2;
+	else
+	{
+		registers.SP += 2;
+	}
 	return currentCycles;
 }
 
@@ -1216,15 +1228,13 @@ int IF_INC_DEC::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		uint8_t _r_num = 0;
 
 		if ((opcode & 0b00111000) != 0b00110000) {
-			std::cout << "Reg Before :" << static_cast<int>(registers.m_registers[(opcode & 0b00111000) >> 3]) << std::endl;
-			_r_num = registers.m_registers[(opcode & 0b00111000) >> 3];
 			registers.m_registers[(opcode & 0b00111000) >> 3] += _res;
-			std::cout << "Reg After :" << static_cast<int>(registers.m_registers[(opcode & 0b00111000) >> 3]) << std::endl;
+			_r_num = registers.m_registers[(opcode & 0b00111000) >> 3];
 		}
 		else 
 		{
-			_r_num = mmu.Read(registers.HL);
 			mmu.Write(registers.HL, mmu.Read(registers.HL) + _res);
+			_r_num = mmu.Read(registers.HL);
 			currentCycles += 8;
 		}
 #pragma region Flags
@@ -1286,11 +1296,11 @@ int IF_PUSH_POP::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	case 0b00000000:
 		if ((opcode & 0b00000100) == 0b00000000) 
 		{
-			registers.BC = (mmu.Read(registers.SP++) << 4) + mmu.Read(registers.SP++);
+			registers.BC = mmu.Read(registers.SP++) + (mmu.Read(registers.SP++) << 8);
 		}
 		else 
 		{
-			mmu.Write(--registers.SP, registers.BC >> 4);
+			mmu.Write(--registers.SP, registers.BC >> 8);
 			mmu.Write(--registers.SP, registers.BC);
 			currentCycles += 4;
 		}
@@ -1298,11 +1308,11 @@ int IF_PUSH_POP::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	case 0b00010000:
 		if ((opcode & 0b00000100) == 0b00000000)
 		{
-			registers.DE = (mmu.Read(registers.SP++) << 4) + mmu.Read(registers.SP++);
+			registers.DE = mmu.Read(registers.SP++) + (mmu.Read(registers.SP++) << 8);
 		}
 		else
 		{
-			mmu.Write(--registers.SP, registers.DE >> 4);
+			mmu.Write(--registers.SP, registers.DE >> 8);
 			mmu.Write(--registers.SP, registers.DE);
 			currentCycles += 4;
 		}
@@ -1310,11 +1320,11 @@ int IF_PUSH_POP::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	case 0b00100000:
 		if ((opcode & 0b00000100) == 0b00000000)
 		{
-			registers.HL = (mmu.Read(registers.SP++) << 4) + mmu.Read(registers.SP++);
+			registers.HL = mmu.Read(registers.SP++) + (mmu.Read(registers.SP++) << 8);
 		}
 		else
 		{
-			mmu.Write(--registers.SP, registers.HL >> 4);
+			mmu.Write(--registers.SP, registers.HL >> 8);
 			mmu.Write(--registers.SP, registers.HL);
 			currentCycles += 4;
 		}
@@ -1322,11 +1332,11 @@ int IF_PUSH_POP::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	case 0b00110000:
 		if ((opcode & 0b00000100) == 0b00000000)
 		{
-			registers.AF = (mmu.Read(registers.SP++) << 4) + mmu.Read(registers.SP++);
+			registers.AF = mmu.Read(registers.SP++) + (mmu.Read(registers.SP++) << 8);
 		}
 		else
 		{
-			mmu.Write(--registers.SP, registers.AF >> 4);
+			mmu.Write(--registers.SP, registers.AF >> 8);
 			mmu.Write(--registers.SP, registers.AF);
 			currentCycles += 4;
 		}

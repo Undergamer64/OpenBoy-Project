@@ -43,8 +43,6 @@ void CPU::BootDump()
 
 int CPU::Execute()
 {
-	std::cout << "PC :";
-	std::cout << static_cast<int>(m_registers.PC) << std::endl;
 	uint8_t opcode = m_mmu.Read(m_registers.PC++);
 	std::cout << "Opcode :";
 	std::cout << static_cast<int>(opcode) << std::endl;
@@ -74,6 +72,62 @@ int CPU::Execute()
 int CPU::operator()() 
 {
 	return Execute();
+}
+
+int CPU::DumpRegisters(bool skip)
+{
+	if (skip)
+	{
+		return 1;
+	}
+	
+	for (int i = 0; i < 20; i++)
+	{
+		std::cout << "--";
+	}
+	std::cout << std::endl;
+	
+	std::cout << "Registers : " << std::endl;
+
+	std::cout << std::endl;
+	
+	for (int i = 0; i < 8; i++)
+	{
+		std::cout << static_cast<int>(m_registers.m_registers[i]) << " | ";
+	}
+	
+	std::cout << std::endl;
+	std::cout << "SP : " << static_cast<int>(m_registers.SP) << " | ";
+	std::cout << "PC : " << static_cast<int>(m_registers.PC) << std::endl;
+	
+	for (int i = 0; i < 20; i++)
+	{
+		std::cout << "--";
+	}
+	std::cout << std::endl;
+
+	std::cout << "Next ?" << std::endl;
+
+	char n;
+	std::cin >> n;
+
+	if (n == 'c' || n == 'C')
+	{
+		system("cls");
+	}
+	else if (n == 'q' || n == 'Q')
+	{
+		std::cout << "Bye Bye !" << std::endl;
+		return -1;
+	}
+	else if (n == 't')
+	{
+		return 25;
+	}
+
+	std::cout << std::endl;
+
+	return 1;
 }
 
 #pragma endregion

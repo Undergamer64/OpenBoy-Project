@@ -34,4 +34,6 @@ public:
 	int Execute();
 
 	int operator()();
+
+	int DumpRegisters(bool skip);
 };
