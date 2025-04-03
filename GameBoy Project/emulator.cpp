@@ -55,7 +55,7 @@ bool Emulator::operator()()
         //DoInterupts();
 
         DebugStep++;
-        /*
+        
         int Value = m_cpu.DumpRegisters(DebugStep < StepSkip);
         
         if (Value == -1)
@@ -65,7 +65,7 @@ bool Emulator::operator()()
         if (Value != 1)
         {
             StepSkip = Value + DebugStep;
-        }*/
+        }
     }
 
     //RenderScreen();

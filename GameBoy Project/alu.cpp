@@ -567,6 +567,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			break;
 		case 0b00011000: //CP
 			_res = (registers.m_registers[6] - _r_num) - (registers.m_registers[7] & 0b00000001);
+			std::cout << "CP : " << static_cast<int>(_res) << std::endl;
 #pragma region Negatif_Flags
 #pragma region Flag_S
 			registers.m_registers[7] |= 0b10000000; //Flag s (negatif)

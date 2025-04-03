@@ -124,6 +124,10 @@ int CPU::DumpRegisters(bool skip)
 	{
 		return 25;
 	}
+	else if (n == 'f')
+	{
+		return 2000;
+	}
 
 	std::cout << std::endl;
 
