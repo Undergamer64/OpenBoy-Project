@@ -49,22 +49,25 @@ bool Emulator::operator()()
 
         //Sleep for "cycles" cycles time
 
-        //cyclesThisUpdate += cycles;
+        cyclesThisUpdate += cycles;
         //UpdateTimers(cycles);
-        //UpdateGraphics(cycles);
+        UpdateGraphics(cycles);
         //DoInterupts();
 
         DebugStep++;
-        
-        int Value = m_cpu.DumpRegisters(DebugStep < StepSkip);
-        
-        if (Value == -1)
+
+        if (m_debug)
         {
-            return false;
-        }
-        if (Value != 1)
-        {
-            StepSkip = Value + DebugStep;
+            int Value = m_cpu.DumpRegisters(DebugStep < StepSkip);
+        
+            if (Value == -1)
+            {
+                return false;
+            }
+            if (Value != 1)
+            {
+                StepSkip = Value + DebugStep;
+            }
         }
     }
 
@@ -72,4 +75,132 @@ bool Emulator::operator()()
     //std::cout << "\nRefresh\n";
     
     return true;
+}
+
+void Emulator::UpdateGraphics(int cycles)
+{
+    SetLCDStatus();
+
+    if (IsLCDEnabled())
+    {
+        m_scanlineCounter -= cycles ;
+    }
+    else
+    {
+        return;
+    }
+
+    if (m_scanlineCounter <= 0)
+    {
+        // time to move onto next scanline
+        uint8_t currentLine = m_mmu.Read(0xFF44) + 1;
+        m_mmu.Write(0xFF44, currentLine);
+
+        m_scanlineCounter = 456;
+        
+        if (currentLine == 144)// we have entered vertical blank period
+        {
+            RequestInterupt(0);
+        }
+        
+        else if (currentLine > 153)// if gone past scanline 153 reset to 0
+        {
+            m_mmu.Write(0xFF44, 0);
+        }
+        else if (currentLine < 144)// draw the current scanline
+        {
+            //DrawScanLine();
+        }
+    }
+}
+
+void Emulator::SetLCDStatus()
+{
+    uint8_t status = m_mmu.Read(0xFF41) ;
+    if (false == IsLCDEnabled())
+    {
+        // set the mode to 1 during lcd disabled and reset scanline
+        m_scanlineCounter = 456 ;
+        m_mmu.Write(0xFF44, 0);
+        status &= 252 ;
+        status |= 0b01;
+        m_mmu.Write(0xFF41,status) ;
+        return ;
+    }
+
+    uint8_t currentline = m_mmu.Read(0xFF44) ;
+    uint8_t currentmode = status & 0x3 ;
+
+    uint8_t mode = 0 ;
+    bool reqInt = false ;
+
+    // in vblank so set mode to 1
+    if (currentline >= 144)
+    {
+        mode = 1;
+        status |= 0b01;
+        status &= ~0b10;
+        reqInt = status & (1 << 4);
+    }
+    else
+    {
+        int mode2bounds = 456-80;
+        int mode3bounds = mode2bounds - 172;
+
+        // mode 2
+        if (m_scanlineCounter >= mode2bounds)
+        {
+            mode = 2;
+            status |= 0b10;
+            status &= ~0b01;
+            reqInt = status & (1 << 5);
+        }
+        // mode 3
+        else if(m_scanlineCounter >= mode3bounds)
+        {
+            mode = 3;
+            status |= 0b10;
+            status |= 0b01;
+        }
+        // mode 0
+        else
+        {
+            mode = 0;
+            status &= ~0b10;
+            status &= ~0b01;
+            reqInt = status & (1 << 3);
+        }
+    }
+
+    // just entered a new mode so request interrupt
+    if (reqInt && (mode != currentmode))
+    {
+        RequestInterupt(1);
+    }
+
+    // check the coincidence flag
+    if (currentline == m_mmu.Read(0xFF45))
+    {
+        status |= 0b100;
+        if (status & (1 << 6))
+        {
+            RequestInterupt(1);
+        }
+    }
+    else
+    {
+        status &= ~0b100;
+    }
+    m_mmu.Write(0xFF41,status);
+}
+
+bool Emulator::IsLCDEnabled() const
+{
+    //return m_mmu.Read(0xFF40) >> 7;
+    return true;
+}
+
+void Emulator::RequestInterupt(int interrupt)
+{
+    return;
 }

@@ -12,6 +12,7 @@ class Emulator
 
 public:
 	bool m_debug = false;
+	int m_scanlineCounter = 456;
 	
 	Emulator(MMU& mmu, ALU& alu, CPU& cpu);
 	~Emulator();
@@ -19,6 +20,13 @@ public:
 	CPU& m_cpu;
 
 	void Map(MemoryBase* mem, uint16_t address);
+
+	void UpdateGraphics(int cycles);
+	void SetLCDStatus();
+
+	bool IsLCDEnabled() const;
+
+	void RequestInterupt(int interrupt);
 
 	bool operator()();
 };

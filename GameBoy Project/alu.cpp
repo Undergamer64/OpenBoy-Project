@@ -38,7 +38,7 @@ bool IF_LD_r16_imm16::IsValid(uint8_t opcode)
 
 int IF_LD_r16_imm16::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
-	std::cout << "LOAD" << std::endl;
+	//std::cout << "LOAD" << std::endl;
 	int currentCycles = 0;
 
 	switch (opcode & 0b00110000) {
@@ -70,7 +70,7 @@ bool IF_LD_r8_imm8::IsValid(uint8_t opcode)
 
 int IF_LD_r8_imm8::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
-	std::cout << "LOAD" << std::endl;
+	//std::cout << "LOAD" << std::endl;
 	int currentCycles = 0;
 
 	if ((opcode & 0b00111000) == 0b0011000) 
@@ -100,7 +100,7 @@ bool IF_LD_rA_memory::IsValid(uint8_t opcode)
 
 int IF_LD_rA_memory::Execute(uint8_t opcode, MMU& mmu, Registers& registers) 
 {
-	std::cout << "LOAD" << std::endl;
+	//std::cout << "LOAD" << std::endl;
 	int currentCycles = 0;
 
 	switch (opcode & 0b00011000) 
@@ -116,7 +116,7 @@ int IF_LD_rA_memory::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			break;
 		case 0b00011000:
 			registers.m_registers[6] = MMUREAD8(DE);
-			std::cout << mmu.Read(registers.DE) << std::endl;
+			//std::cout << mmu.Read(registers.DE) << std::endl;
 			break;
 	}
 
@@ -134,13 +134,13 @@ bool IF_LD_rA_rHL::IsValid(uint8_t opcode)
 
 int IF_LD_rA_rHL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
-	std::cout << "LOAD" << std::endl;
+	//std::cout << "LOAD" << std::endl;
 	int currentCycles = 0;
 
 	switch (opcode & 0b00011000) 
 	{
 		case 0b00000000:
-			std::cout << static_cast<int>(registers.HL) << std::endl;
+			//std::cout << static_cast<int>(registers.HL) << std::endl;
 			registers.HL++;
 			MMUWRITE8(registers.HL, registers.m_registers[6]);
 			break;
@@ -149,7 +149,7 @@ int IF_LD_rA_rHL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			registers.m_registers[6] = MMUREAD8(HL);
 			break;
 		case 0b00010000:
-			std::cout << static_cast<int>(registers.HL) << std::endl;
+			//std::cout << static_cast<int>(registers.HL) << std::endl;
 			registers.HL--;
 			MMUWRITE8(registers.HL, registers.m_registers[6]);
 			break;
@@ -173,7 +173,7 @@ bool IF_LD_r_r::IsValid(uint8_t opcode)
 
 int IF_LD_r_r::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
-	std::cout << "LOAD" << std::endl;
+	//std::cout << "LOAD" << std::endl;
 	int currentCycles = 4;
 
 	uint8_t _r_num1;	
@@ -218,7 +218,7 @@ bool IF_LD_SP_HL::IsValid(uint8_t opcode)
 
 int IF_LD_SP_HL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
-	std::cout << "LOAD" << std::endl;
+	//std::cout << "LOAD" << std::endl;
 	int currentCycles = 8;
 
 	registers.SP = registers.HL;
@@ -237,7 +237,7 @@ bool IF_LD_ADR_r::IsValid(uint8_t opcode)
 
 int IF_LD_ADR_r::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
-	std::cout << "LOAD" << std::endl;
+	//std::cout << "LOAD" << std::endl;
 	int currentCycles = 8;
 
 	uint16_t address;
@@ -274,7 +274,7 @@ bool IF_LD_ADRIMM_r::IsValid(uint8_t opcode)
 
 int IF_LD_ADRIMM_r::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
-	std::cout << "LOAD" << std::endl;
+	//std::cout << "LOAD" << std::endl;
 	int currentCycles = 8;
 
 	uint8_t address = PCREAD8();
@@ -305,7 +305,7 @@ bool IF_AR::IsValid(uint8_t opcode)
 
 int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
-	std::cout << "ARR" << std::endl;
+	//std::cout << "ARR" << std::endl;
 	int currentCycles = 0;
 
 	uint8_t _r_num = registers.m_registers[(opcode & 0b00000111)];
@@ -567,7 +567,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			break;
 		case 0b00011000: //CP
 			_res = (registers.m_registers[6] - _r_num) - (registers.m_registers[7] & 0b00000001);
-			std::cout << "CP : " << static_cast<int>(_res) << std::endl;
+			//std::cout << "CP : " << static_cast<int>(_res) << std::endl;
 #pragma region Negatif_Flags
 #pragma region Flag_S
 			registers.m_registers[7] |= 0b10000000; //Flag s (negatif)
@@ -628,7 +628,7 @@ bool IF_FLOW_JR::IsValid(uint8_t opcode)
 
 int IF_FLOW_JR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
-	std::cout << "JUMP R" << std::endl;
+	//std::cout << "JUMP R" << std::endl;
 	int currentCycles = 0;
 
 	int8_t e = PCREAD8();
@@ -694,7 +694,7 @@ bool IF_FLOW_JP::IsValid(uint8_t opcode)
 
 int IF_FLOW_JP::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
-	std::cout << "JUMP P" << std::endl;
+	//std::cout << "JUMP P" << std::endl;
 	int currentCycles = 0;
 
 	if ((opcode & 0b11111111) == 0b11101001)
@@ -758,13 +758,13 @@ bool IF_FLOW_CALL::IsValid(uint8_t opcode)
 
 int IF_FLOW_CALL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
-	std::cout << "CALL" << std::endl;
+	//std::cout << "CALL" << std::endl;
 	
 	int currentCycles = 0;
 		
 	uint16_t _nn = READ16();
 
-	std::cout << static_cast<int>(_nn) << std::endl;
+	//std::cout << static_cast<int>(_nn) << std::endl;
 	
 	bool condition = false;
 	
@@ -831,7 +831,7 @@ int IF_FLOW_CALL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		MMUWRITE8(registers.SP - 1, registers.PC >> 8)
 		MMUWRITE8(registers.SP - 2, registers.PC)
 		registers.SP -= 2;
-		std::cout << registers.SP << std::endl;
+		//std::cout << registers.SP << std::endl;
 		currentCycles += 4;
 	}
 	registers.PC = _nn;
@@ -849,7 +849,7 @@ bool IF_FLOW_RET::IsValid(uint8_t opcode)
 
 int IF_FLOW_RET::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
-	std::cout << "RET" << std::endl;
+	//std::cout << "RET" << std::endl;
 	int currentCycles = 8;
 
 	bool condition = false;
@@ -913,7 +913,7 @@ bool IF_ROTATE::IsValid(uint8_t opcode)
 
 int IF_ROTATE::Execute(uint8_t opcode, MMU& mmu, Registers& registers) 
 {
-	std::cout << "ROT" << std::endl;
+	//std::cout << "ROT" << std::endl;
 	int currentCycles = 4;
 
 	switch (opcode & 0b00001000) 
@@ -973,7 +973,7 @@ bool IF_CB_Prefix::IsValid(uint8_t opcode)
 
 int IF_CB_Prefix::Execute(uint8_t _, MMU& mmu, Registers& registers)
 {
-	std::cout << "CB" << std::endl;
+	//std::cout << "CB" << std::endl;
 	int currentCycles = 4;
 
 	uint8_t _opcode = PCREAD8();
@@ -1168,7 +1168,7 @@ bool IF_INC_DEC::IsValid(uint8_t opcode)
 
 int IF_INC_DEC::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
-	std::cout << "INC/DEC" << std::endl;
+	//std::cout << "INC/DEC" << std::endl;
 	int currentCycles = 4;
 
 	if ((opcode & 0b11000111) == 0b00000011) 
@@ -1289,7 +1289,7 @@ bool IF_PUSH_POP::IsValid(uint8_t opcode)
 
 int IF_PUSH_POP::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
-	std::cout << "PUSH/POP" << std::endl;
+	//std::cout << "PUSH/POP" << std::endl;
 	int currentCycles = 12;
 
 	switch (opcode & 0b00110000)

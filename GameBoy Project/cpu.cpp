@@ -44,8 +44,9 @@ void CPU::BootDump()
 int CPU::Execute()
 {
 	uint8_t opcode = m_mmu.Read(m_registers.PC++);
-	std::cout << "Opcode :";
-	std::cout << static_cast<int>(opcode) << std::endl;
+
+	if (m_registers.PC > 0x6E && m_registers.PC < 0x93)
+		std::cout << "Program Counter :" << m_registers.PC << " | " << "Opcode : " << static_cast<int>(opcode) << std::endl;
 
 	if (m_registers.PC > 258) 
 	{

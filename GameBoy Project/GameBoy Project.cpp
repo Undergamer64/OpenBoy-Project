@@ -48,7 +48,7 @@ int main() {
     */
 #pragma endregion
 
-    //emulator.m_debug = true;
+    emulator.m_debug = false;
     
     while (true)
     {
