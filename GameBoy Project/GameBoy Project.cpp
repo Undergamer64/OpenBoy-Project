@@ -14,15 +14,27 @@ int main() {
     Emulator emulator(mmu, alu, cpu);
 
     BootRom        bootRom("dmg_boot.bin");
-    Memory<0x1000> internalRam;
+    //Memory<0x4000> rom;
+    Memory<0x4000> romBanks;
     Memory<0x2000> vram;
+    Memory<0x2000> ram;
+    Memory<0x1000> internalRam;
+    Memory<0x1000> switchableInternalRam;
     Memory<0x00A0> oam;
+    Memory<0x0060> unusableMemory;
+    Memory<0x0080> ioRegisters;
     Memory<0x007F> zeroPage;
 
     emulator.Map(&bootRom    , 0x0000);
+    //emulator.Map(&rom    , 0x0000); //Bank zero of the rom (need to understand interaction when end of boot)
+    emulator.Map(&romBanks    , 0x4000); //Switchable banks for Rom
     emulator.Map(&vram       , 0x8000);
-    emulator.Map(&internalRam, 0xC000);
+    emulator.Map(&ram       , 0xA000);
+    emulator.Map(&internalRam, 0xC000); //WRAM
+    emulator.Map(&switchableInternalRam, 0xD000); //WRAM
     emulator.Map(&oam        , 0x9E00);
+    emulator.Map(&unusableMemory        , 0xFEA0); // prohibited by nintendo
+    emulator.Map(&ioRegisters        , 0xFF00);
     emulator.Map(&zeroPage   , 0xFF80);
 
 #pragma region OpcodeDef
@@ -48,7 +60,24 @@ int main() {
     */
 #pragma endregion
 
-    emulator.m_debug = false;
+    std::cout << "Debug ? (y/n)" << std::endl;
+
+    char n;
+    std::cin >> n;
+
+    if (n == 'y' || n == 'Y')
+    {
+        emulator.m_debug = true;
+    }
+    else
+    {
+        emulator.m_debug = false;
+    }
+
+    if (emulator.m_debug)
+    {
+        cpu.DumpBoot();
+    }
     
     while (true)
     {

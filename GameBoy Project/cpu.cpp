@@ -26,7 +26,7 @@ CPU& CPU::operator+=(InstrFamilyPtr&& f)
 	return *this;
 }
 
-void CPU::BootDump()
+void CPU::DumpBoot()
 {
 	for (int i = 0; i < 16; i++)
 	{
@@ -39,13 +39,18 @@ void CPU::BootDump()
 		}
 		std::cout << std::endl;
 	}
+	for (int i = 0; i < 20; i++)
+	{
+		std::cout << "--";
+	}
+	std::cout << std::endl;
 }
 
 int CPU::Execute()
 {
 	uint8_t opcode = m_mmu.Read(m_registers.PC++);
 
-	if (m_registers.PC > 0x6E && m_registers.PC < 0x93)
+	if (m_registers.PC > 0x6A && m_registers.PC < 0x93)
 		std::cout << "Program Counter :" << m_registers.PC << " | " << "Opcode : " << static_cast<int>(opcode) << std::endl;
 
 	if (m_registers.PC > 258) 
@@ -100,6 +105,7 @@ int CPU::DumpRegisters(bool skip)
 	std::cout << std::endl;
 	std::cout << "SP : " << static_cast<int>(m_registers.SP) << " | ";
 	std::cout << "PC : " << static_cast<int>(m_registers.PC) << std::endl;
+	std::cout << "ScanLine : " << static_cast<int>(m_mmu.Read(0xFF44)) << std::endl;
 	
 	for (int i = 0; i < 20; i++)
 	{

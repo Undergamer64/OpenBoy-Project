@@ -17,19 +17,19 @@ class InstructionFamily;
 
 class CPU 
 {
-	Registers m_registers;
 	MMU& m_mmu;
 
 	using InstrFamilyPtr = std::unique_ptr<InstructionFamily>;
 	ALU& m_alu;
 
 public:
+	Registers m_registers;
 	CPU(MMU& mmu, ALU& alu);
 	~CPU();
 
 	CPU& operator+=(InstrFamilyPtr&& f);
 
-	void BootDump();
+	void DumpBoot();
 	
 	int Execute();
 

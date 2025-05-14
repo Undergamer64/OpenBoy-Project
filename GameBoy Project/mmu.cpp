@@ -21,6 +21,7 @@ uint8_t MMU::Read(uint16_t address)
 			return mem->Read(address - startAddr);
 		}
 	}
+	std::cout << " Not mapped, address : " << address << std::endl;
 	return 0;
 }
 void MMU::Write(uint16_t address, uint8_t value) 
@@ -33,4 +34,5 @@ void MMU::Write(uint16_t address, uint8_t value)
 			return;
 		}
 	}
+	std::cout << " Not mapped" << address << std::endl;
 }

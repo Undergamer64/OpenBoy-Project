@@ -21,20 +21,13 @@ void Emulator::Map(MemoryBase* mem, uint16_t address)
 bool Emulator::operator()() 
 {
     int cyclesThisUpdate = 0;
-    int cycles = 0;
-
-    if (m_debug)
-    {
-        m_cpu.BootDump();
-        return false;
-    }
-
+    
     int DebugStep = 0;
     int StepSkip = 1;
     
     while (cyclesThisUpdate < MAXCYCLES)
     {
-        cycles = m_cpu();
+        int cycles = m_cpu();
 
         if (cycles == -1)
         {
@@ -58,15 +51,18 @@ bool Emulator::operator()()
 
         if (m_debug)
         {
-            int Value = m_cpu.DumpRegisters(DebugStep < StepSkip);
-        
-            if (Value == -1)
+            if (m_cpu.m_registers.PC > 0x6A && m_cpu.m_registers.PC < 0x93)
             {
-                return false;
-            }
-            if (Value != 1)
-            {
-                StepSkip = Value + DebugStep;
+                int Value = m_cpu.DumpRegisters(DebugStep < StepSkip);
+            
+                if (Value == -1)
+                {
+                    return false;
+                }
+                if (Value != 1)
+                {
+                    StepSkip = Value + DebugStep;
+                }
             }
         }
     }
@@ -79,7 +75,7 @@ bool Emulator::operator()()
 
 void Emulator::UpdateGraphics(int cycles)
 {
-    SetLCDStatus();
+    //SetLCDStatus();
 
     if (IsLCDEnabled())
     {
@@ -94,6 +90,8 @@ void Emulator::UpdateGraphics(int cycles)
     {
         // time to move onto next scanline
         uint8_t currentLine = m_mmu.Read(0xFF44) + 1;
+        
+        //std::cout << static_cast<int>(currentLine);
         m_mmu.Write(0xFF44, currentLine);
 
         m_scanlineCounter = 456;
@@ -133,9 +131,8 @@ void Emulator::SetLCDStatus()
 
     uint8_t mode = 0 ;
     bool reqInt = false ;
-
-    // in vblank so set mode to 1
-    if (currentline >= 144)
+    
+    if (currentline >= 144)// in vblank so set mode to 1
     {
         mode = 1;
         status |= 0b01;
@@ -147,23 +144,20 @@ void Emulator::SetLCDStatus()
         int mode2bounds = 456-80;
         int mode3bounds = mode2bounds - 172;
 
-        // mode 2
-        if (m_scanlineCounter >= mode2bounds)
+        if (m_scanlineCounter >= mode2bounds) // mode 2
         {
             mode = 2;
             status |= 0b10;
             status &= ~0b01;
             reqInt = status & (1 << 5);
         }
-        // mode 3
-        else if(m_scanlineCounter >= mode3bounds)
+        else if(m_scanlineCounter >= mode3bounds) // mode 3
         {
             mode = 3;
             status |= 0b10;
             status |= 0b01;
         }
-        // mode 0
-        else
+        else // mode 0
         {
             mode = 0;
             status &= ~0b10;
@@ -171,15 +165,13 @@ void Emulator::SetLCDStatus()
             reqInt = status & (1 << 3);
         }
     }
-
-    // just entered a new mode so request interrupt
-    if (reqInt && (mode != currentmode))
+    
+    if (reqInt && (mode != currentmode)) // just entered a new mode so request interrupt
     {
         RequestInterupt(1);
     }
-
-    // check the coincidence flag
-    if (currentline == m_mmu.Read(0xFF45))
+    
+    if (currentline == m_mmu.Read(0xFF45)) // check the coincidence flag
     {
         status |= 0b100;
         if (status & (1 << 6))
