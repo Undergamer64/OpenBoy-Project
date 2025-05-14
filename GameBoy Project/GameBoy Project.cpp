@@ -6,15 +6,16 @@
 #include "cpu.h"
 #include "BootRom.h"
 
-int main() {
-    MMU mmu;
+int main()
+{
+    BootRom bootRom("dmg_boot.bin");
+    MMU mmu(bootRom);
     ALU alu;
     CPU cpu(mmu, alu);
 
-    Emulator emulator(mmu, alu, cpu);
+    Emulator emulator(cpu);
 
-    BootRom        bootRom("dmg_boot.bin");
-    //Memory<0x4000> rom;
+    Memory<0x4000> romZeroBank;
     Memory<0x4000> romBanks;
     Memory<0x2000> vram;
     Memory<0x2000> ram;
@@ -25,9 +26,8 @@ int main() {
     Memory<0x0080> ioRegisters;
     Memory<0x007F> zeroPage;
 
-    emulator.Map(&bootRom    , 0x0000);
-    //emulator.Map(&rom    , 0x0000); //Bank zero of the rom (need to understand interaction when end of boot)
-    emulator.Map(&romBanks    , 0x4000); //Switchable banks for Rom
+    emulator.Map(&romZeroBank    , 0x0000); //Bank zero of the rom
+    emulator.Map(&romBanks    , 0x4000); //Switchable banks for Rom (bank 1 to n)
     emulator.Map(&vram       , 0x8000);
     emulator.Map(&ram       , 0xA000);
     emulator.Map(&internalRam, 0xC000); //WRAM

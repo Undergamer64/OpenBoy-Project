@@ -2,10 +2,8 @@
 
 const static int MAXCYCLES = 4194304 / 60; // (number of cycles / frame rate)
 
-Emulator::Emulator(MMU& mmu, ALU& alu, CPU& cpu) 
-    : m_mmu(mmu),
-    m_alu(alu),
-    m_cpu(cpu)
+Emulator::Emulator(CPU& cpu) 
+    : m_cpu(cpu)
 {
 }
 
@@ -15,7 +13,7 @@ Emulator::~Emulator()
 
 void Emulator::Map(MemoryBase* mem, uint16_t address) 
 {
-    m_mmu.Map(mem, address);
+    m_cpu.Map(mem, address);
 }
 
 bool Emulator::operator()() 
@@ -31,12 +29,12 @@ bool Emulator::operator()()
 
         if (cycles == -1)
         {
-            std::cout << "  Error : No Valide Instruction Family For Value !";
+            std::cout << "Error : No Valide Instruction Family For Value !";
             return false;
         }
         if (cycles == -2)
         {
-            std::cout << "  Error : Force Exit !";
+            std::cout << "Error : Force Exit !";
             return false;
         }
 
@@ -89,10 +87,10 @@ void Emulator::UpdateGraphics(int cycles)
     if (m_scanlineCounter <= 0)
     {
         // time to move onto next scanline
-        uint8_t currentLine = m_mmu.Read(0xFF44) + 1;
+        uint8_t currentLine = m_cpu.Read(0xFF44) + 1;
         
         //std::cout << static_cast<int>(currentLine);
-        m_mmu.Write(0xFF44, currentLine);
+        m_cpu.Write(0xFF44, currentLine);
 
         m_scanlineCounter = 456;
         
@@ -103,7 +101,7 @@ void Emulator::UpdateGraphics(int cycles)
         
         else if (currentLine > 153)// if gone past scanline 153 reset to 0
         {
-            m_mmu.Write(0xFF44, 0);
+            m_cpu.Write(0xFF44, 0);
         }
         else if (currentLine < 144)// draw the current scanline
         {
@@ -114,19 +112,19 @@ void Emulator::UpdateGraphics(int cycles)
 
 void Emulator::SetLCDStatus()
 {
-    uint8_t status = m_mmu.Read(0xFF41) ;
+    uint8_t status = m_cpu.Read(0xFF41) ;
     if (false == IsLCDEnabled())
     {
         // set the mode to 1 during lcd disabled and reset scanline
         m_scanlineCounter = 456 ;
-        m_mmu.Write(0xFF44, 0);
+        m_cpu.Write(0xFF44, 0);
         status &= 252 ;
         status |= 0b01;
-        m_mmu.Write(0xFF41,status) ;
+        m_cpu.Write(0xFF41,status) ;
         return ;
     }
 
-    uint8_t currentline = m_mmu.Read(0xFF44) ;
+    uint8_t currentline = m_cpu.Read(0xFF44) ;
     uint8_t currentmode = status & 0x3 ;
 
     uint8_t mode = 0 ;
@@ -171,7 +169,7 @@ void Emulator::SetLCDStatus()
         RequestInterupt(1);
     }
     
-    if (currentline == m_mmu.Read(0xFF45)) // check the coincidence flag
+    if (currentline == m_cpu.Read(0xFF45)) // check the coincidence flag
     {
         status |= 0b100;
         if (status & (1 << 6))
@@ -183,12 +181,12 @@ void Emulator::SetLCDStatus()
     {
         status &= ~0b100;
     }
-    m_mmu.Write(0xFF41,status);
+    m_cpu.Write(0xFF41,status);
 }
 
 bool Emulator::IsLCDEnabled() const
 {
-    //return m_mmu.Read(0xFF40) >> 7;
+    //return m_cpu.Read(0xFF40) >> 7;
     return true;
 }
 

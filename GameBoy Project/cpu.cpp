@@ -46,6 +46,25 @@ void CPU::DumpBoot()
 	std::cout << std::endl;
 }
 
+void CPU::Write(uint16_t address, uint8_t value)
+{
+	//CONDITIONS
+	
+	m_mmu.Write(address, value);
+}
+
+uint8_t CPU::Read(uint16_t address)
+{
+	//CONDITIONS
+	
+	return m_mmu.Read(address);
+}
+
+void CPU::Map(MemoryBase* mem, uint16_t address)
+{
+	m_mmu.Map(mem, address);
+}
+
 int CPU::Execute()
 {
 	uint8_t opcode = m_mmu.Read(m_registers.PC++);

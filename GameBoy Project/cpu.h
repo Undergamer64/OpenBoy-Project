@@ -1,7 +1,9 @@
 #pragma once
 #include "alu.h"
+#include "ram.h"
 #include <memory>
 #include <cstdint>
+
 
 struct Registers
 {
@@ -29,6 +31,10 @@ public:
 
 	CPU& operator+=(InstrFamilyPtr&& f);
 
+	void Write(uint16_t address, uint8_t value);
+	uint8_t Read(uint16_t address);
+	void Map(MemoryBase* mem, uint16_t address);
+	
 	void DumpBoot();
 	
 	int Execute();

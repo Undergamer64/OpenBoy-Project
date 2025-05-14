@@ -1,6 +1,11 @@
 #include "mmu.h"
 #include "ram.h"
 
+MMU::MMU(BootRom& bootRom)
+	: m_bootRom(bootRom)
+{
+}
+
 void MMU::Map(MemoryBase* mem, uint16_t address) 
 {
 	if (!m_allMaps.contains(address)) {

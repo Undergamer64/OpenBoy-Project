@@ -146,6 +146,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="dmg_boot.bin" />
+    <Content Include="Tetris (World) (Rev A).gb" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
