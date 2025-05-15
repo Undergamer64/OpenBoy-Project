@@ -12,8 +12,8 @@ class MMU
 {
 	
 	std::map<uint16_t, MemoryBase*> m_allMaps;
-	MemoryBase& m_bootRom;
 public:
+	MemoryBase& m_bootRom;
 	MMU(BootRom& bootRom);
 	
 	void Map(MemoryBase* mem, uint16_t address);

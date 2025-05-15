@@ -1,9 +1,11 @@
 #include "emulator.h"
 
+#include <fstream>
+
 const static int MAXCYCLES = 4194304 / 60; // (number of cycles / frame rate)
 
 Emulator::Emulator(CPU& cpu) 
-    : m_cpu(cpu)
+    : m_cpu(cpu), m_cartidge(Cartidge())
 {
 }
 
@@ -14,6 +16,11 @@ Emulator::~Emulator()
 void Emulator::Map(MemoryBase* mem, uint16_t address) 
 {
     m_cpu.Map(mem, address);
+}
+
+void Emulator::LoadCartridge(const std::string& filepath)
+{
+    m_cpu.LoadCartridge(filepath);
 }
 
 bool Emulator::operator()() 
@@ -40,27 +47,24 @@ bool Emulator::operator()()
 
         //Sleep for "cycles" cycles time
 
-        cyclesThisUpdate += cycles;
+        //cyclesThisUpdate += cycles;
         //UpdateTimers(cycles);
-        UpdateGraphics(cycles);
+        UpdateGraphics(cycles); 
         //DoInterupts();
 
         DebugStep++;
 
         if (m_debug)
         {
-            if (m_cpu.m_registers.PC > 0x6A && m_cpu.m_registers.PC < 0x93)
+            int Value = m_cpu.DumpRegisters(DebugStep < StepSkip);
+        
+            if (Value == -1)
             {
-                int Value = m_cpu.DumpRegisters(DebugStep < StepSkip);
-            
-                if (Value == -1)
-                {
-                    return false;
-                }
-                if (Value != 1)
-                {
-                    StepSkip = Value + DebugStep;
-                }
+                return false;
+            }
+            if (Value != 1)
+            {
+                StepSkip = Value + DebugStep;
             }
         }
     }
@@ -83,13 +87,13 @@ void Emulator::UpdateGraphics(int cycles)
     {
         return;
     }
-
+    
     if (m_scanlineCounter <= 0)
     {
         // time to move onto next scanline
         uint8_t currentLine = m_cpu.Read(0xFF44) + 1;
         
-        //std::cout << static_cast<int>(currentLine);
+        //std::cout << static_cast<int>(currentLine) << std::endl;
         m_cpu.Write(0xFF44, currentLine);
 
         m_scanlineCounter = 456;

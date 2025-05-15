@@ -23,7 +23,7 @@ BootRom::BootRom(const std::string& filepath)
 
 size_t BootRom::Size() const
 {
-	return 258;
+	return 256;
 };
 
 uint8_t BootRom::Read(uint16_t address) const

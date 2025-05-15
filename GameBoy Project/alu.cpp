@@ -52,7 +52,7 @@ int IF_LD_r16_imm16::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		case 0b00100000:
 			WRITE16(HL, READ16())
 			break;
-		case 0b00110000:
+	case 0b00110000:
 			WRITE16(SP, READ16())
 			break;
 	}

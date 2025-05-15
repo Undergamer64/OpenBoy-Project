@@ -4,6 +4,8 @@
 #include <memory>
 #include <cstdint>
 
+#include "Cartidge.h"
+
 
 struct Registers
 {
@@ -21,6 +23,8 @@ class CPU
 {
 	MMU& m_mmu;
 
+	Cartidge m_cartidge;
+	
 	using InstrFamilyPtr = std::unique_ptr<InstructionFamily>;
 	ALU& m_alu;
 
@@ -31,6 +35,8 @@ public:
 
 	CPU& operator+=(InstrFamilyPtr&& f);
 
+	void LoadCartridge(const std::string& filepath);
+	
 	void Write(uint16_t address, uint8_t value);
 	uint8_t Read(uint16_t address);
 	void Map(MemoryBase* mem, uint16_t address);

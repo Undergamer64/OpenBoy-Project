@@ -19,6 +19,11 @@ void MMU::Map(MemoryBase* mem, uint16_t address)
 
 uint8_t MMU::Read(uint16_t address) 
 {
+	if (address < 0x0100 && Read(0xFF50) == 0) // If is booting up
+	{
+		return m_bootRom.Read(address);
+	}
+	
 	for (auto [startAddr, mem] : m_allMaps) 
 	{
 		uint16_t endAddr = startAddr + mem->Size();
@@ -26,7 +31,7 @@ uint8_t MMU::Read(uint16_t address)
 			return mem->Read(address - startAddr);
 		}
 	}
-	std::cout << " Not mapped, address : " << address << std::endl;
+	std::cout << "Reading in non mapped address " << address << std::endl;
 	return 0;
 }
 void MMU::Write(uint16_t address, uint8_t value) 
@@ -39,5 +44,6 @@ void MMU::Write(uint16_t address, uint8_t value)
 			return;
 		}
 	}
-	std::cout << " Not mapped" << address << std::endl;
+	std::cout << "Writing in non mapped address " << address << std::endl;
+	std::cout << "Value was " << static_cast<int>(value) << std::endl;
 }

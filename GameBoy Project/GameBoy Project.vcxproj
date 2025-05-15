@@ -131,6 +131,7 @@
   <ItemGroup>
     <ClCompile Include="alu.cpp" />
     <ClCompile Include="BootRom.cpp" />
+    <ClCompile Include="Cartidge.cpp" />
     <ClCompile Include="cpu.cpp" />
     <ClCompile Include="emulator.cpp" />
     <ClCompile Include="GameBoy Project.cpp" />
@@ -139,6 +140,7 @@
   <ItemGroup>
     <ClInclude Include="alu.h" />
     <ClInclude Include="BootRom.h" />
+    <ClInclude Include="Cartidge.h" />
     <ClInclude Include="cpu.h" />
     <ClInclude Include="emulator.h" />
     <ClInclude Include="mmu.h" />
@@ -146,7 +148,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="dmg_boot.bin" />
-    <Content Include="Tetris (World) (Rev A).gb" />
+    <Content Include="Tetris.gb" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

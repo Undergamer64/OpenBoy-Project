@@ -4,11 +4,13 @@
 #include "alu.h"
 #include "cpu.h"
 #include "BootRom.h"
+#include "Cartidge.h"
 
 class Emulator
 {
-	
 public:
+	Cartidge m_cartidge;
+	
 	bool m_debug = false;
 	int m_scanlineCounter = 456;
 	
@@ -19,6 +21,8 @@ public:
 	
 	void Map(MemoryBase* mem, uint16_t address);
 
+	void LoadCartridge(const std::string& filepath);
+	
 	void UpdateGraphics(int cycles);
 	void SetLCDStatus();
 

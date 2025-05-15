@@ -9,7 +9,7 @@
 class BootRom
 	: public MemoryBase
 {
-	std::array<uint8_t, 258> m_bytes;
+	std::array<uint8_t, 256> m_bytes;
 public:
 	BootRom(const std::string& filepath);
 

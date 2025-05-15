@@ -1,4 +1,7 @@
 #include "cpu.h"
+
+#include <iomanip>
+
 #include "mmu.h"
 
 #pragma region CPU
@@ -6,6 +9,7 @@
 CPU::CPU(MMU& mmu, ALU& alu)
 	: m_mmu(mmu)
 	, m_alu(alu)
+	, m_cartidge(Cartidge())
 {
 	m_registers.PC = 0;
 	m_registers.BC = 0;
@@ -26,6 +30,33 @@ CPU& CPU::operator+=(InstrFamilyPtr&& f)
 	return *this;
 }
 
+void CPU::LoadCartridge(const std::string& filepath)
+{
+	std::cout << "Loading Cartridge: " << filepath << std::endl;
+	
+	m_cartidge = Cartidge(filepath);
+	
+	std::cout << "Done !" << std::endl;
+	
+	std::cout << "Cartridge size : " << m_cartidge.Size() << std::endl;
+/*
+	for (size_t address = 0; address < m_cartidge.Size(); address++)
+	{
+		if (address > 0x8000)
+		{
+			break;
+		}	
+		m_mmu.Write(address, m_cartidge.Read(address));
+		std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(m_cartidge.Read(address)) << " ";
+
+		if ((address + 1) % 0x0010 == 0)
+		{
+			std::cout << std::endl;
+		}
+	}
+*/
+}
+
 void CPU::DumpBoot()
 {
 	for (int i = 0; i < 16; i++)
@@ -33,9 +64,8 @@ void CPU::DumpBoot()
 		for (int j = 0; j < 16; j++)
 		{
 			//std::cout << "Index : " << j + i*16 << " ; ";
-			uint8_t opcode = m_mmu.Read(j + (i*16));
-			std::cout << /*"Opcode : " <<*/ static_cast<int>(opcode);
-			std::cout << " ";
+			uint8_t opcode = Read(j + (i*16));
+			std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(opcode) << " ";
 		}
 		std::cout << std::endl;
 	}
@@ -55,8 +85,6 @@ void CPU::Write(uint16_t address, uint8_t value)
 
 uint8_t CPU::Read(uint16_t address)
 {
-	//CONDITIONS
-	
 	return m_mmu.Read(address);
 }
 
@@ -67,14 +95,14 @@ void CPU::Map(MemoryBase* mem, uint16_t address)
 
 int CPU::Execute()
 {
-	uint8_t opcode = m_mmu.Read(m_registers.PC++);
+	uint8_t opcode = Read(m_registers.PC++);
 
-	if (m_registers.PC > 0x6A && m_registers.PC < 0x93)
-		std::cout << "Program Counter :" << m_registers.PC << " | " << "Opcode : " << static_cast<int>(opcode) << std::endl;
-
+	
+	//std::cout << "Program Counter :" << std::hex << m_registers.PC << " | " << "Opcode : " << std::hex << static_cast<int>(opcode) << std::endl;
+	
 	if (m_registers.PC > 258) 
 	{
-		std::cout << static_cast<int>(m_registers.PC) << std::endl;
+		std::cout << std::hex << static_cast<int>(m_registers.PC) << std::endl;
 		return -2;
 	}
 
@@ -90,7 +118,7 @@ int CPU::Execute()
 			return f->Execute(opcode, m_mmu, m_registers);
 		}
 	}
-	std::cout << static_cast<int>(opcode) << std::endl;
+	std::cout << std::hex << static_cast<int>(opcode) << std::endl;
 	return -1;
 };
 
@@ -101,7 +129,7 @@ int CPU::operator()()
 
 int CPU::DumpRegisters(bool skip)
 {
-	if (skip)
+	if (skip || m_registers.PC != 0x80 || (m_registers.PC < 0x34 || (m_registers.PC >= 0x95 && m_registers.PC <= 0xA7)))
 	{
 		return 1;
 	}
@@ -118,13 +146,14 @@ int CPU::DumpRegisters(bool skip)
 	
 	for (int i = 0; i < 8; i++)
 	{
-		std::cout << static_cast<int>(m_registers.m_registers[i]) << " | ";
+		std::cout << std::hex << static_cast<int>(m_registers.m_registers[i]) << " | ";
 	}
 	
 	std::cout << std::endl;
-	std::cout << "SP : " << static_cast<int>(m_registers.SP) << " | ";
-	std::cout << "PC : " << static_cast<int>(m_registers.PC) << std::endl;
-	std::cout << "ScanLine : " << static_cast<int>(m_mmu.Read(0xFF44)) << std::endl;
+	std::cout << "SP : " << std::hex << static_cast<int>(m_registers.SP) << " | ";
+	std::cout << "PC : " << std::hex << static_cast<int>(m_registers.PC) << " | ";
+	std::cout << "Opcode : " << std::hex << static_cast<int>(Read(m_registers.PC)) << std::endl;
+	std::cout << "ScanLine : " << std::dec << static_cast<int>(Read(0xFF44)) << std::endl;
 	
 	for (int i = 0; i < 20; i++)
 	{
