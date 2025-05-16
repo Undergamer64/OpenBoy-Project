@@ -320,6 +320,10 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			_r_num = MMUREAD8(HL);
 		}
 	}
+	else if ((opcode & 0b00000111) == 0b0111)
+	{
+		_r_num = registers.m_registers[6];
+	}
 	uint8_t _res = 0;
 
 	switch (opcode & 0b00100000)
@@ -982,8 +986,15 @@ int IF_CB_Prefix::Execute(uint8_t _, MMU& mmu, Registers& registers)
 	{
 		if ((_opcode & 0b00000111) != 0b0110) 
 		{
-			uint8_t* _r_num = &registers.m_registers[(_opcode & 0b00000111)];
-
+			uint8_t* _r_num; 
+			if ((_opcode & 0b00000111) == 0b0111)
+			{
+				_r_num = &registers.m_registers[0b00000110];
+			}
+			else
+			{
+				_r_num = &registers.m_registers[(_opcode & 0b00000111)];
+			}
 			if ((_opcode & 0b00001000) == 0b00000000)// Left
 			{
 				if ((_opcode & 0b00010000) == 0b00010000)
@@ -1193,16 +1204,53 @@ int IF_INC_DEC::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		switch (opcode & 0b00110000) 
 		{
 		case 0b00000000:
+			{
+				uint8_t temp = registers.m_registers[0];
+				registers.m_registers[0] = registers.m_registers[1];
+				registers.m_registers[1] = temp;
+			}
+			
 			registers.BC += _res;
+
+			{
+			uint8_t temp = registers.m_registers[0];
+			registers.m_registers[0] = registers.m_registers[1];
+			registers.m_registers[1] = temp;
+			}
 			break;
 		case 0b00010000:
+			{
+				uint8_t temp = registers.m_registers[2];
+				registers.m_registers[2] = registers.m_registers[3];
+				registers.m_registers[3] = temp;
+			}
+			
 			registers.DE += _res;
+
+			{
+			uint8_t temp = registers.m_registers[2];
+			registers.m_registers[2] = registers.m_registers[3];
+			registers.m_registers[3] = temp;
+			}
 			break;
 		case 0b00100000:
+			{
+				uint8_t temp = registers.m_registers[4];
+				registers.m_registers[4] = registers.m_registers[5];
+				registers.m_registers[5] = temp;
+			}
+			
 			registers.HL += _res;
+
+			{
+			uint8_t temp = registers.m_registers[4];
+			registers.m_registers[4] = registers.m_registers[5];
+			registers.m_registers[5] = temp;
+			}
 			break;
 		case 0b00110000:
-			registers.m_registers[6] += _res;
+			//registers.SP += _res;
+			std::cout << "SP INC/DEC not implemented ! NIQUE TA MERE !!!!!" << std::endl;
 			break;
 		}
 		return currentCycles;
@@ -1230,8 +1278,16 @@ int IF_INC_DEC::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		uint8_t _r_num = 0;
 
 		if ((opcode & 0b00111000) != 0b00110000) {
-			registers.m_registers[(opcode & 0b00111000) >> 3] += _res;
-			_r_num = registers.m_registers[(opcode & 0b00111000) >> 3];
+			if ((opcode & 0b00111000) == 0b00111000)
+			{
+				registers.m_registers[0b00110000 >> 3] += _res;
+				_r_num = registers.m_registers[0b00110000 >> 3];
+			}
+			else
+			{
+				registers.m_registers[(opcode & 0b00111000) >> 3] += _res;
+				_r_num = registers.m_registers[(opcode & 0b00111000) >> 3];
+			}
 		}
 		else 
 		{

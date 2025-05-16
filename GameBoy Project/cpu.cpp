@@ -8,8 +8,8 @@
 
 CPU::CPU(MMU& mmu, ALU& alu)
 	: m_mmu(mmu)
-	, m_alu(alu)
 	, m_cartidge(Cartidge())
+	, m_alu(alu)
 {
 	m_registers.PC = 0;
 	m_registers.BC = 0;
@@ -19,9 +19,7 @@ CPU::CPU(MMU& mmu, ALU& alu)
 	m_registers.SP = 0;
 };
 
-CPU::~CPU()
-{
-};
+CPU::~CPU() = default;
 
 
 CPU& CPU::operator+=(InstrFamilyPtr&& f)
@@ -39,7 +37,7 @@ void CPU::LoadCartridge(const std::string& filepath)
 	std::cout << "Done !" << std::endl;
 	
 	std::cout << "Cartridge size : " << m_cartidge.Size() << std::endl;
-/*
+
 	for (size_t address = 0; address < m_cartidge.Size(); address++)
 	{
 		if (address > 0x8000)
@@ -47,6 +45,7 @@ void CPU::LoadCartridge(const std::string& filepath)
 			break;
 		}	
 		m_mmu.Write(address, m_cartidge.Read(address));
+
 		std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(m_cartidge.Read(address)) << " ";
 
 		if ((address + 1) % 0x0010 == 0)
@@ -54,7 +53,11 @@ void CPU::LoadCartridge(const std::string& filepath)
 			std::cout << std::endl;
 		}
 	}
-*/
+	for (int i = 0; i < 20; i++)
+	{
+		std::cout << "--";
+	}
+	std::cout << std::endl;
 }
 
 void CPU::DumpBoot()
@@ -96,12 +99,16 @@ void CPU::Map(MemoryBase* mem, uint16_t address)
 int CPU::Execute()
 {
 	uint8_t opcode = Read(m_registers.PC++);
-
 	
 	//std::cout << "Program Counter :" << std::hex << m_registers.PC << " | " << "Opcode : " << std::hex << static_cast<int>(opcode) << std::endl;
+
+	/*std::cout << "At PC: 0x" << std::hex << static_cast<int>(m_registers.PC) 
+			  << " got opcode: 0x" << static_cast<int>(opcode) << std::endl;*/
+
 	
 	if (m_registers.PC > 258) 
 	{
+		std::cout << "PC overflow" << std::endl;
 		std::cout << std::hex << static_cast<int>(m_registers.PC) << std::endl;
 		return -2;
 	}
@@ -129,9 +136,17 @@ int CPU::operator()()
 
 int CPU::DumpRegisters(bool skip)
 {
-	if (skip || m_registers.PC != 0x80 || (m_registers.PC < 0x34 || (m_registers.PC >= 0x95 && m_registers.PC <= 0xA7)))
+	if (skip || (m_debugSkip
+		&& (m_registers.PC != 0x51/*
+		|| m_registers.m_registers[2] <= 1*/
+		|| (m_registers.PC >= 0x95 && m_registers.PC <= 0xA7)
+		|| (m_registers.PC >= 0x60 && m_registers.PC <= 0x6e))))
 	{
 		return 1;
+	}
+	else
+	{
+		m_debugSkip = false;
 	}
 	
 	for (int i = 0; i < 20; i++)

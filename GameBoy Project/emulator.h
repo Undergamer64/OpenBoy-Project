@@ -14,10 +14,10 @@ public:
 	bool m_debug = false;
 	int m_scanlineCounter = 456;
 	
-	Emulator(CPU& cpu);
+	Emulator(MMU& mmu, ALU& alu);
 	~Emulator();
 
-	CPU& m_cpu;
+	CPU m_cpu;
 	
 	void Map(MemoryBase* mem, uint16_t address);
 

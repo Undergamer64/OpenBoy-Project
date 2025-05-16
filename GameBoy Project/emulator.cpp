@@ -4,8 +4,9 @@
 
 const static int MAXCYCLES = 4194304 / 60; // (number of cycles / frame rate)
 
-Emulator::Emulator(CPU& cpu) 
-    : m_cpu(cpu), m_cartidge(Cartidge())
+Emulator::Emulator(MMU& mmu, ALU& alu) 
+    : m_cartidge(Cartidge())
+    , m_cpu(mmu, alu)
 {
 }
 
@@ -32,7 +33,7 @@ bool Emulator::operator()()
     
     while (cyclesThisUpdate < MAXCYCLES)
     {
-        int cycles = m_cpu();
+        int cycles = m_cpu.Execute();
 
         if (cycles == -1)
         {
