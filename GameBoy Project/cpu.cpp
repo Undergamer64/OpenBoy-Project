@@ -129,7 +129,7 @@ int CPU::operator()()
 
 int CPU::DumpRegisters(bool skip)
 {
-	if (skip || m_registers.PC != 0x80 || (m_registers.PC < 0x34 || (m_registers.PC >= 0x95 && m_registers.PC <= 0xA7)))
+	if (skip /*|| m_registers.PC != 0x80 || (m_registers.PC < 0x34 || (m_registers.PC >= 0x95 && m_registers.PC <= 0xA7))*/)
 	{
 		return 1;
 	}
