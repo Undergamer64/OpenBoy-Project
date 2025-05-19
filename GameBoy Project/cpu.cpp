@@ -144,10 +144,8 @@ int CPU::DumpRegisters(bool skip)
 	{
 		return 1;
 	}
-	else
-	{
-		m_debugSkip = false;
-	}
+	
+	m_debugSkip = false;
 	
 	for (int i = 0; i < 20; i++)
 	{

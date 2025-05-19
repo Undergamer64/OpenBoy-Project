@@ -5,9 +5,21 @@
 #include "alu.h"
 #include "cpu.h"
 #include "BootRom.h"
+#include <SFML/Graphics.hpp>
 
 int main()
 {
+    /*
+    sf::RenderWindow window(sf::VideoMode( sf::Vector2u(800,800), 600), "SFML in Rider!");
+    while (window.isOpen()) {
+        window.clear();
+        window.display();
+    }
+    window.close();
+    return 0;
+    */
+
+    
     BootRom bootRom("dmg_boot.bin");
     
     MMU mmu(bootRom);

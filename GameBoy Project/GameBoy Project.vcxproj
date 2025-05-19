@@ -147,6 +147,7 @@
     <ClInclude Include="ram.h" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="CMakeLists.txt" />
     <Content Include="dmg_boot.bin" />
     <Content Include="dmg_decrypted.txt" />
     <Content Include="Tetris.gb" />
