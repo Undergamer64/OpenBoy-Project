@@ -1,5 +1,6 @@
 #include "emulator.h"
 
+#include <Windows.h>
 #include <fstream>
 
 const static int MAXCYCLES = 4194304 / 60; // (number of cycles / frame rate)
@@ -7,7 +8,7 @@ const static int MAXCYCLES = 4194304 / 60; // (number of cycles / frame rate)
 Emulator::Emulator(MMU& mmu, ALU& alu) 
     : m_cartidge(Cartidge())
     , m_cpu(mmu, alu)
-    , window(sf::VideoMode( sf::Vector2u(160,144), 600), "SFML in Rider!")
+    , m_ppu()
 {
 }
 
@@ -34,20 +35,6 @@ bool Emulator::operator()()
     
     while (cyclesThisUpdate < MAXCYCLES)
     {
-        do
-        {
-            std::optional<sf::Event> event = window.pollEvent();
-            if (!event.has_value())
-            {
-                break;
-            }
-            if (event.value().is<sf::Event::Closed>())
-            {
-                window.close();
-                return false;
-            }
-        } while (true);
-        
         int cycles = m_cpu.Execute();
 
         if (cycles == -1)
@@ -84,10 +71,11 @@ bool Emulator::operator()()
             }
         }
     }
-
-    window.clear();
     
-    //RenderScreen();
+    if (!m_ppu.RenderScreen())
+    {
+        return false;  
+    }
     //std::cout << "\nRefresh\n";
     
     return true;

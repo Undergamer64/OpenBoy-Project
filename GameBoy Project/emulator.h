@@ -4,8 +4,7 @@
 #include "alu.h"
 #include "cpu.h"
 #include "Cartidge.h"
-
-#include <SFML/Graphics.hpp>
+#include "ppu.h"
 
 class Emulator
 {
@@ -18,7 +17,7 @@ public:
 	Emulator(MMU& mmu, ALU& alu);
 	~Emulator();
 
-	sf::RenderWindow window;
+	PPU m_ppu;
 	CPU m_cpu;
 	
 	void Map(MemoryBase* mem, uint16_t address);

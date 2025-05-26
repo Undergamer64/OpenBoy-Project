@@ -136,6 +136,7 @@
     <ClCompile Include="emulator.cpp" />
     <ClCompile Include="GameBoy Project.cpp" />
     <ClCompile Include="mmu.cpp" />
+    <ClCompile Include="ppu.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="alu.h" />
@@ -144,6 +145,7 @@
     <ClInclude Include="cpu.h" />
     <ClInclude Include="emulator.h" />
     <ClInclude Include="mmu.h" />
+    <ClInclude Include="ppu.h" />
     <ClInclude Include="ram.h" />
   </ItemGroup>
   <ItemGroup>
