@@ -365,3 +365,4 @@ FodyWeavers.xsd
 vcpkg/installed/
 vcpkg/buildtrees/
 vcpkg/packages/
+vcpkg_installed

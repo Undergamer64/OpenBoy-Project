@@ -1,5 +1,7 @@
 ﻿#include "ppu.h"
 
+#include <optional>
+
 bool PPU::IsWindowOpen()
 {
     do
