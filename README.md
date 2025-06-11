@@ -1,8 +1,8 @@
-# Dependencies
+## Dependencies
 
 This project uses [vcpkg](https://github.com/microsoft/vcpkg) for dependency management.
 
-# Setup
+### Setup
 
 ```bash
 git clone https://github.com/yourname/GameBoy-Project.git
