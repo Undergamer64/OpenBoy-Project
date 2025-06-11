@@ -12,9 +12,8 @@ int main()
     
     MMU mmu(bootRom);
     ALU alu;
-    CPU cpu(mmu, alu);
 
-    Emulator emulator(cpu);
+    Emulator emulator(mmu, alu);
 
     Memory<0x4000> romZeroBank;
     Memory<0x4000> romBanks;
@@ -65,7 +64,7 @@ int main()
     */
 #pragma endregion
 
-    emulator.LoadCartridge("Tetoris.gb");
+    emulator.LoadCartridge("Tetris.gb");
     
     std::cout << "Debug ? (y/n)" << std::endl;
 
@@ -83,12 +82,16 @@ int main()
 
     if (emulator.m_debug)
     {
-        cpu.DumpBoot();
+        emulator.m_cpu.DumpBoot();
     }
-    
-    if (!emulator()) 
+
+    while (true)
     {
-        std::cout << "Emulator End" << std::endl;
+        if (!emulator()) 
+        {
+            std::cout << "Emulator End" << std::endl;
+            break;
+        }
     }
 
     return 0;

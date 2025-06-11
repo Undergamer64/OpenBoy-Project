@@ -22,7 +22,7 @@ class InstructionFamily;
 class CPU 
 {
 	MMU& m_mmu;
-
+	bool m_debugSkip = true;
 	Cartidge m_cartidge;
 	
 	using InstrFamilyPtr = std::unique_ptr<InstructionFamily>;

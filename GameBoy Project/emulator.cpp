@@ -1,11 +1,14 @@
 #include "emulator.h"
 
+#include <Windows.h>
 #include <fstream>
 
 const static int MAXCYCLES = 4194304 / 60; // (number of cycles / frame rate)
 
-Emulator::Emulator(CPU& cpu) 
-    : m_cpu(cpu), m_cartidge(Cartidge())
+Emulator::Emulator(MMU& mmu, ALU& alu) 
+    : m_cartidge(Cartidge())
+    , m_cpu(mmu, alu)
+    , m_ppu()
 {
 }
 
@@ -32,7 +35,7 @@ bool Emulator::operator()()
     
     while (cyclesThisUpdate < MAXCYCLES)
     {
-        int cycles = m_cpu();
+        int cycles = m_cpu.Execute();
 
         if (cycles == -1)
         {
@@ -47,7 +50,7 @@ bool Emulator::operator()()
 
         //Sleep for "cycles" cycles time
 
-        //cyclesThisUpdate += cycles;
+        cyclesThisUpdate += cycles;
         //UpdateTimers(cycles);
         UpdateGraphics(cycles); 
         //DoInterupts();
@@ -68,8 +71,11 @@ bool Emulator::operator()()
             }
         }
     }
-
-    //RenderScreen();
+    
+    if (!m_ppu.RenderScreen())
+    {
+        return false;  
+    }
     //std::cout << "\nRefresh\n";
     
     return true;

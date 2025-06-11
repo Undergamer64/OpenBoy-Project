@@ -3,8 +3,8 @@
 #include "mmu.h"
 #include "alu.h"
 #include "cpu.h"
-#include "BootRom.h"
 #include "Cartidge.h"
+#include "ppu.h"
 
 class Emulator
 {
@@ -14,10 +14,11 @@ public:
 	bool m_debug = false;
 	int m_scanlineCounter = 456;
 	
-	Emulator(CPU& cpu);
+	Emulator(MMU& mmu, ALU& alu);
 	~Emulator();
 
-	CPU& m_cpu;
+	PPU m_ppu;
+	CPU m_cpu;
 	
 	void Map(MemoryBase* mem, uint16_t address);
 
