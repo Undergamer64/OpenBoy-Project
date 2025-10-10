@@ -40,6 +40,7 @@ int main()
     emulator.Map(&ioRegisters        , 0xFF00);
     emulator.Map(&zeroPage   , 0xFF80);
     emulator.Map(&interruptActivate   , 0xFFFF);
+    emulator.m_cpu.Write(0xFFFF, 0xFF);
 
 #pragma region OpcodeDef
     emulator.m_cpu += std::make_unique<IF_LD_r16_imm16>();
@@ -65,28 +66,25 @@ int main()
 #pragma endregion
 
     emulator.LoadCartridge("Tetris.gb");
+
+#if _DEBUG
+    std::cout << emulator.m_cpu.DumpBoot().str() << std::endl;
+#endif
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> lastFrame = std::chrono::high_resolution_clock::now();
     
-    std::cout << "Debug ? (y/n)" << std::endl;
-
-    char n;
-    std::cin >> n;
-
-    if (n == 'y' || n == 'Y')
-    {
-        emulator.m_debug = true;
-    }
-    else
-    {
-        emulator.m_debug = false;
-    }
-
-    if (emulator.m_debug)
-    {
-        emulator.m_cpu.DumpBoot();
-    }
-
     while (true)
     {
+        std::chrono::time_point<std::chrono::high_resolution_clock> t;
+        do
+        {
+            t = std::chrono::high_resolution_clock::now();
+#if _DEBUG
+        } while (std::chrono::duration_cast<std::chrono::milliseconds>(t - lastFrame).count() < 100); // ~10FPS
+#else
+        } while (std::chrono::duration_cast<std::chrono::microseconds>(t - lastFrame).count() < 16667); // ~60FPS
+#endif
+        lastFrame = std::chrono::high_resolution_clock::now();
         if (!emulator()) 
         {
             std::cout << "Emulator End" << std::endl;

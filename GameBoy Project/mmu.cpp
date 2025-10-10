@@ -27,6 +27,10 @@ uint8_t MMU::Read(uint16_t address)
 	for (auto [startAddr, mem] : m_allMaps) 
 	{
 		uint16_t endAddr = startAddr + mem->Size();
+		if (startAddr == 0xffff && address == 0xffff)
+		{
+			return mem->Read(0);
+		}
 		if (address >= startAddr && address < endAddr) {
 			return mem->Read(address - startAddr);
 		}
@@ -41,6 +45,11 @@ void MMU::Write(uint16_t address, uint8_t value)
 		uint16_t endAddr = startAddr + mem->Size();
 		if (address >= startAddr && address < endAddr) {
 			mem->Write(address - startAddr, value);
+			return;
+		}
+		if (startAddr == 0xFFFF && address == 0xffff)
+		{
+			mem->Write(0, value);
 			return;
 		}
 	}

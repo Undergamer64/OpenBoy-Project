@@ -11,7 +11,6 @@ class Emulator
 public:
 	Cartidge m_cartidge;
 	
-	bool m_debug = false;
 	int m_scanlineCounter = 456;
 	
 	Emulator(MMU& mmu, ALU& alu);
@@ -23,13 +22,16 @@ public:
 	void Map(MemoryBase* mem, uint16_t address);
 
 	void LoadCartridge(const std::string& filepath);
-	
+
+	void UpdateTimers(int cycles);
 	void UpdateGraphics(int cycles);
 	void SetLCDStatus();
 
 	bool IsLCDEnabled() const;
 
 	void RequestInterupt(int interrupt);
+	int DoInterupts();
+	int ServiceInterupt(int interrupt);
 
 	bool operator()();
 };

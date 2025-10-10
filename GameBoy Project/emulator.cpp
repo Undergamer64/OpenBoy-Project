@@ -3,7 +3,11 @@
 #include <Windows.h>
 #include <fstream>
 
+#if _DEBUG
 const static int MAXCYCLES = 4194304 / 60; // (number of cycles / frame rate)
+#else
+const static int MAXCYCLES = 1; //Debug
+#endif
 
 Emulator::Emulator(MMU& mmu, ALU& alu) 
     : m_cartidge(Cartidge())
@@ -30,46 +34,25 @@ bool Emulator::operator()()
 {
     int cyclesThisUpdate = 0;
     
-    int DebugStep = 0;
-    int StepSkip = 1;
-    
     while (cyclesThisUpdate < MAXCYCLES)
     {
         int cycles = m_cpu.Execute();
 
         if (cycles == -1)
         {
-            std::cout << "Error : No Valide Instruction Family For Value !";
+            std::cout << "Error : No Valide Instruction Family For Value !" << std::endl;
             return false;
         }
         if (cycles == -2)
         {
-            std::cout << "Error : Force Exit !";
+            std::cout << "Error : Force Exit !" << std::endl;
             return false;
         }
 
-        //Sleep for "cycles" cycles time
-
         cyclesThisUpdate += cycles;
-        //UpdateTimers(cycles);
+        UpdateTimers(cycles);
         UpdateGraphics(cycles); 
-        //DoInterupts();
-
-        DebugStep++;
-
-        if (m_debug)
-        {
-            int Value = m_cpu.DumpRegisters(DebugStep < StepSkip);
-        
-            if (Value == -1)
-            {
-                return false;
-            }
-            if (Value != 1)
-            {
-                StepSkip = Value + DebugStep;
-            }
-        }
+        cyclesThisUpdate += DoInterupts();
     }
     
     if (!m_ppu.RenderScreen())
@@ -77,13 +60,26 @@ bool Emulator::operator()()
         return false;  
     }
     //std::cout << "\nRefresh\n";
+
+#if _DEBUG
+    //Render Debug values here
+    m_ppu.RenderDebug(m_cpu);
+#endif
+
+    m_ppu.Display();
+    m_ppu.Clear();
     
     return true;
 }
 
+void Emulator::UpdateTimers(int cycles)
+{
+    
+}
+
 void Emulator::UpdateGraphics(int cycles)
 {
-    //SetLCDStatus();
+    SetLCDStatus();
 
     if (IsLCDEnabled())
     {
@@ -202,5 +198,59 @@ bool Emulator::IsLCDEnabled() const
 
 void Emulator::RequestInterupt(int interrupt)
 {
-    return;
+    uint8_t req = m_cpu.Read(0xFF0F);
+    req |= (1 << interrupt);
+    m_cpu.Write(0xFF0F, req);
+}
+
+int Emulator::DoInterupts()
+{
+    if (m_cpu.m_registers.IME == true)
+    {
+        uint8_t req = m_cpu.Read(0xFF0F) ;
+        uint8_t enabled = m_cpu.Read(0xFFFF) ;
+        if (req > 0)
+        {
+            for (int i = 0 ; i < 5; i++)
+            {
+                if ((req & (1 << i)) != 0)
+                {
+                    if ((enabled & (1 << i)) != 0)
+                    {
+                        std::cout << "Servicing Interrupt " << i << std::endl;
+                        return ServiceInterupt(i);
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+int Emulator::ServiceInterupt(int interrupt)
+{
+    m_cpu.m_registers.IME = false;
+    uint8_t req = m_cpu.Read(0xFF0F) ;
+    req = req & ~(1 << interrupt);
+    m_cpu.Write(0xFF0F,req) ;
+
+    /// we must save the current execution address by pushing it onto the stack
+    m_cpu.Push(m_cpu.m_registers.PC);
+
+    switch (interrupt)
+    {
+    case 0:
+        m_cpu.m_registers.PC = 0x40;
+        break;
+    case 1:
+        m_cpu.m_registers.PC = 0x48;
+        break;
+    case 2:
+        m_cpu.m_registers.PC = 0x50;
+        break;
+    case 4:
+        m_cpu.m_registers.PC = 0x60;
+        break;
+    }
+    return 20;
 }

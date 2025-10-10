@@ -152,6 +152,8 @@
     <Content Include="CMakeLists.txt" />
     <Content Include="dmg_boot.bin" />
     <Content Include="dmg_decrypted.txt" />
+    <Content Include="Early GameBoy.ttf" />
+    <Content Include="Jersey10-Regular.ttf" />
     <Content Include="Tetris.gb" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

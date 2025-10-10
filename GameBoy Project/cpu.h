@@ -15,6 +15,7 @@ struct Registers
 	uint16_t& HL = *(uint16_t*)(m_registers + 4);
 	uint16_t& AF = *(uint16_t*)(m_registers + 6);
 	uint16_t SP, PC;
+	uint8_t IME;
 };
 
 class InstructionFamily;
@@ -40,8 +41,12 @@ public:
 	void Write(uint16_t address, uint8_t value);
 	uint8_t Read(uint16_t address);
 	void Map(MemoryBase* mem, uint16_t address);
-	
-	void DumpBoot();
+
+	void Push(uint16_t address);
+
+	uint8_t GetCurrentInstruction();
+
+	std::stringstream DumpBoot(bool pointer = false);
 	
 	int Execute();
 

@@ -1,6 +1,7 @@
 #include "cpu.h"
 
 #include <iomanip>
+#include <sstream>
 
 #include "mmu.h"
 
@@ -8,8 +9,8 @@
 
 CPU::CPU(MMU& mmu, ALU& alu)
 	: m_mmu(mmu)
-	, m_cartidge(Cartidge())
-	, m_alu(alu)
+	  , m_cartidge(Cartidge())
+	  , m_alu(alu)
 {
 	m_registers.PC = 0;
 	m_registers.BC = 0;
@@ -17,6 +18,7 @@ CPU::CPU(MMU& mmu, ALU& alu)
 	m_registers.HL = 0;
 	m_registers.AF = 0;
 	m_registers.SP = 0;
+	m_registers.IME = 1;
 };
 
 CPU::~CPU() = default;
@@ -34,10 +36,11 @@ void CPU::LoadCartridge(const std::string& filepath)
 	
 	m_cartidge = Cartidge(filepath);
 	
-	std::cout << "Done !" << std::endl;
+	std::cout << "Done !" << "\n";
 	
 	std::cout << "Cartridge size : " << m_cartidge.Size() << std::endl;
-
+	/*
+#if _DEBUG
 	for (size_t address = 0; address < m_cartidge.Size(); address++)
 	{
 		if (address > 0x8000)
@@ -50,9 +53,11 @@ void CPU::LoadCartridge(const std::string& filepath)
 
 		if ((address + 1) % 0x0010 == 0)
 		{
-			std::cout << std::endl;
+			std::cout << "\n";
 		}
 	}
+#endif
+	*/
 	for (int i = 0; i < 20; i++)
 	{
 		std::cout << "--";
@@ -60,23 +65,32 @@ void CPU::LoadCartridge(const std::string& filepath)
 	std::cout << std::endl;
 }
 
-void CPU::DumpBoot()
+std::stringstream CPU::DumpBoot(bool pointer)
 {
+	std::stringstream ss;
 	for (int i = 0; i < 16; i++)
 	{
 		for (int j = 0; j < 16; j++)
 		{
+			if (pointer && (j + i * 16) == m_registers.PC)
+			{
+				ss << "!";
+			}
+			else
+			{
+				ss << "  ";
+			}
 			//std::cout << "Index : " << j + i*16 << " ; ";
 			uint8_t opcode = Read(j + (i*16));
-			std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(opcode) << " ";
+			ss << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(opcode);
 		}
-		std::cout << std::endl;
+		ss << "\n";
 	}
 	for (int i = 0; i < 20; i++)
 	{
-		std::cout << "--";
+		ss << "--";
 	}
-	std::cout << std::endl;
+	return ss;
 }
 
 void CPU::Write(uint16_t address, uint8_t value)
@@ -96,9 +110,21 @@ void CPU::Map(MemoryBase* mem, uint16_t address)
 	m_mmu.Map(mem, address);
 }
 
+void CPU::Push(uint16_t address)
+{
+	m_mmu.Write(--m_registers.SP, address >> 8);
+	m_mmu.Write(--m_registers.SP, address);
+}
+
+uint8_t CPU::GetCurrentInstruction()
+{
+	return Read(m_registers.PC);
+}
+
 int CPU::Execute()
 {
-	uint8_t opcode = Read(m_registers.PC++);
+	uint8_t opcode = GetCurrentInstruction();
+	m_registers.PC++;
 	
 	//std::cout << "Program Counter :" << std::hex << m_registers.PC << " | " << "Opcode : " << std::hex << static_cast<int>(opcode) << std::endl;
 

@@ -849,7 +849,7 @@ int IF_FLOW_CALL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 
 bool IF_FLOW_RET::IsValid(uint8_t opcode) 
 {
-	return (opcode & 0b11111111) == 0b11001001 || (opcode & 0b11100111) == 0b11000000;
+	return (opcode & 0b11101111) == 0b11001001 || (opcode & 0b11100111) == 0b11000000;
 }
 
 int IF_FLOW_RET::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
@@ -858,9 +858,14 @@ int IF_FLOW_RET::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	int currentCycles = 8;
 
 	bool condition = false;
-	if ((opcode & 0b11111111) == 0b11001001)
+	bool interruptEnable = false;
+	if ((opcode & 0b11101111) == 0b11001001)
 	{
 		condition = true;
+		if ((opcode & 0b11111111) == 0b11011001)
+		{
+			interruptEnable = true;
+		}
 	}
 	else
 	{
@@ -893,6 +898,7 @@ int IF_FLOW_RET::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			break;
 		}
 	}
+	
 	if (condition)
 	{
 		registers.PC = MMUREAD8(SP++) + (MMUREAD8(SP++) << 8);
@@ -902,6 +908,12 @@ int IF_FLOW_RET::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	{
 		registers.SP += 2;
 	}
+
+	if (interruptEnable)
+	{
+		registers.IME = true;
+	}
+	
 	return currentCycles;
 }
 
@@ -1400,6 +1412,32 @@ int IF_PUSH_POP::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		}
 		break;
 	}
+	return currentCycles;
+}
+
+#pragma endregion
+
+#pragma region Interrupts Instructions
+
+bool IF_DI_EI::IsValid(uint8_t opcode)
+{
+	return (opcode & 0b11110111) == 0b11110011;
+}
+
+int IF_DI_EI::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
+{
+	//std::cout << "DI/IE" << std::endl;
+	int currentCycles = 4;
+
+	if ((opcode & 0b00001000) == 0b00001000)
+	{
+		registers.IME = true;
+	}
+	else
+	{
+		registers.IME = false;
+	}
+
 	return currentCycles;
 }
 

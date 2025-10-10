@@ -202,6 +202,18 @@ public:
 
 #pragma endregion
 
+#pragma region Interrupts Instructions
+
+class IF_DI_EI final
+	: public InstructionFamily
+{
+public:
+	bool IsValid(uint8_t opcode) override;
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override;
+};
+
+#pragma endregion
+
 #pragma region Custom Instruction
 
 class IF_Finish final
