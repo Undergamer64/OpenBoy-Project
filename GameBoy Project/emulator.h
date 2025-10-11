@@ -27,7 +27,7 @@ public:
 	void UpdateGraphics(int cycles);
 	void SetLCDStatus();
 
-	bool IsLCDEnabled() const;
+	bool IsLCDEnabled();
 
 	void RequestInterupt(int interrupt);
 	int DoInterupts();

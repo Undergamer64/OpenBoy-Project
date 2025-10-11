@@ -4,9 +4,9 @@
 #include <fstream>
 
 #if _DEBUG
-const static int MAXCYCLES = 4194304 / 60; // (number of cycles / frame rate)
+static int MAXCYCLES = 1; //Debug
 #else
-const static int MAXCYCLES = 1; //Debug
+static int MAXCYCLES = 4194304 / 60; // (number of cycles / frame rate)
 #endif
 
 Emulator::Emulator(MMU& mmu, ALU& alu) 
@@ -40,7 +40,6 @@ bool Emulator::operator()()
 
         if (cycles == -1)
         {
-            std::cout << "Error : No Valide Instruction Family For Value !" << std::endl;
             return false;
         }
         if (cycles == -2)
@@ -74,7 +73,7 @@ bool Emulator::operator()()
 
 void Emulator::UpdateTimers(int cycles)
 {
-    
+    //DO TIMER WITH FREQUENCY FOR INTERRUPT
 }
 
 void Emulator::UpdateGraphics(int cycles)
@@ -119,7 +118,7 @@ void Emulator::UpdateGraphics(int cycles)
 void Emulator::SetLCDStatus()
 {
     uint8_t status = m_cpu.Read(0xFF41) ;
-    if (false == IsLCDEnabled())
+    if (!IsLCDEnabled())
     {
         // set the mode to 1 during lcd disabled and reset scanline
         m_scanlineCounter = 456 ;
@@ -190,10 +189,9 @@ void Emulator::SetLCDStatus()
     m_cpu.Write(0xFF41,status);
 }
 
-bool Emulator::IsLCDEnabled() const
+bool Emulator::IsLCDEnabled()
 {
-    //return m_cpu.Read(0xFF40) >> 7;
-    return true;
+    return m_cpu.Read(0xFF40) >> 7;
 }
 
 void Emulator::RequestInterupt(int interrupt)
@@ -217,7 +215,7 @@ int Emulator::DoInterupts()
                 {
                     if ((enabled & (1 << i)) != 0)
                     {
-                        std::cout << "Servicing Interrupt " << i << std::endl;
+                        //std::cout << "Servicing Interrupt " << i << std::endl;
                         return ServiceInterupt(i);
                     }
                 }
@@ -229,7 +227,10 @@ int Emulator::DoInterupts()
 
 int Emulator::ServiceInterupt(int interrupt)
 {
-    m_cpu.m_registers.IME = false;
+    //if (m_cpu.m_registers.PC >= 0x0100 || m_cpu.Read(0xFF50) != 0)// If not in bootrom
+    {
+        m_cpu.m_registers.IME = false;
+    }
     uint8_t req = m_cpu.Read(0xFF0F) ;
     req = req & ~(1 << interrupt);
     m_cpu.Write(0xFF0F,req) ;
@@ -240,16 +241,16 @@ int Emulator::ServiceInterupt(int interrupt)
     switch (interrupt)
     {
     case 0:
-        m_cpu.m_registers.PC = 0x40;
+        m_cpu.m_registers.PC = 0x40 - 1;
         break;
     case 1:
-        m_cpu.m_registers.PC = 0x48;
+        m_cpu.m_registers.PC = 0x48 - 1;
         break;
     case 2:
-        m_cpu.m_registers.PC = 0x50;
+        m_cpu.m_registers.PC = 0x50 - 1;
         break;
     case 4:
-        m_cpu.m_registers.PC = 0x60;
+        m_cpu.m_registers.PC = 0x60 - 1;
         break;
     }
     return 20;

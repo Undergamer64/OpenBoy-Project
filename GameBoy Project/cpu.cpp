@@ -132,9 +132,9 @@ int CPU::Execute()
 			  << " got opcode: 0x" << static_cast<int>(opcode) << std::endl;*/
 
 	
-	if (m_registers.PC > 258) 
+	if (m_registers.PC > 258  && Read(0xFF50) == 0) // booting overflow
 	{
-		std::cout << "PC overflow" << std::endl;
+		std::cout << "PC overflow while booting" << std::endl;
 		std::cout << std::hex << static_cast<int>(m_registers.PC) << std::endl;
 		return -2;
 	}
@@ -143,7 +143,7 @@ int CPU::Execute()
 	{
 		if (f == std::nullptr_t()) 
 		{
-			std::cout << "  Error : Null Pointer For Instruction Family !";
+			std::cout << "Error : Null Pointer For Instruction Family !";
 			continue;
 		}
 		if (f->IsValid(opcode)) 
@@ -151,7 +151,13 @@ int CPU::Execute()
 			return f->Execute(opcode, m_mmu, m_registers);
 		}
 	}
-	std::cout << std::hex << static_cast<int>(opcode) << std::endl;
+	std::cout << "Error : No Valide Instruction Family For Value 0x"
+		<< std::hex
+		<< static_cast<int>(opcode)
+		<< " At PC 0x"
+		<< static_cast<int>(m_registers.PC)
+		<< std::endl;
+	
 	return -1;
 };
 

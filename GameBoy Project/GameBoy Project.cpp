@@ -59,8 +59,8 @@ int main()
     emulator.m_cpu += std::make_unique<IF_ROTATE>();
     emulator.m_cpu += std::make_unique<IF_FLOW_RET>();
     emulator.m_cpu += std::make_unique<IF_LD_r_r>();
-    /*
     emulator.m_cpu += std::make_unique<IF_LD_SP_HL>();
+    /*
     emulator.m_cpu += std::make_unique<IF_Finish>();
     */
 #pragma endregion
@@ -80,9 +80,9 @@ int main()
         {
             t = std::chrono::high_resolution_clock::now();
 #if _DEBUG
-        } while (std::chrono::duration_cast<std::chrono::milliseconds>(t - lastFrame).count() < 100); // ~10FPS
-#else
         } while (std::chrono::duration_cast<std::chrono::microseconds>(t - lastFrame).count() < 16667); // ~60FPS
+#else
+        } while (std::chrono::duration_cast<std::chrono::milliseconds>(t - lastFrame).count() < 100); // ~10FPS
 #endif
         lastFrame = std::chrono::high_resolution_clock::now();
         if (!emulator()) 

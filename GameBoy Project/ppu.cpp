@@ -53,6 +53,19 @@ void PPU::RenderDebug(CPU cpu)
 
     std::stringstream ur;
     ur << cpu.DumpBoot(true).str();
+
+    ur << "\nPC : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.m_registers.PC) << std::endl;
+    ur << "SP : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.m_registers.SP) << std::endl;
+    ur << "A" << " : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.m_registers.m_registers[6]) << std::endl;
+    ur << "F" << " : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.m_registers.m_registers[7]) << std::endl;
+    ur << "B" << " : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.m_registers.m_registers[0]) << std::endl;
+    ur << "C" << " : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.m_registers.m_registers[1]) << std::endl;
+    ur << "D" << " : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.m_registers.m_registers[2]) << std::endl;
+    ur << "E" << " : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.m_registers.m_registers[3]) << std::endl;
+    ur << "H" << " : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.m_registers.m_registers[4]) << std::endl;
+    ur << "L" << " : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.m_registers.m_registers[5]) << std::endl;
+    ur << "IME : " << (cpu.m_registers.IME ? "true" : "false") << std::endl;
+    
     m_debugRom->setString(ur.str());
     
     std::stringstream ss;

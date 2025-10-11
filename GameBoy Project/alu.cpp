@@ -1,8 +1,6 @@
-
 #include "alu.h"
 #include "cpu.h"
 #include "mmu.h"
-
 
 #define PCREAD8() ([&]() { \
 	currentCycles += 4; \
@@ -214,7 +212,7 @@ int IF_LD_r_r::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 
 bool IF_LD_SP_HL::IsValid(uint8_t opcode)
 {
-	return opcode == 0b10011111;
+	return opcode == 0b11111001;
 }
 
 int IF_LD_SP_HL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
@@ -287,6 +285,13 @@ int IF_LD_ADRIMM_r::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		break;
 	case 0b00010000:
 		registers.m_registers[6] = mmu.Read(0xFF00 + address);
+		/*if (address == 0x44)
+		{
+			if (mmu.Read(0xFF00 + address) == 0x90)
+			{
+				std::cout << "AH" << std::endl;
+			}
+		}*/
 		break;
 	}	
 
@@ -573,6 +578,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		case 0b00011000: //CP
 			_res = (registers.m_registers[6] - _r_num) - (registers.m_registers[7] & 0b00000001);
 			//std::cout << "CP : " << static_cast<int>(_res) << std::endl;
+			
 #pragma region Negatif_Flags
 #pragma region Flag_S
 			registers.m_registers[7] |= 0b10000000; //Flag s (negatif)
@@ -864,6 +870,7 @@ int IF_FLOW_RET::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		condition = true;
 		if ((opcode & 0b11111111) == 0b11011001)
 		{
+			std::cout << "RETI" << std::endl;
 			interruptEnable = true;
 		}
 	}
