@@ -8,7 +8,6 @@ class PPU
 {
     sf::RenderWindow m_window;
     sf::Font m_font;
-    sf::Text* m_debugInstruction;
     sf::Text* m_debugRom;
 
     bool IsWindowOpen();

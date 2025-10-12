@@ -34,4 +34,6 @@ public:
 	int ServiceInterupt(int interrupt);
 
 	bool operator()();
+
+	void DebugSlowDown();
 };

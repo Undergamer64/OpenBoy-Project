@@ -83,7 +83,7 @@ int main()
 #if _DEBUG
         } while (std::chrono::duration_cast<std::chrono::microseconds>(t - lastFrame).count() < 16667); // ~60FPS
 #else
-        } while (std::chrono::duration_cast<std::chrono::milliseconds>(t - lastFrame).count() < 100); // ~10FPS
+        } while (std::chrono::duration_cast<std::chrono::milliseconds>(t - lastFrame).count() < 500); // ~5FPS
 #endif
         lastFrame = std::chrono::high_resolution_clock::now();
         if (!emulator()) 

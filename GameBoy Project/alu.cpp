@@ -1,4 +1,7 @@
 #include "alu.h"
+
+#include <Windows.h>
+
 #include "cpu.h"
 #include "mmu.h"
 
@@ -687,7 +690,7 @@ int IF_FLOW_JR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	}
 	else if ((opcode & 0b11111111) == 0b00011000)//Always JR
 	{
-		registers.PC -= e;
+		registers.PC += e;
 		currentCycles += 4;
 	}
 

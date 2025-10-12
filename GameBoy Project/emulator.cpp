@@ -4,9 +4,9 @@
 #include <fstream>
 
 #if _DEBUG
-static int MAXCYCLES = 1; //Debug
-#else
 static int MAXCYCLES = 4194304 / 60; // (number of cycles / frame rate)
+#else
+static int MAXCYCLES = 1; //Debug
 #endif
 
 Emulator::Emulator(MMU& mmu, ALU& alu) 
@@ -52,6 +52,10 @@ bool Emulator::operator()()
         UpdateTimers(cycles);
         UpdateGraphics(cycles); 
         cyclesThisUpdate += DoInterupts();
+
+#if _DEBUG
+        DebugSlowDown();
+#endif
     }
     
     if (!m_ppu.RenderScreen())
@@ -69,6 +73,15 @@ bool Emulator::operator()()
     m_ppu.Clear();
     
     return true;
+}
+
+void Emulator::DebugSlowDown()
+{
+    if (m_cpu.m_registers.PC == 0x8E)
+    {
+        MAXCYCLES = 1;
+        std::cout << "Debug Slow Down" << std::endl;
+    }
 }
 
 void Emulator::UpdateTimers(int cycles)
