@@ -1,3 +1,4 @@
+#include <chrono>
 #include <iostream>
 #include "emulator.h"
 #include "RAM.h"
