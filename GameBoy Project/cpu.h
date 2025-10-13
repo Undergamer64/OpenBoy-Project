@@ -31,6 +31,8 @@ class CPU
 
 public:
 	Registers m_registers;
+	int m_TimerCounter = 1024;
+
 	CPU(MMU& mmu, ALU& alu);
 	~CPU();
 
@@ -53,4 +55,8 @@ public:
 	int operator()();
 
 	int DumpRegisters(bool skip);
+
+	void SetClockFreq(int& TimerCounter);
+
+	void ForceWrite(uint16_t address, uint8_t value);
 };

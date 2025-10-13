@@ -637,7 +637,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 
 bool IF_FLOW_JR::IsValid(uint8_t opcode)
 {
-	return (opcode & 0b11111111) == 0b00011000 || (opcode & 0b11111111) == 0b00010000 || (opcode & 0b11100111) == 0b00100000;
+	return (opcode & 0b11111111) == 0b00011000 || (opcode & 0b11100111) == 0b00100000;
 }
 
 int IF_FLOW_JR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
@@ -678,14 +678,6 @@ int IF_FLOW_JR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 				currentCycles += 4;
 			}
 			break;
-		}
-	}
-	else if ((opcode & 0b11111111) == 0b00010000)//JR with B (if B = 0) + B -= 1
-	{
-		if (registers.m_registers[0] != 0)
-		{
-			registers.PC -= e;
-			currentCycles += 4;
 		}
 	}
 	else if ((opcode & 0b11111111) == 0b00011000)//Always JR

@@ -3,8 +3,13 @@
 #include <Windows.h>
 #include <fstream>
 
+#define CLOCKSPEED 4194304
+#define TIMA 0xFF05
+#define TMA 0xFF06
+#define TMC 0xFF07
+
 #if _DEBUG
-static int MAXCYCLES = 4194304 / 60; // (number of cycles / frame rate)
+static int MAXCYCLES = CLOCKSPEED / 60; // (number of cycles / frame rate)
 #else
 static int MAXCYCLES = 1; //Debug
 #endif
@@ -77,16 +82,40 @@ bool Emulator::operator()()
 
 void Emulator::DebugSlowDown()
 {
-    if (m_cpu.m_registers.PC == 0x8E)
+    if (m_cpu.m_registers.PC == 0x8B)
     {
-        MAXCYCLES = 1;
+        //MAXCYCLES = 1;
         std::cout << "Debug Slow Down" << std::endl;
     }
 }
 
 void Emulator::UpdateTimers(int cycles)
 {
-    //DO TIMER WITH FREQUENCY FOR INTERRUPT
+    DoDividerRegister(cycles);
+
+    // the clock must be enabled to update the clock
+    if (IsClockEnabled())
+    {
+        m_TimerCounter -= cycles ;
+
+        // enough cpu clock cycles have happened to update the timer
+        if (m_TimerCounter <= 0)
+        {
+            // reset m_TimerTracer to the correct value
+            m_cpu.SetClockFreq(m_TimerCounter);
+
+            // timer about to overflow
+            if (m_cpu.Read(TIMA) == 255)
+            {
+                m_cpu.Write(TIMA,m_cpu.Read(TMA)) ;
+                RequestInterupt(2) ;
+            }
+            else
+            {
+                m_cpu.Write(TIMA, m_cpu.Read(TIMA)+1) ;
+            }
+        }
+    }
 }
 
 void Emulator::UpdateGraphics(int cycles)
@@ -207,6 +236,11 @@ bool Emulator::IsLCDEnabled()
     return m_cpu.Read(0xFF40) >> 7;
 }
 
+bool Emulator::IsClockEnabled()
+{
+    return (m_cpu.Read(TMC) & 0b00000100) != 0;
+}
+
 void Emulator::RequestInterupt(int interrupt)
 {
     uint8_t req = m_cpu.Read(0xFF0F);
@@ -267,4 +301,14 @@ int Emulator::ServiceInterupt(int interrupt)
         break;
     }
     return 20;
+}
+
+void Emulator::DoDividerRegister(int cycles)
+{
+    m_DividerCounter += cycles;
+    if (m_DividerCounter >= 255)
+    {
+        m_DividerCounter = 0;
+        m_cpu.ForceWrite(0xFF04, m_cpu.Read(0xFF04) + 1);
+    }
 }

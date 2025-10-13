@@ -1,6 +1,11 @@
 #include "mmu.h"
 #include "ram.h"
 
+#define CLOCKSPEED 4194304
+#define TIMA 0xFF05
+#define TMA 0xFF06
+#define TMC 0xFF07
+
 MMU::MMU(BootRom& bootRom)
 	: m_bootRom(bootRom)
 {
@@ -55,4 +60,29 @@ void MMU::Write(uint16_t address, uint8_t value)
 	}
 	std::cout << "Writing in non mapped address " << address << std::endl;
 	std::cout << "Value was " << static_cast<int>(value) << std::endl;
+}
+
+void MMU::SetClockFreq(int& TimerCounter)
+{
+	uint8_t freq = Read(TMC) & 3;
+	switch (freq)
+	{
+	case 0:
+		TimerCounter = 1024;
+		break; // freq 4096
+	case 1:
+		TimerCounter = 16;
+		break;// freq 262144
+	case 2:
+		TimerCounter = 64;
+		break;// freq 65536
+	case 3:
+		TimerCounter = 256;
+		break;// freq 16382
+	}
+}
+
+uint8_t MMU::GetClockFreq()
+{
+	return Read(TMC) & 3;
 }

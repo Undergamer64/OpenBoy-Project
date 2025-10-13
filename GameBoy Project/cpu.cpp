@@ -5,6 +5,11 @@
 
 #include "mmu.h"
 
+#define CLOCKSPEED 4194304
+#define TIMA 0xFF05
+#define TMA 0xFF06
+#define TMC 0xFF07
+
 #pragma region CPU
 
 CPU::CPU(MMU& mmu, ALU& alu)
@@ -91,29 +96,6 @@ std::stringstream CPU::DumpBoot(bool pointer)
 		ss << "--";
 	}
 	return ss;
-}
-
-void CPU::Write(uint16_t address, uint8_t value)
-{
-	//CONDITIONS
-	
-	m_mmu.Write(address, value);
-}
-
-uint8_t CPU::Read(uint16_t address)
-{
-	return m_mmu.Read(address);
-}
-
-void CPU::Map(MemoryBase* mem, uint16_t address)
-{
-	m_mmu.Map(mem, address);
-}
-
-void CPU::Push(uint16_t address)
-{
-	m_mmu.Write(--m_registers.SP, address >> 8);
-	m_mmu.Write(--m_registers.SP, address);
 }
 
 uint8_t CPU::GetCurrentInstruction()
@@ -235,3 +217,51 @@ int CPU::DumpRegisters(bool skip)
 }
 
 #pragma endregion
+
+void CPU::Write(uint16_t address, uint8_t value)
+{
+	//CONDITIONS
+
+	
+	
+	m_mmu.Write(address, value);
+}
+
+uint8_t CPU::Read(uint16_t address)
+{
+	if (TMC == address)
+	{
+		uint8_t currentfreq = m_mmu.GetClockFreq() ;
+		uint8_t value = m_mmu.Read(address);
+		uint8_t newfreq = m_mmu.GetClockFreq();
+
+		if (currentfreq != newfreq)
+		{
+			m_mmu.SetClockFreq(m_TimerCounter);
+		}
+		return value;
+	}
+	
+	return m_mmu.Read(address);
+}
+
+void CPU::Map(MemoryBase* mem, uint16_t address)
+{
+	m_mmu.Map(mem, address);
+}
+
+void CPU::Push(uint16_t address)
+{
+	m_mmu.Write(--m_registers.SP, address >> 8);
+	m_mmu.Write(--m_registers.SP, address);
+}
+
+void CPU::SetClockFreq(int& TimerCounter)
+{
+	m_mmu.SetClockFreq(TimerCounter);
+}
+
+void CPU::ForceWrite(uint16_t address, uint8_t value)
+{
+	m_mmu.Write(address, value);
+}

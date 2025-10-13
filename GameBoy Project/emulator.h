@@ -12,6 +12,8 @@ public:
 	Cartidge m_cartidge;
 	
 	int m_scanlineCounter = 456;
+	int m_TimerCounter = 1024;
+	int m_DividerCounter = 0;
 	
 	Emulator(MMU& mmu, ALU& alu);
 	~Emulator();
@@ -29,6 +31,8 @@ public:
 
 	bool IsLCDEnabled();
 
+	bool IsClockEnabled();
+	
 	void RequestInterupt(int interrupt);
 	int DoInterupts();
 	int ServiceInterupt(int interrupt);
@@ -36,4 +40,6 @@ public:
 	bool operator()();
 
 	void DebugSlowDown();
+
+	void DoDividerRegister(int cycles);
 };
