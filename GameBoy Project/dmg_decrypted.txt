@@ -1,0 +1,254 @@
+    ld sp, hStackBottom
+    
+    xor a
+    ld hl, _VRAM + SIZEOF(VRAM) - 1
+    
+    
+    ld [hld], a                             (.clearVRAM)
+    bit 7, h
+    jr nz, .clearVRAM
+    
+    
+    ld hl, rNR52
+    
+    
+    ld c, LOW(rNR11) ////CH1 length ////Enable APU
+    
+    ld a, AUDENA_ON ////This sets (roughly) all audio registers to 0
+    
+    ld [hld], a
+    ldh [c], a ////Set CH1 duty cycle to 25%
+    inc c ////Set CH1 envelope
+    ld a, (15 << 4) | AUDENV_DOWN | 3 ////Initial volume 15, decreasing sweep 3
+    
+    ldh [c], a ////Route all channels to left speaker, CH2 and CH1 to right speaker
+    ld [hld], a ////Note that only channel 1 will be used!
+    ld a, $77 ////Set volume on both speakers to max, disable VIN on both speakers
+    
+    ld [hl], a
+    ld a, %11_11_11_00
+    
+    ldh [rBGP], a
+    ld de, HeaderLogo
+    
+    
+    ld hl, vLogoTiles
+    
+    
+    ld a, [de]                            (.decompressLogo)
+    call DecompressFirstNibble
+    
+    
+    call DecompressSecondNibble
+    
+    
+    inc de
+    ld a, e
+    cp LOW(HeaderTitle)
+    
+    jr nz, .decompressLogo ////ld hl, vRTile
+    
+    
+    ld de, RTile
+    
+    
+    ld b, 8
+    
+    ld a, [de]                           (.copyRTile)
+    inc de
+    ld [hli], a
+    inc hl ////Skip every other byte
+    dec b
+    jr nz, .copyRTile
+    
+    ld a, $19
+    
+    ld [vMainTilemap + SCRN_VX_B * 8 + 16], a ////8 rows down, 16 across
+    
+    
+    ld hl, vMainTilemap + SCRN_VX_B * 9 + 15
+    
+    
+    ld c, 12                            (.writeTilemapRow)
+    
+    dec a                               (.writeTilemapByte)
+    jr z, ScrollLogo
+    
+    ld [hld], a
+    dec c
+    jr nz, .writeTilemapByte
+    
+    ld l, LOW(vMainTilemap + SCRN_VX_B * 8 + 15)
+    
+    jr .writeTilemapRow
+
+    ld h, a ////ld h, 0   ////a = 0     (ScrollLogo:)
+    ld a, 100
+    
+    ld d, a
+    ldh [rSCY], a
+    
+    ld a, LCDCF_ON | LCDCF_BLK01 | LCDCF_BGON
+    
+    ldh [rLCDC], a    ////h = Number of times the logo was scrolled up
+                      ////d = How many frames before exiting the loop
+    inc b ////ld b, 1 ////b = Whether to scroll the logo
+    ld e, 2                             (.loop)
+
+    ld c, 12                            (.delayFrames)
+    
+    ldh a, [rLY]                        (.waitVBlank)
+    
+    cp SCRN_Y
+    
+    jr nz, .waitVBlank
+    
+    dec c
+    jr nz, .waitVBlank
+    
+    dec e
+    jr nz, .delayFrames
+
+    ld c, LOW(rNR13) ////CH1 frequency low byte
+    
+    inc h
+    ld a, h
+    ld e, $83
+    
+    cp $62
+    
+    jr z, .playSound
+    
+    ld e, $C1
+    
+    cp $64
+    
+    jr nz, .dontPlaySound
+    
+    ld a, e                             (.playSound)
+    ldh [c], a
+    inc c ////ld c, LOW(rNR14) ////CH1 frequency high byte
+    ld a, AUDHIGH_RESTART | 7 ////Set frequency to $7XX and restart channel
+    
+    ldh [c], a
+    ldh a, [rSCY]                       (.dontPlaySound)
+    
+    sub b
+    ldh [rSCY], a
+    
+    dec d
+    jr nz, .loop
+
+    dec b
+    jr nz, CheckLogo
+    
+    ld d, 32
+    
+    jr .loop
+
+    ld c, a                     (DecompressFirstNibble:)
+    ld b, 8 / 2                 (DecompressSecondNibble:)
+////Set all 8 bits of a, "consuming" 4 bits of c
+    push bc                     (.loop)
+    rl c ////Extract MSB of c
+    
+    rla ////Into LSB of a
+    pop bc
+    rl c ////Extract that same bit
+    
+    rla ////So that bit is inserted twice in a (= horizontally doubled)
+    dec b
+    jr nz, .loop
+    
+    ld [hli], a
+    inc hl ////Skip second plane
+    ld [hli], a ////Also double vertically
+    inc hl
+    ret
+$CE                                             (Logo:)
+$ED
+$66
+$66
+$CC
+$0D
+$00
+$0B
+$03
+$73
+$00
+$83
+$00
+$0C
+$00
+$0D 
+$00
+$08
+$11
+$1F
+$88
+$89
+$00
+$0E
+$DC
+$CC
+$6E
+$E6
+$DD
+$DD
+$D9
+$99 
+$BB
+$BB
+$67
+$63
+$6E
+$0E
+$EC
+$CC
+$DD
+$DC
+$99
+$9F
+$BB
+$B9
+$33
+$3E
+$3C //// Copyright logo from here (including this line)
+$42
+$B9
+$A5
+$B9
+$A5
+$42
+$3C
+    ld hl, HeaderLogo                   (CheckLogo:)
+    
+    
+    ld de, Logo
+    
+    
+    ld a, [de]                          (.compare)
+    inc de
+    cp [hl]
+    jr nz, .logoFailure                 (.logoFailure)
+    
+    inc hl
+    ld a, l
+    cp LOW(HeaderTitle)
+    
+    jr nz, .compare
+
+    ld b, HeaderChecksum - HeaderTitle
+    
+    ld a, b
+    add a, [hl]                         (.computeChecksum)
+    inc hl
+    dec b
+    jr nz, .computeChecksum
+    
+    add a, [hl]
+    jr nz, .checksumFailure             (.checksumFailure)
+
+    ld a, BOOTUP_A_DMG
+
+    ldh [rBANK], a

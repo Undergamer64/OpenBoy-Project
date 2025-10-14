@@ -1,5 +1,4 @@
 #pragma once
-#include <iostream>
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -69,6 +68,24 @@ public:
 };
 
 class IF_LD_SP_HL final
+	: public InstructionFamily
+{
+public:
+	bool IsValid(uint8_t opcode) override;
+
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override;
+};
+
+class IF_LD_ADR_r final
+	: public InstructionFamily
+{
+public:
+	bool IsValid(uint8_t opcode) override;
+
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override;
+};
+
+class IF_LD_ADRIMM_r final
 	: public InstructionFamily
 {
 public:
@@ -179,6 +196,18 @@ class IF_PUSH_POP final
 public:
 	bool IsValid(uint8_t opcode) override;
 
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override;
+};
+
+#pragma endregion
+
+#pragma region Interrupts Instructions
+
+class IF_DI_EI final
+	: public InstructionFamily
+{
+public:
+	bool IsValid(uint8_t opcode) override;
 	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override;
 };
 

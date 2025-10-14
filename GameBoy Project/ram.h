@@ -18,6 +18,11 @@ class Memory
 	std::array<uint8_t, SIZE> m_bytes;
 
 public:
+	Memory()
+	{
+		m_bytes.fill(0);
+	}
+	
 	size_t Size() const override 
 	{
 		return SIZE;

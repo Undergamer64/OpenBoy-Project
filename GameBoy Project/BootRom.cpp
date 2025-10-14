@@ -1,29 +1,34 @@
 #include "BootRom.h"
 
+#include <iostream>
 #include <fstream>
 
 BootRom::BootRom(const std::string& filepath)
 {
-	std::ifstream ifs(filepath);
+	std::ifstream ifs(filepath, std::ios::binary);
 	if (ifs.good()) 
 	{
-		ifs.read(reinterpret_cast<char*>(m_bytes.data()), 258);
+		ifs.read(reinterpret_cast<char*>(m_bytes.data()), BootRom::Size()-1);
+		if (ifs.fail())
+		{
+			std::cout << std::to_string(ifs.gcount()) << " failure" << std::endl;
+		}
 		ifs.close();
 	}
 	else 
 	{
-		//throw std::exception("BootRom is Invalid !");
+		throw std::exception("BootRom is Invalid !");
 	}
 };
 
 size_t BootRom::Size() const
 {
-	return 258;
+	return 256;
 };
 
 uint8_t BootRom::Read(uint16_t address) const
 {
-	if (address < 258) {
+	if (address < BootRom::Size()) {
 		return m_bytes[address];
 	}
 	return 0;

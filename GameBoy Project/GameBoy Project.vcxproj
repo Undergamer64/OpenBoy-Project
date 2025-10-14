@@ -131,23 +131,35 @@
   <ItemGroup>
     <ClCompile Include="alu.cpp" />
     <ClCompile Include="BootRom.cpp" />
+    <ClCompile Include="Cartidge.cpp" />
     <ClCompile Include="cpu.cpp" />
     <ClCompile Include="emulator.cpp" />
     <ClCompile Include="GameBoy Project.cpp" />
     <ClCompile Include="mmu.cpp" />
+    <ClCompile Include="ppu.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="alu.h" />
     <ClInclude Include="BootRom.h" />
+    <ClInclude Include="Cartidge.h" />
     <ClInclude Include="cpu.h" />
     <ClInclude Include="emulator.h" />
     <ClInclude Include="mmu.h" />
+    <ClInclude Include="ppu.h" />
     <ClInclude Include="ram.h" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="CMakeLists.txt" />
     <Content Include="dmg_boot.bin" />
+    <Content Include="dmg_decrypted.txt" />
+    <Content Include="EarlyGameBoy.ttf" />
+    <Content Include="Jersey10-Regular.ttf" />
+    <Content Include="Tetris.gb" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>true</VcpkgEnableManifest>
+  </PropertyGroup>
 </Project>
