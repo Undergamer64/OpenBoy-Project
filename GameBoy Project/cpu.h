@@ -54,7 +54,7 @@ public:
 
 	int operator()();
 
-	int DumpRegisters(bool skip);
+	//int DumpRegisters(bool skip);
 
 	void SetClockFreq(int& TimerCounter);
 

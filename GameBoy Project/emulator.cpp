@@ -1,17 +1,14 @@
 #include "emulator.h"
 
-#include <Windows.h>
-#include <fstream>
-
 #define CLOCKSPEED 4194304
 #define TIMA 0xFF05
 #define TMA 0xFF06
 #define TMC 0xFF07
 
 #if _DEBUG
-static int MAXCYCLES = CLOCKSPEED / 60; // (number of cycles / frame rate)
-#else
 static int MAXCYCLES = 1; //Debug
+#else
+static int MAXCYCLES = CLOCKSPEED / 60; // (number of cycles / frame rate)
 #endif
 
 Emulator::Emulator(MMU& mmu, ALU& alu) 
@@ -61,6 +58,7 @@ bool Emulator::operator()()
 #if _DEBUG
         DebugSlowDown();
 #endif
+        
     }
     
     if (!m_ppu.RenderScreen())

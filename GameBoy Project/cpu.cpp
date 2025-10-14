@@ -44,7 +44,7 @@ void CPU::LoadCartridge(const std::string& filepath)
 	std::cout << "Done !" << "\n";
 	
 	std::cout << "Cartridge size : " << m_cartidge.Size() << std::endl;
-	/*
+	
 #if _DEBUG
 	for (size_t address = 0; address < m_cartidge.Size(); address++)
 	{
@@ -62,7 +62,7 @@ void CPU::LoadCartridge(const std::string& filepath)
 		}
 	}
 #endif
-	*/
+	
 	for (int i = 0; i < 20; i++)
 	{
 		std::cout << "--";
@@ -148,13 +148,10 @@ int CPU::operator()()
 	return Execute();
 }
 
+/*
 int CPU::DumpRegisters(bool skip)
 {
-	if (skip || (m_debugSkip
-		&& (m_registers.PC != 0x51/*
-		|| m_registers.m_registers[2] <= 1*/
-		|| (m_registers.PC >= 0x95 && m_registers.PC <= 0xA7)
-		|| (m_registers.PC >= 0x60 && m_registers.PC <= 0x6e))))
+	if (skip || m_debugSkip)
 	{
 		return 1;
 	}
@@ -215,6 +212,7 @@ int CPU::DumpRegisters(bool skip)
 
 	return 1;
 }
+*/
 
 #pragma endregion
 

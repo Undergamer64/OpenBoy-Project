@@ -1,7 +1,4 @@
 #include "alu.h"
-
-#include <Windows.h>
-
 #include "cpu.h"
 #include "mmu.h"
 
