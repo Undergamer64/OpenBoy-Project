@@ -154,6 +154,7 @@
     <Content Include="dmg_decrypted.txt" />
     <Content Include="EarlyGameBoy.ttf" />
     <Content Include="Jersey10-Regular.ttf" />
+    <Content Include="Square.png" />
     <Content Include="Tetris.gb" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

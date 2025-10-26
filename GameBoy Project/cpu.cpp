@@ -37,15 +37,19 @@ CPU& CPU::operator+=(InstrFamilyPtr&& f)
 
 void CPU::LoadCartridge(const std::string& filepath)
 {
+#if _DEBUG
 	std::cout << "Loading Cartridge: " << filepath << std::endl;
+#endif
 	
 	m_cartidge = Cartidge(filepath);
-	
+
+#if _DEBUG
 	std::cout << "Done !" << "\n";
 	
-	std::cout << "Cartridge size : " << m_cartidge.Size() << std::endl;
+	std::cout << "Cartridge size : " << m_cartidge.Size() << "\n";
+	/*
+	std::cout << "Cartridge content (up to 0x8000) :" << std::endl;
 	
-#if _DEBUG
 	for (size_t address = 0; address < m_cartidge.Size(); address++)
 	{
 		if (address > 0x8000)
@@ -54,20 +58,20 @@ void CPU::LoadCartridge(const std::string& filepath)
 		}	
 		m_mmu.Write(address, m_cartidge.Read(address));
 
-		std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(m_cartidge.Read(address)) << " ";
+		std::cout << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(m_cartidge.Read(address)) << " ";
 
 		if ((address + 1) % 0x0010 == 0)
 		{
 			std::cout << "\n";
 		}
 	}
-#endif
 	
 	for (int i = 0; i < 20; i++)
 	{
 		std::cout << "--";
 	}
-	std::cout << std::endl;
+	std::cout << std::endl;*/
+#endif
 }
 
 std::stringstream CPU::DumpBoot(bool pointer)
@@ -85,7 +89,6 @@ std::stringstream CPU::DumpBoot(bool pointer)
 			{
 				ss << "  ";
 			}
-			//std::cout << "Index : " << j + i*16 << " ; ";
 			uint8_t opcode = Read(j + (i*16));
 			ss << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(opcode);
 		}

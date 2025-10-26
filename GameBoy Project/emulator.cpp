@@ -11,10 +11,10 @@ static int MAXCYCLES = 1; //Debug
 static int MAXCYCLES = CLOCKSPEED / 60; // (number of cycles / frame rate)
 #endif
 
-Emulator::Emulator(MMU& mmu, ALU& alu) 
+Emulator::Emulator(MMU& mmu, ALU& alu)
     : m_cartidge(Cartidge())
     , m_cpu(mmu, alu)
-    , m_ppu()
+    , m_ppu(mmu)
 {
 }
 
@@ -79,12 +79,12 @@ bool Emulator::operator()()
 }
 
 void Emulator::DebugSlowDown()
-{
+{/*
     if (m_cpu.m_registers.PC == 0x8B)
     {
         //MAXCYCLES = 1;
         std::cout << "Debug Slow Down" << std::endl;
-    }
+    }*/
 }
 
 void Emulator::UpdateTimers(int cycles)
@@ -150,7 +150,7 @@ void Emulator::UpdateGraphics(int cycles)
         }
         else if (currentLine < 144)// draw the current scanline
         {
-            //DrawScanLine();
+            m_ppu.DrawScanLine(currentLine);
         }
     }
 }

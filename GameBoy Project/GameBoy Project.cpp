@@ -69,6 +69,7 @@ int main()
     emulator.LoadCartridge("Tetris.gb");
 
 #if _DEBUG
+    std::cout << "Boot ROM :" << std::endl;
     std::cout << emulator.m_cpu.DumpBoot().str() << std::endl;
 #endif
 
@@ -92,6 +93,6 @@ int main()
             break;
         }
     }
-
+  
     return 0;
 }
