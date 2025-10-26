@@ -9,6 +9,7 @@ class PPU
     sf::RenderWindow m_window;
     sf::Font m_font;
     sf::Text* m_debugRom;
+    sf::RectangleShape* m_debugBackground;
     
     std::vector<std::vector<sf::RectangleShape*>> m_ScreenData;
 

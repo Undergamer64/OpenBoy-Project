@@ -71,10 +71,9 @@ bool Emulator::operator()()
     //Render Debug values here
     m_ppu.RenderDebug(m_cpu);
 #endif
-
+    
     m_ppu.Display();
     m_ppu.Clear();
-    
     return true;
 }
 

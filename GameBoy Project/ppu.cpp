@@ -38,25 +38,35 @@ PPU::PPU(MMU& mmu)
     m_window.setFramerateLimit(60);
     m_window.setVerticalSyncEnabled(true);
     sf::Vector2u size = sf::VideoMode::getDesktopMode().size;
-    size.x = std::min(size.x / 160, size.y / 144) * 160;
-    size.y = std::min(size.x / 160, size.y / 144) * 144;
+    
+    float ratio = std::min(size.x / 160, size.y / 144);
+
+    size.x = ratio * 160;
+    size.y = ratio * 144;
     m_window.setSize(size);
     m_window.setPosition(sf::Vector2i(
-            (sf::VideoMode::getDesktopMode().size.x - size.x) / 2,
-            (sf::VideoMode::getDesktopMode().size.y - size.y) / 2)
+        (sf::VideoMode::getDesktopMode().size.x - size.x) / 2,
+        (sf::VideoMode::getDesktopMode().size.y - size.y) / 2)
     );
     if (!m_font.openFromFile("EarlyGameBoy.ttf"))
     {
         m_window.close();
     }
+    
+    sf::Vector2f pixelSize(
+        ratio * 160,
+        ratio * 144
+    );
+
+    //Screen size wasn't screen size, so fuck it
+    m_debugBackground = new sf::RectangleShape(sf::Vector2f(
+        sf::VideoMode::getDesktopMode().size.x*2,
+        sf::VideoMode::getDesktopMode().size.y*2)
+        );
+
+    m_debugBackground->setFillColor(sf::Color(0,0,0,150));
 
     m_debugRom = new sf::Text(m_font);
-    m_debugRom->setOutlineColor(sf::Color::Black);
-
-    sf::Vector2f pixelSize(
-        std::min(size.x / 160, size.y / 144) * 160,
-        std::min(size.x / 160, size.y / 144) * 144
-    );
 
     for (int y = 0; y < 144; y++)
     {
@@ -65,7 +75,7 @@ PPU::PPU(MMU& mmu)
         {
             sf::RectangleShape* pixel = new sf::RectangleShape(pixelSize);
             pixel->setFillColor(sf::Color::White);
-            pixel->setPosition(sf::Vector2f(static_cast<float>(x * 8), static_cast<float>(y * 8)));
+            pixel->setPosition(sf::Vector2f(x * ratio, y * ratio));
             row.push_back(pixel);
         }
         m_ScreenData.push_back(row);
@@ -121,6 +131,7 @@ void PPU::RenderDebug(CPU cpu)
     
     m_debugRom->setString(ur.str());
     
+    m_window.draw(*m_debugBackground);
     m_window.draw(*m_debugRom);
 }
 
@@ -223,15 +234,15 @@ void PPU::RenderTiles(uint8_t lcdControl)
 
         // get the tile identity number. Remember it can be signed
         // or unsigned
-        uint16_t tileAddrss = backgroundMemory+tileRow+tileCol;
+        uint16_t tileAddress = backgroundMemory+tileRow+tileCol;
         if(unsig)
         {
-            tileNum = m_mmu.Read(tileAddrss);
+            tileNum = m_mmu.Read(tileAddress);
         }
         else
         {
             //TODO : find how to integrate SIGNED_BYTE
-            tileNum =static_cast<int8_t>(m_mmu.Read(tileAddrss));
+            tileNum =static_cast<int8_t>(m_mmu.Read(tileAddress));
         }
 
         // deduce where this tile identifier is in memory.
@@ -269,6 +280,7 @@ void PPU::RenderTiles(uint8_t lcdControl)
         // now we have the colour id get the actual
         // colour from palette 0xFF47
         uint8_t col = m_mmu.Read(0xFF47) >> colourNum * 2 & 0b11;
+        
         int red = 0;
         int green = 0;
         int blue = 0;
@@ -305,12 +317,6 @@ void PPU::RenderTiles(uint8_t lcdControl)
         if ((scanline<0)||(scanline>143)||(pixel<0)||(pixel>159))
         {
             continue;
-        }
-
-        if (col != WHITE)
-        {
-            std::cout << "Drawing tile pixel at (" << scanline << "," << pixel << ")\n";
-            std::cout << "Colour is " << static_cast<int>(col) << "\n\n";
         }
 
         m_ScreenData[scanline][pixel]->setFillColor(sf::Color(red, green, blue));
@@ -417,9 +423,7 @@ void PPU::RenderSprites(uint8_t lcdControl)
                 {
                     continue;
                 }
-
-                std::cout << "Drawing sprite pixel at (" << scanline << "," << pixel << ")\n";
-                std::cout << "Colour is " << static_cast<int>(col) << "\n\n";
+                
                 m_ScreenData[scanline][pixel]->setFillColor(sf::Color(red, green, blue));
             }
         }
