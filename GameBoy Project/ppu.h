@@ -1,8 +1,8 @@
 ﻿#pragma once
-
 #include <SFML/Graphics.hpp>
 
-#include "cpu.h"
+class MMU;
+class CPU;
 
 class PPU
 {

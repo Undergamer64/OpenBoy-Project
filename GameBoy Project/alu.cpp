@@ -1444,12 +1444,12 @@ int IF_DI_EI::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 
 #pragma region Custom Instruction
 
-bool IF_Finish::IsValid(uint8_t opcode)
+bool IF_Finish::IsValid(uint8_t opcode) //Deprecated
 {
 	return (opcode & 0b11111111) == 0xFD;
 }
 
-int IF_Finish::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
+int IF_Finish::Execute(uint8_t opcode, MMU& mmu, Registers& registers) //Deprecated
 {
 	int currentCycles = -2;
 

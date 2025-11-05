@@ -1,8 +1,8 @@
 ﻿#include "ppu.h"
-
 #include <iostream>
 #include <optional>
 
+#include "cpu.h"
 #include "mmu.h"
 
 enum

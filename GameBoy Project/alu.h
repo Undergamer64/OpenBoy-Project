@@ -215,7 +215,7 @@ public:
 
 #pragma region Custom Instruction
 
-class IF_Finish final
+class IF_Finish final //Deprecated
 	: public InstructionFamily
 {
 public:

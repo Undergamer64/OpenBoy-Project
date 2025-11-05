@@ -1,5 +1,7 @@
 #include "emulator.h"
 
+#include <iostream>
+
 #define CLOCKSPEED 4194304
 #define TIMA 0xFF05
 #define TMA 0xFF06

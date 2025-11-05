@@ -1,10 +1,10 @@
 #pragma once
-#include "RAM.h"
-#include "mmu.h"
-#include "alu.h"
-#include "cpu.h"
 #include "Cartidge.h"
+#include "cpu.h"
 #include "ppu.h"
+
+class MMU;
+class ALU;
 
 class Emulator
 {
