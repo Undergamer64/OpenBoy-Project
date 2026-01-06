@@ -17,9 +17,11 @@ public:
 	
 	Emulator(MMU& mmu, ALU& alu);
 	~Emulator();
-
-	PPU m_ppu;
+    
+    PPU m_ppu;
 	CPU m_cpu;
+    
+    void SkipBootRom();
 	
 	void Map(MemoryBase* mem, uint16_t address);
 
@@ -42,4 +44,6 @@ public:
 	void DebugSlowDown();
 
 	void DoDividerRegister(int cycles);
+    
+    bool Render();
 };

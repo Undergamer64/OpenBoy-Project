@@ -8,7 +8,7 @@
 #define TMC 0xFF07
 
 #if _DEBUG
-static int MAXCYCLES = 1; //Debug
+static int MAXCYCLES = CLOCKSPEED / 60; //Debug
 #else
 static int MAXCYCLES = CLOCKSPEED / 60; // (number of cycles / frame rate)
 #endif
@@ -22,6 +22,59 @@ Emulator::Emulator(MMU& mmu, ALU& alu)
 
 Emulator::~Emulator()
 {
+}
+
+void Emulator::SkipBootRom()
+{
+    // Set registers to post boot rom values (BRUTE FORCE METHOD) source : Pan Docs
+    
+    m_cpu.m_registers.PC = 0x100;
+    m_cpu.m_registers.SP = 0xFFFE;
+    m_cpu.m_registers.m_registers[0] = 0x01; // A
+    m_cpu.m_registers.m_registers[1] = 0xB0; // F
+    m_cpu.m_registers.m_registers[2] = 0x13; // B
+    m_cpu.m_registers.m_registers[3] = 0x00; // C
+    m_cpu.m_registers.m_registers[4] = 0xD8; // D
+    m_cpu.m_registers.m_registers[5] = 0x01; // E
+    m_cpu.m_registers.m_registers[6] = 0x4D; // H
+    m_cpu.m_registers.m_registers[7] = 0x00; // L
+    
+    m_cpu.ForceWrite(0xFF00, 0xCF); // P1
+    m_cpu.ForceWrite(0xFF01, 0x00); // SB
+    m_cpu.ForceWrite(0xFF02, 0x7E); // SC
+    m_cpu.ForceWrite(0xFF04, 0xAB); // DIV
+    m_cpu.ForceWrite(0xFF05, 0x00); // TIMA
+    m_cpu.ForceWrite(0xFF06, 0x00); // TMA
+    m_cpu.ForceWrite(0xFF07, 0xF8); // TAC
+    m_cpu.ForceWrite(0xFF0F, 0xE1); // IF
+    m_cpu.ForceWrite(0xFF10, 0x80); // NR10
+    m_cpu.ForceWrite(0xFF11, 0xBF); // NR11
+    m_cpu.ForceWrite(0xFF12, 0xF3); // NR12
+    m_cpu.ForceWrite(0xFF14, 0xBF); // NR14
+    m_cpu.ForceWrite(0xFF16, 0x3F); // NR21
+    m_cpu.ForceWrite(0xFF17, 0x00); // NR22
+    m_cpu.ForceWrite(0xFF19, 0xBF); // NR24
+    m_cpu.ForceWrite(0xFF1A, 0x7F); // NR30
+    m_cpu.ForceWrite(0xFF1B, 0xFF); // NR31
+    m_cpu.ForceWrite(0xFF1C, 0x9F); // NR32
+    m_cpu.ForceWrite(0xFF1E, 0xBF); // NR33
+    m_cpu.ForceWrite(0xFF20, 0xFF); // NR41
+    m_cpu.ForceWrite(0xFF21, 0x00); // NR42
+    m_cpu.ForceWrite(0xFF22, 0x00); // NR43
+    m_cpu.ForceWrite(0xFF23, 0xBF); // NR44
+    m_cpu.ForceWrite(0xFF24, 0x77); // NR50
+    m_cpu.ForceWrite(0xFF25, 0xF3); // NR51
+    m_cpu.ForceWrite(0xFF40, 0x91); // LCDC
+    m_cpu.ForceWrite(0xFF41, 0x85); // STAT
+    m_cpu.ForceWrite(0xFF42, 0x00); // SCY
+    m_cpu.ForceWrite(0xFF43, 0x00); // SCX
+    m_cpu.ForceWrite(0xFF45, 0x00); // LYC
+    m_cpu.ForceWrite(0xFF47, 0xFC); // BGP
+    m_cpu.ForceWrite(0xFF48, 0xFF); // OBP0
+    m_cpu.ForceWrite(0xFF49, 0xFF); // OBP1
+    m_cpu.ForceWrite(0xFF4A, 0x00); // WY
+    m_cpu.ForceWrite(0xFF4B, 0x00); // WX
+    m_cpu.ForceWrite(0xFFFF, 0x00); // IE
 }
 
 void Emulator::Map(MemoryBase* mem, uint16_t address) 
@@ -58,24 +111,10 @@ bool Emulator::operator()()
         cyclesThisUpdate += DoInterupts();
 
 #if _DEBUG
-        DebugSlowDown();
+        //DebugSlowDown();
 #endif
         
     }
-    
-    if (!m_ppu.RenderScreen())
-    {
-        return false;  
-    }
-    //std::cout << "\nRefresh\n";
-
-#if _DEBUG
-    //Render Debug values here
-    m_ppu.RenderDebug(m_cpu);
-#endif
-    
-    m_ppu.Display();
-    m_ppu.Clear();
     return true;
 }
 
@@ -310,4 +349,22 @@ void Emulator::DoDividerRegister(int cycles)
         m_DividerCounter = 0;
         m_cpu.ForceWrite(0xFF04, m_cpu.Read(0xFF04) + 1);
     }
+}
+
+bool Emulator::Render()
+{
+    if (!m_ppu.RenderScreen())
+    {
+        return false;  
+    }
+    //std::cout << "\nRefresh\n";
+
+#if _DEBUG
+    //Render Debug values here
+    m_ppu.RenderDebug(m_cpu);
+#endif
+    
+    m_ppu.Display();
+    m_ppu.Clear();
+    return true;
 }

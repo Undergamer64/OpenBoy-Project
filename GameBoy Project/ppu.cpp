@@ -15,25 +15,20 @@ enum
 
 bool PPU::IsWindowOpen()
 {
-    do
+    while (const std::optional<sf::Event> event = m_window.pollEvent())
     {
-        std::optional<sf::Event> event = m_window.pollEvent();
-        if (!event.has_value())
-        {
-            break;
-        }
-        if (event.value().is<sf::Event::Closed>())
+        if (event->is<sf::Event::Closed>())
         {
             m_window.close();
             return false;
         }
-    } while (true);
+    }
 
     return true;
 }
 
 PPU::PPU(MMU& mmu)
-    : m_window(sf::VideoMode( sf::Vector2u(160*8,144*8), 600), "GameBoy Project"), m_mmu(mmu)
+    : m_window(sf::VideoMode( sf::Vector2u(160,144), 32), "GameBoy Project"), m_mmu(mmu)
 {
     m_window.setFramerateLimit(60);
     m_window.setVerticalSyncEnabled(true);
@@ -52,30 +47,23 @@ PPU::PPU(MMU& mmu)
     {
         m_window.close();
     }
-    
-    sf::Vector2f pixelSize(
-        ratio * 160,
-        ratio * 144
-    );
 
     //Screen size wasn't screen size, so fuck it
-    m_debugBackground = new sf::RectangleShape(sf::Vector2f(
-        sf::VideoMode::getDesktopMode().size.x*2,
-        sf::VideoMode::getDesktopMode().size.y*2)
-        );
+    m_debugBackground = new sf::RectangleShape(sf::Vector2f(size.x, size.y));
 
     m_debugBackground->setFillColor(sf::Color(0,0,0,150));
 
     m_debugRom = new sf::Text(m_font);
-
+    m_debugRom->setScale(sf::Vector2f(0.15f,0.15f)); //Magic numbers ? Nah, I would never !
+    
     for (int y = 0; y < 144; y++)
     {
         std::vector<sf::RectangleShape*> row;
         for (int x = 0; x < 160; x++)
         {
-            sf::RectangleShape* pixel = new sf::RectangleShape(pixelSize);
+            sf::RectangleShape* pixel = new sf::RectangleShape(sf::Vector2f(1,1));
             pixel->setFillColor(sf::Color::White);
-            pixel->setPosition(sf::Vector2f(x * ratio, y * ratio));
+            pixel->setPosition(sf::Vector2f(x, y));
             row.push_back(pixel);
         }
         m_ScreenData.push_back(row);
@@ -88,6 +76,7 @@ bool PPU::RenderScreen()
     if (!IsWindowOpen()) return false;
 
     //Render the game here
+    
     for (int y = 0; y < 144; y++)
     {
         for (int x = 0; x < 160; x++)
@@ -271,14 +260,14 @@ void PPU::RenderTiles(uint8_t lcdControl)
         colourBit -= 7;
         colourBit *= -1;
 
-        // combine data 2 and data 1 to get the colour id for this pixel
+        // combine data 2 and data 1 to get the color id for this pixel
         // in the tile
         int colourNum = data2 >> colourBit & 1;
         colourNum <<= 1;
         colourNum |= data1 >> colourBit & 1;
 
-        // now we have the colour id get the actual
-        // colour from palette 0xFF47
+        // now we have the color id get the actual
+        // color from palette 0xFF47
         uint8_t col = m_mmu.Read(0xFF47) >> colourNum * 2 & 0b11;
         
         int red = 0;
@@ -319,7 +308,13 @@ void PPU::RenderTiles(uint8_t lcdControl)
             continue;
         }
 
+        sf::Color currentColor = m_ScreenData[scanline][pixel]->getFillColor();
         m_ScreenData[scanline][pixel]->setFillColor(sf::Color(red, green, blue));
+        if (m_ScreenData[scanline][pixel]->getFillColor() != currentColor)
+        {
+            std::cout << "Pixel at (" << pixel << "," << scanline << ") set to color " 
+                      << "R:" << red << " G:" << green << " B:" << blue << std::endl;
+        }
     }
 }
 
@@ -365,7 +360,7 @@ void PPU::RenderSprites(uint8_t lcdControl)
             uint8_t data2 = m_mmu.Read(dataAddress + 1);
 
             // its easier to read in from right to left as pixel 0 is
-            // bit 7 in the colour data, pixel 1 is bit 6 etc...
+            // bit 7 in the color data, pixel 1 is bit 6 etc...
             for (int tilePixel = 7; tilePixel >= 0; tilePixel--)
             {
                 int colourBit = tilePixel;
@@ -424,7 +419,13 @@ void PPU::RenderSprites(uint8_t lcdControl)
                     continue;
                 }
                 
+                sf::Color currentColor = m_ScreenData[scanline][pixel]->getFillColor();
                 m_ScreenData[scanline][pixel]->setFillColor(sf::Color(red, green, blue));
+                if (m_ScreenData[scanline][pixel]->getFillColor() != currentColor)
+                {
+                    std::cout << "Pixel at (" << pixel << "," << scanline << ") set to color " 
+                              << "R:" << red << " G:" << green << " B:" << blue << std::endl;
+                }
             }
         }
     }

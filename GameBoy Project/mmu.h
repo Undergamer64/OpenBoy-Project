@@ -3,18 +3,21 @@
 #include <iostream>
 #include <cstdint>
 #include <map>
-
 #include "BootRom.h"
+#include "Cartidge.h"
 
 class MemoryBase;
 
 class MMU 
 {
-	
 	std::map<uint16_t, MemoryBase*> m_allMaps;
+    Cartidge m_cartidge;
+    
 public:
 	MemoryBase& m_bootRom;
 	MMU(BootRom& bootRom);
+    
+    void LoadCartridge(const std::string& filepath);
 	
 	void Map(MemoryBase* mem, uint16_t address);
 	
