@@ -304,14 +304,17 @@ int IF_LD_ADRIMM_r::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 
 #pragma region Arithmetique Instruction
 
-bool IF_AR::IsValid(uint8_t opcode) 
+#pragma region IF_AR_8BIT
+bool IF_AR_8BIT::IsValid(uint8_t opcode) 
 {
-	return ((opcode & 0b11100000) == 0b10000000 || (opcode & 0b11100000) == 0b10100000) || (opcode & 0b11000111) == 0b11000110;
+	return ((opcode & 0b11100000) == 0b10000000 ||
+		(opcode & 0b11100000) == 0b10100000) ||
+			(opcode & 0b11000111) == 0b11000110;
 }
 
-int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
+int IF_AR_8BIT::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 {
-	//std::cout << "ARR" << std::endl;
+	//std::cout << "AR_8BIT" << std::endl;
 	int currentCycles = 0;
 
 	uint8_t _r_num = registers.m_registers[(opcode & 0b00000111)];
@@ -337,7 +340,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 #pragma region Arithmetique
 		switch (opcode & 0b00011000)
 		{
-		case 0b00000000:
+	case 0b00000000:
 			_res = registers.m_registers[6] + _r_num + (registers.m_registers[7] & 0b00000001);
 #pragma region Flags
 #pragma region Flag_S
@@ -375,7 +378,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 #pragma endregion
 #pragma endregion
 			break;
-		case 0b00001000:
+	case 0b00001000:
 			_res = registers.m_registers[6] + _r_num;
 #pragma region Flags
 #pragma region Flag_S
@@ -413,7 +416,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 #pragma endregion
 #pragma endregion
 			break;
-		case 0b00010000:
+	case 0b00010000:
 			_res = (registers.m_registers[6] - _r_num) - (registers.m_registers[7] & 0b00000001);
 #pragma region Negatif_Flags
 #pragma region Flag_S
@@ -453,7 +456,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 #pragma endregion
 #pragma endregion
 			break;
-		case 0b00011000:
+	case 0b00011000:
 			_res = registers.m_registers[6] - _r_num;
 #pragma region Negatif_Flags
 #pragma region Flag_S
@@ -500,7 +503,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 #pragma region Condition
 		switch (opcode & 0b00011000)
 		{
-		case 0b00000000: //AND
+	case 0b00000000: //AND
 			_res = registers.m_registers[6] & _r_num;
 #pragma region Flags
 #pragma region Flag_S
@@ -525,7 +528,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 #pragma endregion
 			registers.m_registers[6] = _res;
 			break;
-		case 0b00001000: //XOR
+	case 0b00001000: //XOR
 			_res = registers.m_registers[6] ^ _r_num;
 #pragma region Flags
 #pragma region Flag_S
@@ -550,7 +553,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 #pragma endregion
 			registers.m_registers[6] = _res;
 			break;
-		case 0b00010000: //OR
+	case 0b00010000: //OR
 			_res = registers.m_registers[6] | _r_num;
 #pragma region Flags
 #pragma region Flag_S
@@ -575,7 +578,7 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 #pragma endregion
 			registers.m_registers[6] = _res;
 			break;
-		case 0b00011000: //CP
+	case 0b00011000: //CP
 			_res = (registers.m_registers[6] - _r_num) - (registers.m_registers[7] & 0b00000001);
 			//std::cout << "CP : " << static_cast<int>(_res) << std::endl;
 			
@@ -619,12 +622,197 @@ int IF_AR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		break;
 #pragma endregion
 	}
-	if ((opcode & 0b00111000) != 0b00111000) {
+	if ((opcode & 0b00111000) != 0b00111000)
+	{
 		registers.m_registers[6] = _res;
-	} 
+	}
 
 	return currentCycles;
 }
+#pragma endregion
+
+#pragma region IF_ADD_HL
+bool IF_ADD_HL::IsValid(uint8_t opcode) 
+{
+	return (opcode & 0b11001111) == 0b00001001;
+}
+
+int IF_ADD_HL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
+{
+	//std::cout << "ADD_HL" << std::endl;
+	int currentCycles = 8;
+
+	switch (opcode & 0b00110000)
+	{
+		case 0b00000000:
+		{
+			uint16_t _res = registers.HL + registers.BC;
+#pragma region Flags
+#pragma region Flag_S
+			registers.m_registers[7] &= ~0b10000000; //Flag s (negatif)
+#pragma endregion
+#pragma region Flag_Z
+			if (_res == 0) //Flag Z (zero)
+			{
+				registers.m_registers[7] |= 0b01000000;
+			}
+			else
+			{
+				registers.m_registers[7] &= ~0b01000000;
+			}
+#pragma endregion
+#pragma region Flag_C
+			if (registers.BC > _res - (registers.m_registers[7] & 0b00000001) || registers.HL > _res - (registers.m_registers[7] & 0b00000001)) //c (Carry for the 7 bit) ONLY FOR ADDS, NOT FOR SUBS !!!
+			{
+				registers.m_registers[7] |= 0b00000001;
+			}
+			else
+			{
+				registers.m_registers[7] &= ~0b00000001;
+			}
+#pragma endregion
+#pragma region Flag_H
+			if ((registers.BC & 0b00001111) > ((_res - (registers.m_registers[7] & 0b00000001)) & 0b00001111) || (registers.HL & 0b00001111) > ((_res - (registers.m_registers[7] & 0b00000001)) & 0b00001111)) //Flag h (half-carry) same method as Flag C but with mask
+			{
+				registers.m_registers[7] |= 0b00010000;
+			}
+			else
+			{
+				registers.m_registers[7] &= ~0b00010000;
+			}
+#pragma endregion
+#pragma endregion
+			WRITE16(HL, _res);
+			break;
+		}
+		case 0b00010000:
+		{
+			uint16_t _res = registers.HL + registers.DE;
+#pragma region Flags
+#pragma region Flag_S
+			registers.m_registers[7] &= ~0b10000000; //Flag s (negatif)
+#pragma endregion
+#pragma region Flag_Z
+			if (_res == 0) //Flag Z (zero)
+			{
+				registers.m_registers[7] |= 0b01000000;
+			}
+			else
+			{
+				registers.m_registers[7] &= ~0b01000000;
+			}
+#pragma endregion
+#pragma region Flag_C
+			if (registers.DE > _res - (registers.m_registers[7] & 0b00000001) || registers.HL > _res - (registers.m_registers[7] & 0b00000001)) //c (Carry for the 7 bit) ONLY FOR ADDS, NOT FOR SUBS !!!
+			{
+				registers.m_registers[7] |= 0b00000001;
+			}
+			else
+			{
+				registers.m_registers[7] &= ~0b00000001;
+			}
+#pragma endregion
+#pragma region Flag_H
+			if ((registers.DE & 0b00001111) > ((_res - (registers.m_registers[7] & 0b00000001)) & 0b00001111) || (registers.HL & 0b00001111) > ((_res - (registers.m_registers[7] & 0b00000001)) & 0b00001111)) //Flag h (half-carry) same method as Flag C but with mask
+			{
+				registers.m_registers[7] |= 0b00010000;
+			}
+			else
+			{
+				registers.m_registers[7] &= ~0b00010000;
+			}
+#pragma endregion
+#pragma endregion
+			WRITE16(HL, _res);
+			break;
+		}
+		case 0b00100000:
+		{
+			uint16_t _res = registers.HL + registers.HL;
+#pragma region Flags
+#pragma region Flag_S
+			registers.m_registers[7] &= ~0b10000000; //Flag s (negatif)
+#pragma endregion
+#pragma region Flag_Z
+			if (_res == 0) //Flag Z (zero)
+			{
+				registers.m_registers[7] |= 0b01000000;
+			}
+			else
+			{
+				registers.m_registers[7] &= ~0b01000000;
+			}
+#pragma endregion
+#pragma region Flag_C
+			if (registers.HL > _res - registers.m_registers[7] & 0b00000001) //c (Carry for the 7 bit) ONLY FOR ADDS, NOT FOR SUBS !!!
+			{
+				registers.m_registers[7] |= 0b00000001;
+			}
+			else
+			{
+				registers.m_registers[7] &= ~0b00000001;
+			}
+#pragma endregion
+#pragma region Flag_H
+			if ((registers.HL & 0b00001111) > ((_res - (registers.m_registers[7] & 0b00000001)) & 0b00001111)) //Flag h (half-carry) same method as Flag C but with mask
+			{
+				registers.m_registers[7] |= 0b00010000;
+			}
+			else
+			{
+				registers.m_registers[7] &= ~0b00010000;
+			}
+#pragma endregion
+#pragma endregion
+			WRITE16(HL, _res);
+			break;
+		}
+		case 0b00110000:
+		{
+			uint16_t _res = registers.HL + registers.SP;
+#pragma region Flags
+#pragma region Flag_S
+			registers.m_registers[7] &= ~0b10000000; //Flag s (negatif)
+#pragma endregion
+#pragma region Flag_Z
+			if (_res == 0) //Flag Z (zero)
+			{
+				registers.m_registers[7] |= 0b01000000;
+			}
+			else
+			{
+				registers.m_registers[7] &= ~0b01000000;
+			}
+#pragma endregion
+#pragma region Flag_C
+			if (registers.SP > _res - (registers.m_registers[7] & 0b00000001) || registers.HL > _res - (registers.m_registers[7] & 0b00000001)) //c (Carry for the 7 bit) ONLY FOR ADDS, NOT FOR SUBS !!!
+			{
+				registers.m_registers[7] |= 0b00000001;
+			}
+			else
+			{
+				registers.m_registers[7] &= ~0b00000001;
+			}
+#pragma endregion
+#pragma region Flag_H
+			if ((registers.SP & 0b00001111) > ((_res - (registers.m_registers[7] & 0b00000001)) & 0b00001111) || (registers.HL & 0b00001111) > ((_res - (registers.m_registers[7] & 0b00000001)) & 0b00001111)) //Flag h (half-carry) same method as Flag C but with mask
+			{
+				registers.m_registers[7] |= 0b00010000;
+			}
+			else
+			{
+				registers.m_registers[7] &= ~0b00010000;
+			}
+#pragma endregion
+#pragma endregion
+			WRITE16(HL, _res);
+			break;
+		}
+	}
+	
+	return currentCycles;
+}
+#pragma endregion
 
 #pragma endregion
 

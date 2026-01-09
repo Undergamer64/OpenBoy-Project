@@ -28,7 +28,7 @@ void Emulator::SkipBootRom()
 {
     // Set registers to post boot rom values (BRUTE FORCE METHOD) source : Pan Docs
     
-    m_cpu.m_registers.PC = 0x100;
+    m_cpu.m_registers.PC = 0x101;
     m_cpu.m_registers.SP = 0xFFFE;
     m_cpu.m_registers.m_registers[0] = 0x01; // A
     m_cpu.m_registers.m_registers[1] = 0xB0; // F
@@ -74,6 +74,7 @@ void Emulator::SkipBootRom()
     m_cpu.ForceWrite(0xFF49, 0xFF); // OBP1
     m_cpu.ForceWrite(0xFF4A, 0x00); // WY
     m_cpu.ForceWrite(0xFF4B, 0x00); // WX
+    m_cpu.ForceWrite(0xFF50, 0x01); // BOOT
     m_cpu.ForceWrite(0xFFFF, 0x00); // IE
 }
 
@@ -107,7 +108,7 @@ bool Emulator::operator()()
 
         cyclesThisUpdate += cycles;
         UpdateTimers(cycles);
-        UpdateGraphics(cycles); 
+        //UpdateGraphics(cycles); 
         cyclesThisUpdate += DoInterupts();
 
 #if _DEBUG

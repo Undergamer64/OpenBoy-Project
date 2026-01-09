@@ -45,7 +45,8 @@ int main()
 
 #pragma region OpcodeDef
     emulator.m_cpu += std::make_unique<IF_LD_r16_imm16>();
-    emulator.m_cpu += std::make_unique<IF_AR>();
+    emulator.m_cpu += std::make_unique<IF_AR_8BIT>();
+    emulator.m_cpu += std::make_unique<IF_ADD_HL>();
     emulator.m_cpu += std::make_unique<IF_LD_rA_rHL>();
     emulator.m_cpu += std::make_unique<IF_CB_Prefix>();
     emulator.m_cpu += std::make_unique<IF_FLOW_JR>();
@@ -61,6 +62,7 @@ int main()
     emulator.m_cpu += std::make_unique<IF_FLOW_RET>();
     emulator.m_cpu += std::make_unique<IF_LD_r_r>();
     emulator.m_cpu += std::make_unique<IF_LD_SP_HL>();
+    emulator.m_cpu += std::make_unique<IF_DI_EI>();
     
     //emulator.m_cpu += std::make_unique<IF_Finish>(); Deprecated
     
@@ -68,7 +70,7 @@ int main()
 
     emulator.LoadCartridge("Tetris.gb");
     
-    emulator.SkipBootRom();
+    //emulator.SkipBootRom();
 
     std::chrono::time_point<std::chrono::high_resolution_clock> lastFrame = std::chrono::high_resolution_clock::now();
     

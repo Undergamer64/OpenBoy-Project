@@ -11,7 +11,7 @@ class PPU
     sf::Text* m_debugRom;
     sf::RectangleShape* m_debugBackground;
     
-    std::vector<std::vector<sf::RectangleShape*>> m_ScreenData;
+    std::vector<std::vector<sf::RectangleShape*>> m_screenData;
 
     MMU& m_mmu;
 
@@ -19,6 +19,7 @@ class PPU
 public:
 
     PPU(MMU& mmu);
+    void RecalculateScreenSize();
 
     bool RenderScreen();
 

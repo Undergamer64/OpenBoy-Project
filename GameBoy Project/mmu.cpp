@@ -1,4 +1,7 @@
 #include "mmu.h"
+
+#include <iomanip>
+
 #include "ram.h"
 
 #define CLOCKSPEED 4194304
@@ -13,41 +16,46 @@ MMU::MMU(BootRom& bootRom)
 
 void MMU::LoadCartridge(const std::string& filepath)
 {
-#if _DEBUG
-    std::cout << "Loading Cartridge: " << filepath << std::endl;
-#endif
-	
     m_cartidge = Cartidge(filepath);
-
-#if _DEBUG
-    std::cout << "Done !" << "\n";
 	
-    std::cout << "Cartridge size : " << std::hex << m_cartidge.Size() << "\n";
-    /*
-    std::cout << "Cartridge content (up to 0x8000) :" << std::endl;
-    
-    for (size_t address = 0; address < m_cartidge.Size(); address++)
+	// Load the first 0x8000 bytes of the cartridge into memory
+    for (size_t address = 0; address < 0x8000; address++)
     {
-        if (address > 0x8000)
-        {
-            break;
-        }	
-        m_mmu.Write(address, m_cartidge.Read(address));
-
-        std::cout << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(m_cartidge.Read(address)) << " ";
-
-        if ((address + 1) % 0x0010 == 0)
-        {
-            std::cout << "\n";
-        }
+	    Write(address, m_cartidge.Read(address));
     }
-    
-    for (int i = 0; i < 20; i++)
-    {
-        std::cout << "--";
-    }
-    std::cout << std::endl;*/
+	
+#if _DEBUG
+    //std::cout << "Cartridge content :" << std::endl;
+
+	//DebugDumpMemory(&m_cartidge);
 #endif
+}
+
+void MMU::DebugDumpMemory(MemoryBase* mem)
+{
+	if (!mem)
+	{
+		std::cout << "Memory is null !" << std::endl;
+		return;
+	}
+	
+	std::cout << "Memory" << std::endl;
+	
+	for (size_t address = 0; address < mem->Size(); address++)
+	{
+		std::cout << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(mem->Read(address)) << " ";
+
+		if ((address + 1) % 0x0010 == 0)
+		{
+			std::cout << "\n";
+		}
+	}
+	
+	for (int i = 0; i < 20; i++)
+	{
+		std::cout << "--";
+	}
+	std::cout << std::endl;
 }
 
 void MMU::Map(MemoryBase* mem, uint16_t address) 
@@ -67,10 +75,6 @@ uint8_t MMU::Read(uint16_t address)
 	{
 		return m_bootRom.Read(address);
 	}
-	if (address < 0x8000) // If is cartridge area
-    {
-	    return m_cartidge.Read(address);//TODO : fix this
-    }
     
 	for (auto [startAddr, mem] : m_allMaps) 
 	{

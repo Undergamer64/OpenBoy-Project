@@ -19,6 +19,7 @@ Cartidge::Cartidge(const std::string& filepath)
             std::cout << std::to_string(ifs.gcount()) << " failure" << std::endl;
         }
         ifs.close();
+        std::cout << "Successfully loaded cartridge: " << filepath << " (0x" << std::hex << size << " bytes)" << std::endl;
     }
     else 
     {
@@ -27,6 +28,7 @@ Cartidge::Cartidge(const std::string& filepath)
         {
             data[i] = 0xFF;
         }
+        std::cout << "Failed to load cartridge: " << filepath << std::endl;
     }
 }
 

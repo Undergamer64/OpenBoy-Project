@@ -105,7 +105,7 @@ int CPU::Execute()
 		<< std::hex
 		<< static_cast<int>(opcode)
 		<< " At PC 0x"
-		<< static_cast<int>(m_registers.PC)
+		<< static_cast<int>(m_registers.PC)-1
 		<< std::endl;
 	
 	return -1;

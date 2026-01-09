@@ -18,7 +18,8 @@ public:
 	MMU(BootRom& bootRom);
     
     void LoadCartridge(const std::string& filepath);
-	
+	void DebugDumpMemory(MemoryBase* mem);
+
 	void Map(MemoryBase* mem, uint16_t address);
 	
 	uint8_t Read(uint16_t address);

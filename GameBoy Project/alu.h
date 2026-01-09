@@ -98,7 +98,16 @@ public:
 
 #pragma region Arithmetique Instructions
 
-class IF_AR final
+class IF_AR_8BIT final
+	: public InstructionFamily
+{
+public:
+	bool IsValid(uint8_t opcode) override;
+
+	int Execute(uint8_t opcode, MMU& mmu, Registers& registers) override;
+};
+
+class IF_ADD_HL final
 	: public InstructionFamily
 {
 public:

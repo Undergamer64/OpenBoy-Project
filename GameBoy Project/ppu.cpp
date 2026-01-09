@@ -22,6 +22,12 @@ bool PPU::IsWindowOpen()
             m_window.close();
             return false;
         }
+        if (event->is<sf::Event::Resized>())
+        {
+            RecalculateScreenSize();/*
+            sf::FloatRect visibleArea({0.f, 0.f}, {static_cast<float>(event.².x), static_cast<float>(event->size.y)});
+            m_window.setView(sf::View(visibleArea));*/
+        }
     }
 
     return true;
@@ -34,27 +40,25 @@ PPU::PPU(MMU& mmu)
     m_window.setVerticalSyncEnabled(true);
     sf::Vector2u size = sf::VideoMode::getDesktopMode().size;
     
-    float ratio = std::min(size.x / 160, size.y / 144);
+    unsigned int ratio = std::min((size.x) / 160, size.y / 144) - 1;
 
     size.x = ratio * 160;
     size.y = ratio * 144;
     m_window.setSize(size);
     m_window.setPosition(sf::Vector2i(
-        (sf::VideoMode::getDesktopMode().size.x - size.x) / 2,
-        (sf::VideoMode::getDesktopMode().size.y - size.y) / 2)
+        (sf::VideoMode::getDesktopMode().size.x / 2 - size.x / 2),
+        (sf::VideoMode::getDesktopMode().size.y / 2 - size.y / 2 - 40)
+        )
     );
     if (!m_font.openFromFile("EarlyGameBoy.ttf"))
     {
         m_window.close();
     }
-
-    //Screen size wasn't screen size, so fuck it
+    
     m_debugBackground = new sf::RectangleShape(sf::Vector2f(size.x, size.y));
-
     m_debugBackground->setFillColor(sf::Color(0,0,0,150));
 
     m_debugRom = new sf::Text(m_font);
-    m_debugRom->setScale(sf::Vector2f(0.15f,0.15f)); //Magic numbers ? Nah, I would never !
     
     for (int y = 0; y < 144; y++)
     {
@@ -63,12 +67,54 @@ PPU::PPU(MMU& mmu)
         {
             sf::RectangleShape* pixel = new sf::RectangleShape(sf::Vector2f(1,1));
             pixel->setFillColor(sf::Color::White);
-            pixel->setPosition(sf::Vector2f(x, y));
+            pixel->setPosition(sf::Vector2f(x,y));
             row.push_back(pixel);
         }
-        m_ScreenData.push_back(row);
+        m_screenData.push_back(row);
     }
+
+    RecalculateScreenSize();
+}
+
+void PPU::RecalculateScreenSize()
+{
+    m_window.setView(sf::View(sf::FloatRect({0,0}, sf::Vector2f(160,144))));
+
     
+    sf::Vector2u size = m_window.getSize();
+    
+    sf::Vector2f screenRation = sf::Vector2f((size.x) / 160.f, size.y / 144.f);
+    
+    //float ratio = std::min((size.x) / 160, size.y / 144);
+    bool isSideRestrained = screenRation.x < screenRation.y;
+    
+    //m_debugRom->setScale(sf::Vector2f((desktopSize.x / (ratio * 160 * 3)) * 0.1f,(desktopSize.y / (ratio * 144)) * 0.1f)); //Magic numbers ? Nah, I would never !
+
+    if (isSideRestrained)
+        m_debugRom->setScale(sf::Vector2f(0.2f , 0.2f * screenRation.x / screenRation.y));
+    else
+        m_debugRom->setScale(sf::Vector2f(0.2f * screenRation.y / screenRation.x, 0.2f ));
+
+    
+    for (int y = 0; y < 144; y++)
+    {
+        for (int x = 0; x < 160; x++)
+        {
+            sf::RectangleShape* pixel = m_screenData[y][x];
+            if (isSideRestrained)
+            {
+                pixel->setScale(sf::Vector2f(1, 1 * screenRation.x / screenRation.y));
+                float centerOffset = 144.f / 2.f - (144 * screenRation.x / screenRation.y) / 2.f;
+                pixel->setPosition(sf::Vector2f(x, y * screenRation.x / screenRation.y + centerOffset));
+            }
+            else
+            {
+                pixel->setScale(sf::Vector2f(1 * screenRation.y / screenRation.x, 1));
+                float centerOffset = 160.f / 2.f - (160 * screenRation.y / screenRation.x) / 2.f;
+                pixel->setPosition(sf::Vector2f(x * screenRation.y / screenRation.x + centerOffset, y));
+            }
+        }
+    }
 }
 
 bool PPU::RenderScreen()
@@ -81,7 +127,7 @@ bool PPU::RenderScreen()
     {
         for (int x = 0; x < 160; x++)
         {
-            m_window.draw(*m_ScreenData[y][x]);
+            m_window.draw(*m_screenData[y][x]);
         }
     }
     
@@ -103,7 +149,10 @@ void PPU::RenderDebug(CPU cpu)
     m_debugRom->setCharacterSize(16);
 
     std::stringstream ur;
-    ur << cpu.DumpBoot(true).str();
+    if (cpu.m_registers.PC < 0x0100 && m_mmu.Read(0xFF50) == 0) // If is booting up
+    {
+        ur << cpu.DumpBoot(true).str();
+    }
 
     ur << "\nPC : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.m_registers.PC) << "\n";
     ur << "SP : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.m_registers.SP) << "\n";
@@ -136,8 +185,8 @@ void PPU::Clear()
 
 void PPU::RenderTiles(uint8_t lcdControl)
 {
-    uint16_t tileData = 0;
-    uint16_t backgroundMemory = 0;
+    uint16_t tileData;
+    uint16_t backgroundMemory;
     bool unsig = true;
 
     // where to draw the visual area and the window
@@ -231,7 +280,7 @@ void PPU::RenderTiles(uint8_t lcdControl)
         else
         {
             //TODO : find how to integrate SIGNED_BYTE
-            tileNum =static_cast<int8_t>(m_mmu.Read(tileAddress));
+            tileNum = static_cast<int8_t>(m_mmu.Read(tileAddress));
         }
 
         // deduce where this tile identifier is in memory.
@@ -254,7 +303,7 @@ void PPU::RenderTiles(uint8_t lcdControl)
         uint8_t data1 = m_mmu.Read(tileLocation + line);
         uint8_t data2 = m_mmu.Read(tileLocation + line + 1);
 
-        // pixel 0 in the tile is it 7 of data 1 and data2.
+        // pixel 0 in the tile is bit 7 of data 1 and data2.
         // Pixel 1 is bit 6 etc..
         int colourBit = xPos % 8;
         colourBit -= 7;
@@ -270,9 +319,9 @@ void PPU::RenderTiles(uint8_t lcdControl)
         // color from palette 0xFF47
         uint8_t col = m_mmu.Read(0xFF47) >> colourNum * 2 & 0b11;
         
-        int red = 0;
-        int green = 0;
-        int blue = 0;
+        int red;
+        int green;
+        int blue;
 
         // setup the RGB values
         switch(col)
@@ -308,13 +357,13 @@ void PPU::RenderTiles(uint8_t lcdControl)
             continue;
         }
 
-        sf::Color currentColor = m_ScreenData[scanline][pixel]->getFillColor();
-        m_ScreenData[scanline][pixel]->setFillColor(sf::Color(red, green, blue));
-        if (m_ScreenData[scanline][pixel]->getFillColor() != currentColor)
+        sf::Color currentColor = m_screenData[scanline][pixel]->getFillColor();
+        m_screenData[scanline][pixel]->setFillColor(sf::Color(red, green, blue));/*
+        if (m_screenData[scanline][pixel]->getFillColor() != currentColor)
         {
             std::cout << "Pixel at (" << pixel << "," << scanline << ") set to color " 
                       << "R:" << red << " G:" << green << " B:" << blue << std::endl;
-        }
+        }*/
     }
 }
 
@@ -419,13 +468,13 @@ void PPU::RenderSprites(uint8_t lcdControl)
                     continue;
                 }
                 
-                sf::Color currentColor = m_ScreenData[scanline][pixel]->getFillColor();
-                m_ScreenData[scanline][pixel]->setFillColor(sf::Color(red, green, blue));
-                if (m_ScreenData[scanline][pixel]->getFillColor() != currentColor)
+                sf::Color currentColor = m_screenData[scanline][pixel]->getFillColor();
+                m_screenData[scanline][pixel]->setFillColor(sf::Color(red, green, blue));/*
+                if (m_screenData[scanline][pixel]->getFillColor() != currentColor)
                 {
                     std::cout << "Pixel at (" << pixel << "," << scanline << ") set to color " 
                               << "R:" << red << " G:" << green << " B:" << blue << std::endl;
-                }
+                }*/
             }
         }
     }

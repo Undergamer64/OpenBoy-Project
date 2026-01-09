@@ -5,7 +5,7 @@
 #include "ram.h"
 
 class Cartidge
-    : MemoryBase
+    : public MemoryBase
 {
     std::vector<uint8_t> data;
 public:
