@@ -68,7 +68,8 @@ int main()
     
 #pragma endregion
 
-    emulator.LoadCartridge("Tetris.gb");
+    //emulator.LoadCartridge("Tetris.gb");
+    emulator.LoadCartridge("Tetoris.gb");
     
     //emulator.SkipBootRom();
 

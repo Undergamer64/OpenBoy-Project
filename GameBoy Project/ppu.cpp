@@ -1,4 +1,6 @@
 ﻿#include "ppu.h"
+
+#include <bitset>
 #include <iostream>
 #include <optional>
 
@@ -24,9 +26,7 @@ bool PPU::IsWindowOpen()
         }
         if (event->is<sf::Event::Resized>())
         {
-            RecalculateScreenSize();/*
-            sf::FloatRect visibleArea({0.f, 0.f}, {static_cast<float>(event.².x), static_cast<float>(event->size.y)});
-            m_window.setView(sf::View(visibleArea));*/
+            RecalculateScreenSize();
         }
     }
 
@@ -34,16 +34,18 @@ bool PPU::IsWindowOpen()
 }
 
 PPU::PPU(MMU& mmu)
-    : m_window(sf::VideoMode( sf::Vector2u(160,144), 32), "GameBoy Project"), m_mmu(mmu)
+    : m_window(sf::VideoMode( sf::Vector2u(GB_W,GB_H), 32), "GameBoy Project"), m_screenTexture(sf::Vector2u{GB_W, GB_H}), m_screenSprite(m_screenTexture), m_mmu(mmu)
 {
+    m_screenTexture.setSmooth(false);
+    
     m_window.setFramerateLimit(60);
     m_window.setVerticalSyncEnabled(true);
     sf::Vector2u size = sf::VideoMode::getDesktopMode().size;
     
-    unsigned int ratio = std::min((size.x) / 160, size.y / 144) - 1;
+    unsigned int ratio = std::min((size.x) / GB_W, size.y / GB_H) - 1;
 
-    size.x = ratio * 160;
-    size.y = ratio * 144;
+    size.x = ratio * GB_W;
+    size.y = ratio * GB_H;
     m_window.setSize(size);
     m_window.setPosition(sf::Vector2i(
         (sf::VideoMode::getDesktopMode().size.x / 2 - size.x / 2),
@@ -59,62 +61,45 @@ PPU::PPU(MMU& mmu)
     m_debugBackground->setFillColor(sf::Color(0,0,0,150));
 
     m_debugRom = new sf::Text(m_font);
-    
-    for (int y = 0; y < 144; y++)
-    {
-        std::vector<sf::RectangleShape*> row;
-        for (int x = 0; x < 160; x++)
-        {
-            sf::RectangleShape* pixel = new sf::RectangleShape(sf::Vector2f(1,1));
-            pixel->setFillColor(sf::Color::White);
-            pixel->setPosition(sf::Vector2f(x,y));
-            row.push_back(pixel);
-        }
-        m_screenData.push_back(row);
-    }
 
     RecalculateScreenSize();
 }
 
 void PPU::RecalculateScreenSize()
 {
-    m_window.setView(sf::View(sf::FloatRect({0,0}, sf::Vector2f(160,144))));
+    m_window.setView(sf::View(sf::FloatRect({0,0}, sf::Vector2f(GB_W,GB_H))));
 
     
     sf::Vector2u size = m_window.getSize();
     
-    sf::Vector2f screenRation = sf::Vector2f((size.x) / 160.f, size.y / 144.f);
+    sf::Vector2f screenRation = sf::Vector2f((size.x) / GB_W, size.y / GB_H);
     
-    //float ratio = std::min((size.x) / 160, size.y / 144);
+    //float ratio = std::min((size.x) / GB_W, size.y / GB_H);
     bool isSideRestrained = screenRation.x < screenRation.y;
     
-    //m_debugRom->setScale(sf::Vector2f((desktopSize.x / (ratio * 160 * 3)) * 0.1f,(desktopSize.y / (ratio * 144)) * 0.1f)); //Magic numbers ? Nah, I would never !
+    //m_debugRom->setScale(sf::Vector2f((desktopSize.x / (ratio * GB_W * 3)) * 0.1f,(desktopSize.y / (ratio * GB_H)) * 0.1f)); //Magic numbers ? Nah, I would never !
 
     if (isSideRestrained)
-        m_debugRom->setScale(sf::Vector2f(0.2f , 0.2f * screenRation.x / screenRation.y));
+        m_debugRom->setScale(sf::Vector2f(0.15f , 0.15f * screenRation.x / screenRation.y));
     else
-        m_debugRom->setScale(sf::Vector2f(0.2f * screenRation.y / screenRation.x, 0.2f ));
+        m_debugRom->setScale(sf::Vector2f(0.15f * screenRation.y / screenRation.x, 0.15f ));
 
+    /*
+    pixel->setPosition(sf::Vector2f(x, y * screenRation.x / screenRation.y + centerOffset));*/
     
-    for (int y = 0; y < 144; y++)
+    if (isSideRestrained)
     {
-        for (int x = 0; x < 160; x++)
-        {
-            sf::RectangleShape* pixel = m_screenData[y][x];
-            if (isSideRestrained)
-            {
-                pixel->setScale(sf::Vector2f(1, 1 * screenRation.x / screenRation.y));
-                float centerOffset = 144.f / 2.f - (144 * screenRation.x / screenRation.y) / 2.f;
-                pixel->setPosition(sf::Vector2f(x, y * screenRation.x / screenRation.y + centerOffset));
-            }
-            else
-            {
-                pixel->setScale(sf::Vector2f(1 * screenRation.y / screenRation.x, 1));
-                float centerOffset = 160.f / 2.f - (160 * screenRation.y / screenRation.x) / 2.f;
-                pixel->setPosition(sf::Vector2f(x * screenRation.y / screenRation.x + centerOffset, y));
-            }
-        }
+        m_screenSprite.setScale({1, 1 * screenRation.x / screenRation.y});
+        float centerOffset = GB_H / 2.f - (GB_H * screenRation.x / screenRation.y) / 2.f;
+        m_screenSprite.setPosition({1, 1 * screenRation.x / screenRation.y + centerOffset});
     }
+    else
+    {
+        m_screenSprite.setScale({1 * screenRation.y / screenRation.x, 1});
+        float centerOffset = GB_W / 2.f - (GB_W * screenRation.y / screenRation.x) / 2.f;
+        m_screenSprite.setPosition({1 * screenRation.y / screenRation.x + centerOffset, 1});
+    }
+    //m_screenSprite.setScale({1,1});
 }
 
 bool PPU::RenderScreen()
@@ -123,13 +108,9 @@ bool PPU::RenderScreen()
 
     //Render the game here
     
-    for (int y = 0; y < 144; y++)
-    {
-        for (int x = 0; x < 160; x++)
-        {
-            m_window.draw(*m_screenData[y][x]);
-        }
-    }
+    m_screenTexture.update(m_framebuffer.data());
+
+    m_window.draw(m_screenSprite);
     
     return true;
 }
@@ -165,12 +146,43 @@ void PPU::RenderDebug(CPU cpu)
     ur << "H" << " : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.m_registers.m_registers[4]) << "\n";
     ur << "L" << " : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.m_registers.m_registers[5]) << "\n";
     ur << "IME : " << (cpu.m_registers.IME ? "true" : "false") << "\n";
-    ur << "Current instruction : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.GetCurrentInstruction());
+    ur << "Current instruction : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.GetCurrentInstruction()) << "\n";
+    ur << "\n";
+
+    ur << "LY : " << std::dec << static_cast<int>(m_mmu.Read(0xFF44)) << "\n";
+    ur << "LCDC : 0b" << std::bitset<8>(m_mmu.Read(0xFF40)) << "\n";
+    ur << "STAT : 0b" << std::bitset<8>(m_mmu.Read(0xFF41)) << "\n";
+
+    ur << "SCY : " << std::dec << static_cast<int>(m_mmu.Read(0xFF42)) << "\n";
+    ur << "SCX : " << std::dec << static_cast<int>(m_mmu.Read(0xFF43)) << "\n";
+
+    ur << "WY : " << std::dec << static_cast<int>(m_mmu.Read(0xFF4A)) << "\n";
+    ur << "WX : " << std::dec << static_cast<int>(m_mmu.Read(0xFF4B)) << "\n";
     
     m_debugRom->setString(ur.str());
     
     m_window.draw(*m_debugBackground);
     m_window.draw(*m_debugRom);
+}
+
+sf::Color PPU::GetPixelColor(int y, int x)
+{
+    sf::Color color;
+    int index = (y * GB_W + x) * 4;
+    color.r = m_framebuffer[index];
+    color.g = m_framebuffer[index + 1];
+    color.b = m_framebuffer[index + 2];
+    color.a = m_framebuffer[index + 3];
+    return color;
+}
+
+void PPU::SetPixelColor(int y, int x, sf::Color color)
+{
+    int index = (y * GB_W + x) * 4;
+    m_framebuffer[index] = color.r;
+    m_framebuffer[index + 1] = color.g;
+    m_framebuffer[index + 2] = color.b;
+    m_framebuffer[index + 3] = color.a;
 }
 
 void PPU::Display()
@@ -194,6 +206,8 @@ void PPU::RenderTiles(uint8_t lcdControl)
     uint8_t scrollX = m_mmu.Read(0xFF43);
     uint8_t windowY = m_mmu.Read(0xFF4A);
     uint8_t windowX = m_mmu.Read(0xFF4B) - 7;
+    
+    uint8_t scanline = m_mmu.Read(0xFF44);
 
     bool usingWindow = false;
 
@@ -202,7 +216,7 @@ void PPU::RenderTiles(uint8_t lcdControl)
     {
         // is the current scanline we're drawing
         // within the windows Y pos?,
-        if (windowY <= m_mmu.Read(0xFF44))
+        if (windowY <= scanline)
             usingWindow = true;
     }
 
@@ -220,7 +234,7 @@ void PPU::RenderTiles(uint8_t lcdControl)
     }
 
     // which background mem?
-    if (false == usingWindow)
+    if (usingWindow == false)
     {
         if ((lcdControl >> 3 & 1) == 1)
             backgroundMemory = 0x9C00;
@@ -236,22 +250,22 @@ void PPU::RenderTiles(uint8_t lcdControl)
             backgroundMemory = 0x9800;
     }
 
-    uint8_t yPos = 0;
+    uint8_t yPos;
 
     // yPos is used to calculate which of 32 vertical tiles the
     // current scanline is drawing
     if (!usingWindow)
-        yPos = scrollY + m_mmu.Read(0xFF44);
+        yPos = scrollY + scanline;
     else
-        yPos = m_mmu.Read(0xFF44) - windowY;
+        yPos = scanline - windowY;
 
     // which of the 8 vertical pixels of the current
     // tile is the scanline on?
     uint16_t tileRow = (static_cast<uint8_t>(yPos / 8)*32);
 
-    // time to start drawing the 160 horizontal pixels
+    // time to start drawing the GB_W horizontal pixels
     // for this scanline
-    for (int pixel = 0; pixel < 160; pixel++)
+    for (int pixel = 0; pixel < GB_W; pixel++)
     {
         uint8_t xPos = pixel + scrollX;
 
@@ -348,17 +362,17 @@ void PPU::RenderTiles(uint8_t lcdControl)
             break;
         }
 
-        int scanline = m_mmu.Read(0xFF44);
-
         // safety check to make sure what im about
         // to set is in the 160x144 bounds
         if ((scanline<0)||(scanline>143)||(pixel<0)||(pixel>159))
         {
+            std::cerr << "PPU::RenderTiles: scanline is out of bounds" << std::endl;
             continue;
         }
 
-        sf::Color currentColor = m_screenData[scanline][pixel]->getFillColor();
-        m_screenData[scanline][pixel]->setFillColor(sf::Color(red, green, blue));/*
+        sf::Color currentColor = GetPixelColor(scanline, pixel);
+        SetPixelColor(scanline, pixel,sf::Color(red, green, blue));
+        /*
         if (m_screenData[scanline][pixel]->getFillColor() != currentColor)
         {
             std::cout << "Pixel at (" << pixel << "," << scanline << ") set to color " 
@@ -465,11 +479,13 @@ void PPU::RenderSprites(uint8_t lcdControl)
                 // sanity check
                 if ((scanline<0)||(scanline>143)||(pixel<0)||(pixel>159))
                 {
+                    std::cerr << "PPU::RenderSprites: scanline is out of bounds" << std::endl;
                     continue;
                 }
                 
-                sf::Color currentColor = m_screenData[scanline][pixel]->getFillColor();
-                m_screenData[scanline][pixel]->setFillColor(sf::Color(red, green, blue));/*
+                sf::Color currentColor = GetPixelColor(scanline, pixel);
+                SetPixelColor(scanline, pixel,sf::Color(red, green, blue));
+                /*
                 if (m_screenData[scanline][pixel]->getFillColor() != currentColor)
                 {
                     std::cout << "Pixel at (" << pixel << "," << scanline << ") set to color " 

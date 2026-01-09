@@ -4,6 +4,9 @@
 class MMU;
 class CPU;
 
+static constexpr int GB_W = 160;
+static constexpr int GB_H = 144;
+
 class PPU
 {
     sf::RenderWindow m_window;
@@ -11,7 +14,11 @@ class PPU
     sf::Text* m_debugRom;
     sf::RectangleShape* m_debugBackground;
     
-    std::vector<std::vector<sf::RectangleShape*>> m_screenData;
+    //std::vector<std::vector<sf::RectangleShape*>> m_screenData;
+
+    std::array<uint8_t, GB_W * GB_H * 4> m_framebuffer;
+    sf::Texture m_screenTexture;
+    sf::Sprite m_screenSprite;
 
     MMU& m_mmu;
 
@@ -26,6 +33,8 @@ public:
     void DrawScanLine(uint8_t currentLine);
 
     void RenderDebug(CPU cpu);
+    sf::Color GetPixelColor(int y, int x);
+    void SetPixelColor(int y, int x, sf::Color color);
     void Display();
     void Clear();
 

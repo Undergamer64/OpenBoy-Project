@@ -108,7 +108,7 @@ bool Emulator::operator()()
 
         cyclesThisUpdate += cycles;
         UpdateTimers(cycles);
-        //UpdateGraphics(cycles); 
+        UpdateGraphics(cycles); 
         cyclesThisUpdate += DoInterupts();
 
 #if _DEBUG
