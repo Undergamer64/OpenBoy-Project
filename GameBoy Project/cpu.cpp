@@ -10,19 +10,19 @@
 #define TMA 0xFF06
 #define TMC 0xFF07
 
-#pragma region CPU
-
 CPU::CPU(MMU& mmu, ALU& alu)
 	: m_mmu(mmu)
 	  , m_alu(alu)
 {
 	m_registers.PC = 0;
-	m_registers.BC = 0;
-	m_registers.DE = 0;
-	m_registers.HL = 0;
-	m_registers.AF = 0;
+	m_registers.CB = 0;
+	m_registers.ED = 0;
+	m_registers.LH = 0;
+	m_registers.FA = 0;
 	m_registers.SP = 0;
 	m_registers.IME = 1;
+
+	m_debugAddresses = std::vector<uint16_t>();
 };
 
 CPU::~CPU() = default;
@@ -73,14 +73,12 @@ uint8_t CPU::GetCurrentInstruction()
 
 int CPU::Execute()
 {
+	if (std::find(m_debugAddresses.begin(), m_debugAddresses.end(), m_registers.PC) == m_debugAddresses.end())
+	{
+		m_debugAddresses.push_back(m_registers.PC);
+	}
 	uint8_t opcode = GetCurrentInstruction();
 	m_registers.PC++;
-	
-	//std::cout << "Program Counter :" << std::hex << m_registers.PC << " | " << "Opcode : " << std::hex << static_cast<int>(opcode) << std::endl;
-
-	/*std::cout << "At PC: 0x" << std::hex << static_cast<int>(m_registers.PC) 
-			  << " got opcode: 0x" << static_cast<int>(opcode) << std::endl;*/
-
 	
 	if (m_registers.PC > 258  && Read(0xFF50) == 0) // booting overflow
 	{
@@ -101,11 +99,12 @@ int CPU::Execute()
 			return f->Execute(opcode, m_mmu, m_registers);
 		}
 	}
+	m_registers.PC--;
 	std::cout << "Error : No Valide Instruction Family For Value 0x"
 		<< std::hex
 		<< static_cast<int>(opcode)
 		<< " At PC 0x"
-		<< static_cast<int>(m_registers.PC)-1
+		<< static_cast<int>(m_registers.PC)
 		<< std::endl;
 	
 	return -1;
@@ -116,77 +115,9 @@ int CPU::operator()()
 	return Execute();
 }
 
-/*
-int CPU::DumpRegisters(bool skip)
-{
-	if (skip || m_debugSkip)
-	{
-		return 1;
-	}
-	
-	m_debugSkip = false;
-	
-	for (int i = 0; i < 20; i++)
-	{
-		std::cout << "--";
-	}
-	std::cout << std::endl;
-	
-	std::cout << "Registers : " << std::endl;
-
-	std::cout << std::endl;
-	
-	for (int i = 0; i < 8; i++)
-	{
-		std::cout << std::hex << static_cast<int>(m_registers.m_registers[i]) << " | ";
-	}
-	
-	std::cout << std::endl;
-	std::cout << "SP : " << std::hex << static_cast<int>(m_registers.SP) << " | ";
-	std::cout << "PC : " << std::hex << static_cast<int>(m_registers.PC) << " | ";
-	std::cout << "Opcode : " << std::hex << static_cast<int>(Read(m_registers.PC)) << std::endl;
-	std::cout << "ScanLine : " << std::dec << static_cast<int>(Read(0xFF44)) << std::endl;
-	
-	for (int i = 0; i < 20; i++)
-	{
-		std::cout << "--";
-	}
-	std::cout << std::endl;
-
-	std::cout << "Next ?" << std::endl;
-
-	char n;
-	std::cin >> n;
-
-	if (n == 'c' || n == 'C')
-	{
-		system("cls");
-	}
-	else if (n == 'q' || n == 'Q')
-	{
-		std::cout << "Bye Bye !" << std::endl;
-		return -1;
-	}
-	else if (n == 't')
-	{
-		return 25;
-	}
-	else if (n == 'f')
-	{
-		return 2000;
-	}
-
-	std::cout << std::endl;
-
-	return 1;
-}
-*/
-
-#pragma endregion
-
 void CPU::Write(uint16_t address, uint8_t value)
 {
-	//CONDITIONS
+	//TODO : CONDITIONS
 
 	
 	
@@ -230,4 +161,9 @@ void CPU::SetClockFreq(int& TimerCounter)
 void CPU::ForceWrite(uint16_t address, uint8_t value)
 {
 	m_mmu.Write(address, value);
+}
+
+uint8_t CPU::ForceRead(uint16_t address)
+{
+	return m_mmu.Read(address);
 }

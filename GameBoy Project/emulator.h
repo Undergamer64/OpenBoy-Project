@@ -10,6 +10,7 @@ class Emulator
 {
 public:
 	Cartidge m_cartidge;
+	bool m_isRunning = true;
 	
 	int m_scanlineCounter = 456;
 	int m_TimerCounter = 1024;
@@ -39,11 +40,12 @@ public:
 	int DoInterupts();
 	int ServiceInterupt(int interrupt);
 
-	bool operator()();
+	void operator()();
+	void Execute();
 
 	void DebugSlowDown();
 
 	void DoDividerRegister(int cycles);
-    
-    bool Render();
+
+	bool Render();
 };

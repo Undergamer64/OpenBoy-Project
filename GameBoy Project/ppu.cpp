@@ -30,62 +30,122 @@ bool PPU::IsWindowOpen()
         }
     }
 
+    while (const std::optional<sf::Event> event = m_debugWindow.pollEvent())
+    {
+        if (event->is<sf::Event::Closed>())
+        {
+            m_window.close();
+            return false;
+        }
+        if (event->is<sf::Event::Resized>())
+        {
+            RecalculateDebugScreenSize();
+        }
+        
+        if (const auto* scroll = event->getIf<sf::Event::MouseWheelScrolled>())
+        {
+            ScrollScreen(scroll->delta * 10.f);
+        }
+    }
+
     return true;
 }
 
-PPU::PPU(MMU& mmu)
-    : m_window(sf::VideoMode( sf::Vector2u(GB_W,GB_H), 32), "GameBoy Project"), m_screenTexture(sf::Vector2u{GB_W, GB_H}), m_screenSprite(m_screenTexture), m_mmu(mmu)
+void PPU::ScrollScreen(float delta)
+{
+    m_debugText->setPosition(m_debugText->getPosition() + sf::Vector2f(0, delta));
+}
+
+PPU::PPU(MMU& mmu) :
+    m_window(sf::VideoMode( sf::Vector2u(GB_W,GB_H), 32), "GameBoy Project"),
+    m_debugWindow(sf::VideoMode( sf::Vector2u(GB_W,GB_H), 32), "Debug Window"),
+    m_screenTexture(sf::Vector2u{GB_W, GB_H}),
+    m_screenSprite(m_screenTexture),
+    m_mmu(mmu)
 {
     m_screenTexture.setSmooth(false);
     
     m_window.setFramerateLimit(60);
     m_window.setVerticalSyncEnabled(true);
-    sf::Vector2u size = sf::VideoMode::getDesktopMode().size;
+
+    m_debugWindow.setFramerateLimit(60);
+    m_debugWindow.setVerticalSyncEnabled(true);
     
-    unsigned int ratio = std::min((size.x) / GB_W, size.y / GB_H) - 1;
+    sf::Vector2u size = sf::VideoMode::getDesktopMode().size;
+    unsigned int ratio = std::min((size.x) / GB_W / 2, size.y / GB_H) - 1;
 
     size.x = ratio * GB_W;
     size.y = ratio * GB_H;
+    
     m_window.setSize(size);
     m_window.setPosition(sf::Vector2i(
-        (sf::VideoMode::getDesktopMode().size.x / 2 - size.x / 2),
+        (sf::VideoMode::getDesktopMode().size.x * 3 / 4 - size.x / 2),
         (sf::VideoMode::getDesktopMode().size.y / 2 - size.y / 2 - 40)
         )
     );
+
+    m_debugWindow.setSize(size);
+    m_debugWindow.setPosition(sf::Vector2i(
+        (sf::VideoMode::getDesktopMode().size.x / 4 - size.x / 2),
+        (sf::VideoMode::getDesktopMode().size.y / 2 - size.y / 2 - 40)
+        )
+    );
+
+    
     if (!m_font.openFromFile("EarlyGameBoy.ttf"))
     {
         m_window.close();
+        m_debugWindow.close();
     }
     
     m_debugBackground = new sf::RectangleShape(sf::Vector2f(size.x, size.y));
     m_debugBackground->setFillColor(sf::Color(0,0,0,150));
 
     m_debugRom = new sf::Text(m_font);
+    m_debugText = new sf::Text(m_font);
 
     RecalculateScreenSize();
+    RecalculateDebugScreenSize();
+}
+
+void PPU::RecalculateDebugScreenSize()
+{
+    m_debugWindow.setView(sf::View(sf::FloatRect({0,0}, sf::Vector2f(GB_W,GB_H))));
+    
+    sf::Vector2u size = m_debugWindow.getSize();
+    
+    sf::Vector2f screenRation = sf::Vector2f((size.x) / GB_W, size.y / GB_H);
+    
+    bool isSideRestrained = screenRation.x < screenRation.y;
+    
+    if (isSideRestrained)
+    {
+        m_debugText->setScale(sf::Vector2f(0.10f , 0.10f * screenRation.x / screenRation.y));
+    }
+    else
+    {
+        m_debugText->setScale(sf::Vector2f(0.10f * screenRation.y / screenRation.x, 0.10f ));
+    }
 }
 
 void PPU::RecalculateScreenSize()
 {
     m_window.setView(sf::View(sf::FloatRect({0,0}, sf::Vector2f(GB_W,GB_H))));
-
     
     sf::Vector2u size = m_window.getSize();
     
     sf::Vector2f screenRation = sf::Vector2f((size.x) / GB_W, size.y / GB_H);
     
-    //float ratio = std::min((size.x) / GB_W, size.y / GB_H);
     bool isSideRestrained = screenRation.x < screenRation.y;
     
-    //m_debugRom->setScale(sf::Vector2f((desktopSize.x / (ratio * GB_W * 3)) * 0.1f,(desktopSize.y / (ratio * GB_H)) * 0.1f)); //Magic numbers ? Nah, I would never !
-
     if (isSideRestrained)
+    {
         m_debugRom->setScale(sf::Vector2f(0.15f , 0.15f * screenRation.x / screenRation.y));
+    }
     else
+    {
         m_debugRom->setScale(sf::Vector2f(0.15f * screenRation.y / screenRation.x, 0.15f ));
-
-    /*
-    pixel->setPosition(sf::Vector2f(x, y * screenRation.x / screenRation.y + centerOffset));*/
+    }
     
     if (isSideRestrained)
     {
@@ -99,7 +159,6 @@ void PPU::RecalculateScreenSize()
         float centerOffset = GB_W / 2.f - (GB_W * screenRation.y / screenRation.x) / 2.f;
         m_screenSprite.setPosition({1 * screenRation.y / screenRation.x + centerOffset, 1});
     }
-    //m_screenSprite.setScale({1,1});
 }
 
 bool PPU::RenderScreen()
@@ -125,7 +184,7 @@ void PPU::DrawScanLine(uint8_t currentLine)
         RenderSprites(control);
 }
 
-void PPU::RenderDebug(CPU cpu)
+void PPU::RenderDebug(CPU cpu, bool isRunning = true)
 {
     m_debugRom->setCharacterSize(16);
 
@@ -153,16 +212,62 @@ void PPU::RenderDebug(CPU cpu)
     ur << "LCDC : 0b" << std::bitset<8>(m_mmu.Read(0xFF40)) << "\n";
     ur << "STAT : 0b" << std::bitset<8>(m_mmu.Read(0xFF41)) << "\n";
 
-    ur << "SCY : " << std::dec << static_cast<int>(m_mmu.Read(0xFF42)) << "\n";
-    ur << "SCX : " << std::dec << static_cast<int>(m_mmu.Read(0xFF43)) << "\n";
+    ur << "SCY : " << std::hex << static_cast<int>(m_mmu.Read(0xFF42)) << "\n";
+    ur << "SCX : " << std::hex << static_cast<int>(m_mmu.Read(0xFF43)) << "\n";
 
-    ur << "WY : " << std::dec << static_cast<int>(m_mmu.Read(0xFF4A)) << "\n";
-    ur << "WX : " << std::dec << static_cast<int>(m_mmu.Read(0xFF4B)) << "\n";
+    ur << "WY : " << std::hex << static_cast<int>(m_mmu.Read(0xFF4A)) << "\n";
+    ur << "WX : " << std::hex << static_cast<int>(m_mmu.Read(0xFF4B)) << "\n";
+
+    if (isRunning)
+    {
+        ur << "\n   Running";
+    }
+    else
+    {
+        ur << "\n   Paused";
+    }
     
     m_debugRom->setString(ur.str());
     
     m_window.draw(*m_debugBackground);
     m_window.draw(*m_debugRom);
+
+    std::stringstream ss;
+    for (int i = 0x0000; i < 0x0100; i++)
+    {
+        if (i == cpu.m_registers.PC)
+        {
+            ss << "!";
+        }
+        else if (std::find(cpu.m_debugAddresses.begin(), cpu.m_debugAddresses.end(), i) != cpu.m_debugAddresses.end())
+        {
+            ss << "*";
+        }
+        else
+        {
+            ss << "  ";
+        }
+        uint8_t opcode = cpu.Read(i);
+/*
+        if (opcode == 0b0000)
+        {
+            ss << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << "    ";
+        }
+        else
+        {
+            ss << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(opcode);
+        }
+*/
+        ss << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(opcode);
+        
+        if ((i + 1) % 16 == 0)
+        {
+            ss << "\n";
+        }
+    }
+    
+    m_debugText->setString(ss.str());
+    m_debugWindow.draw(*m_debugText);
 }
 
 sf::Color PPU::GetPixelColor(int y, int x)
@@ -188,11 +293,13 @@ void PPU::SetPixelColor(int y, int x, sf::Color color)
 void PPU::Display()
 {
     m_window.display();
+    m_debugWindow.display();
 }
 
 void PPU::Clear()
 {
     m_window.clear();
+    m_debugWindow.clear();
 }
 
 void PPU::RenderTiles(uint8_t lcdControl)

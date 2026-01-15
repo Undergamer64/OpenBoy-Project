@@ -26,7 +26,7 @@ int main()
     Memory<0x00A0> oam;
     Memory<0x0060> unusableMemory;
     Memory<0x0080> ioRegisters;
-    Memory<0x007F> zeroPage;
+    Memory<0x007F> hram;
     Memory<0x0001> interruptActivate;
 
     emulator.Map(&romZeroBank, 0x0000); //Bank zero of the rom
@@ -39,68 +39,43 @@ int main()
     emulator.Map(&oam, 0xFE00);
     emulator.Map(&unusableMemory, 0xFEA0); // prohibited by nintendo
     emulator.Map(&ioRegisters, 0xFF00);
-    emulator.Map(&zeroPage, 0xFF80);
+    emulator.Map(&hram, 0xFF80);
     emulator.Map(&interruptActivate, 0xFFFF);
     emulator.m_cpu.Write(0xFFFF, 0xFF);
 
 #pragma region OpcodeDef
     emulator.m_cpu += std::make_unique<IF_LD_r16_imm16>();
     emulator.m_cpu += std::make_unique<IF_AR_8BIT>();
-    emulator.m_cpu += std::make_unique<IF_ADD_HL>();
     emulator.m_cpu += std::make_unique<IF_LD_rA_rHL>();
     emulator.m_cpu += std::make_unique<IF_CB_Prefix>();
     emulator.m_cpu += std::make_unique<IF_FLOW_JR>();
     emulator.m_cpu += std::make_unique<IF_LD_r8_imm8>();
     emulator.m_cpu += std::make_unique<IF_LD_ADR_r>();
-    emulator.m_cpu += std::make_unique<IF_FLOW_JP>();
     emulator.m_cpu += std::make_unique<IF_INC_DEC>();
+    emulator.m_cpu += std::make_unique<IF_LD_r_r>();
     emulator.m_cpu += std::make_unique<IF_LD_ADRIMM_r>();
-    emulator.m_cpu += std::make_unique<IF_FLOW_CALL>();
     emulator.m_cpu += std::make_unique<IF_LD_rA_memory>();
+    emulator.m_cpu += std::make_unique<IF_FLOW_CALL>();
     emulator.m_cpu += std::make_unique<IF_PUSH_POP>();
     emulator.m_cpu += std::make_unique<IF_ROTATE>();
     emulator.m_cpu += std::make_unique<IF_FLOW_RET>();
-    emulator.m_cpu += std::make_unique<IF_LD_r_r>();
     emulator.m_cpu += std::make_unique<IF_LD_SP_HL>();
+    /*
+    emulator.m_cpu += std::make_unique<IF_FLOW_JP>();
     emulator.m_cpu += std::make_unique<IF_DI_EI>();
+    emulator.m_cpu += std::make_unique<IF_ADD_HL>();
+    */
     
     //emulator.m_cpu += std::make_unique<IF_Finish>(); Deprecated
     
 #pragma endregion
 
-    //emulator.LoadCartridge("Tetris.gb");
-    emulator.LoadCartridge("Tetoris.gb");
+    emulator.LoadCartridge("Tetris.gb");
+    //emulator.LoadCartridge("Tetoris.gb");
     
     //emulator.SkipBootRom();
 
-    std::chrono::time_point<std::chrono::high_resolution_clock> lastFrame = std::chrono::high_resolution_clock::now();
-    
-    while (true)
-    {
-        std::chrono::time_point<std::chrono::high_resolution_clock> t;
-        
-        do
-        {
-            t = std::chrono::high_resolution_clock::now();
-            
-#if _DEBUG
-        } while (std::chrono::duration_cast<std::chrono::milliseconds>(t - lastFrame).count() < (1.f/60.f) * 1000); 
-#else
-        } while (std::chrono::duration_cast<std::chrono::milliseconds>(t - lastFrame).count() < (1.f/60.f) * 1000); 
-#endif
-        
-        lastFrame = std::chrono::high_resolution_clock::now();
-        if (!emulator()) 
-        {
-            std::cout << "Emulator End" << std::endl;
-            break;
-        }
-        if (!emulator.Render())
-        {
-            std::cout << "Emulator couldn't render !" << std::endl;
-            break;
-        }
-    }
+    emulator();
   
     return 0;
 }

@@ -13,6 +13,9 @@ class PPU
     sf::Font m_font;
     sf::Text* m_debugRom;
     sf::RectangleShape* m_debugBackground;
+
+    sf::RenderWindow m_debugWindow;
+    sf::Text* m_debugText;
     
     //std::vector<std::vector<sf::RectangleShape*>> m_screenData;
 
@@ -23,16 +26,19 @@ class PPU
     MMU& m_mmu;
 
     bool IsWindowOpen();
+
+    void ScrollScreen(float delta);
 public:
 
     PPU(MMU& mmu);
+    void RecalculateDebugScreenSize();
     void RecalculateScreenSize();
 
     bool RenderScreen();
 
     void DrawScanLine(uint8_t currentLine);
 
-    void RenderDebug(CPU cpu);
+    void RenderDebug(CPU cpu, bool isRunning);
     sf::Color GetPixelColor(int y, int x);
     void SetPixelColor(int y, int x, sf::Color color);
     void Display();

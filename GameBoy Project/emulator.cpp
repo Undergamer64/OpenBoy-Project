@@ -88,8 +88,39 @@ void Emulator::LoadCartridge(const std::string& filepath)
     m_cpu.LoadCartridge(filepath);
 }
 
-bool Emulator::operator()() 
+void Emulator::operator()() 
 {
+    Render();
+    
+    std::chrono::time_point<std::chrono::high_resolution_clock> lastFrame = std::chrono::high_resolution_clock::now();
+    
+    while (true)
+    {
+        std::chrono::time_point<std::chrono::high_resolution_clock> t;
+        
+        do
+        {
+            t = std::chrono::high_resolution_clock::now();
+            
+#if _DEBUG
+        } while (std::chrono::duration_cast<std::chrono::milliseconds>(t - lastFrame).count() < (1.f/60.f) * 1000); 
+#else
+        } while (std::chrono::duration_cast<std::chrono::milliseconds>(t - lastFrame).count() < (1.f/60.f) * 1000); 
+#endif
+        
+        lastFrame = std::chrono::high_resolution_clock::now();
+        Execute();
+        if (!Render()) return;
+    }
+}
+
+void Emulator::Execute()
+{
+    if (!m_isRunning)
+    {
+        return;
+    }
+    
     int cyclesThisUpdate = 0;
     
     while (cyclesThisUpdate < MAXCYCLES)
@@ -98,12 +129,15 @@ bool Emulator::operator()()
 
         if (cycles == -1)
         {
-            return false;
+            m_isRunning = false;
+            std::cout << "Emulation Stopped !" << std::endl;
+            break;
         }
         if (cycles == -2)
         {
-            std::cout << "Error : Force Exit !" << std::endl;
-            return false;
+            m_isRunning = false;
+            std::cout << "Forced Exit !" << std::endl;
+            break;
         }
 
         cyclesThisUpdate += cycles;
@@ -116,16 +150,15 @@ bool Emulator::operator()()
 #endif
         
     }
-    return true;
 }
 
 void Emulator::DebugSlowDown()
-{/*
-    if (m_cpu.m_registers.PC == 0x8B)
+{
+    if (m_cpu.m_registers.PC == 0x6a)
     {
-        //MAXCYCLES = 1;
+        MAXCYCLES = 1;
         std::cout << "Debug Slow Down" << std::endl;
-    }*/
+    }
 }
 
 void Emulator::UpdateTimers(int cycles)
@@ -356,13 +389,14 @@ bool Emulator::Render()
 {
     if (!m_ppu.RenderScreen())
     {
-        return false;  
+        std::cout << "No Render !" << std::endl;
+        return false;
     }
     //std::cout << "\nRefresh\n";
 
 #if _DEBUG
     //Render Debug values here
-    m_ppu.RenderDebug(m_cpu);
+    m_ppu.RenderDebug(m_cpu, m_isRunning);
 #endif
     
     m_ppu.Display();
