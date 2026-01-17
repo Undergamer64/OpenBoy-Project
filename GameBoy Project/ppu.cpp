@@ -217,6 +217,13 @@ void PPU::RenderDebug(CPU cpu, bool isRunning = true)
 
     ur << "WY : " << std::hex << static_cast<int>(m_mmu.Read(0xFF4A)) << "\n";
     ur << "WX : " << std::hex << static_cast<int>(m_mmu.Read(0xFF4B)) << "\n";
+    
+    ur << "\nLast executed instructions:\n";
+    int count = 0;
+    for (auto it = cpu.m_debugAddresses.rbegin(); it != cpu.m_debugAddresses.rend() && count < 5; ++it, ++count)
+    {
+        ur << "0x" << std::hex << std::uppercase << static_cast<int>(*it) << " : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.Read(*it)) << "\n";
+    }
 
     if (isRunning)
     {
@@ -233,7 +240,7 @@ void PPU::RenderDebug(CPU cpu, bool isRunning = true)
     m_window.draw(*m_debugRom);
 
     std::stringstream ss;
-    for (int i = 0x0000; i < 0x0100; i++)
+    for (int i = 0x8010; i < 0x9100; i++)
     {
         if (i == cpu.m_registers.PC)
         {
@@ -248,7 +255,7 @@ void PPU::RenderDebug(CPU cpu, bool isRunning = true)
             ss << "  ";
         }
         uint8_t opcode = cpu.Read(i);
-/*
+
         if (opcode == 0b0000)
         {
             ss << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << "    ";
@@ -257,8 +264,8 @@ void PPU::RenderDebug(CPU cpu, bool isRunning = true)
         {
             ss << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(opcode);
         }
-*/
-        ss << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(opcode);
+
+        //ss << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(opcode);
         
         if ((i + 1) % 16 == 0)
         {

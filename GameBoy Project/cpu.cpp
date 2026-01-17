@@ -20,7 +20,7 @@ CPU::CPU(MMU& mmu, ALU& alu)
 	m_registers.LH = 0;
 	m_registers.FA = 0;
 	m_registers.SP = 0;
-	m_registers.IME = 1;
+	m_registers.IME = 0;
 
 	m_debugAddresses = std::vector<uint16_t>();
 };
@@ -73,10 +73,14 @@ uint8_t CPU::GetCurrentInstruction()
 
 int CPU::Execute()
 {
-	if (std::find(m_debugAddresses.begin(), m_debugAddresses.end(), m_registers.PC) == m_debugAddresses.end())
+	m_debugAddresses.push_back(m_registers.PC);
+
+	//Remove instructions that are too old
+	while (m_debugAddresses.size() > 5)
 	{
-		m_debugAddresses.push_back(m_registers.PC);
+		m_debugAddresses.erase(m_debugAddresses.begin());
 	}
+	
 	uint8_t opcode = GetCurrentInstruction();
 	m_registers.PC++;
 	
@@ -96,10 +100,11 @@ int CPU::Execute()
 		}
 		if (f->IsValid(opcode)) 
 		{
-			return f->Execute(opcode, m_mmu, m_registers);
+			int cycles = f->Execute(opcode, m_mmu, m_registers);
+			return cycles;
 		}
 	}
-	m_registers.PC--;
+	m_registers.PC = m_debugAddresses.back();
 	std::cout << "Error : No Valide Instruction Family For Value 0x"
 		<< std::hex
 		<< static_cast<int>(opcode)

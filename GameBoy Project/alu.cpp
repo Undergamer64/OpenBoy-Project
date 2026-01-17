@@ -623,7 +623,7 @@ int IF_AR_8BIT::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		break;
 #pragma endregion
 	}
-	if ((opcode & 0b00111000) != 0b00111000)
+	if ((opcode & 0b00111000) != 0b00111000)//don't apply on compare instruction
 	{
 		registers.m_registers[6] = _res;
 	}
@@ -643,7 +643,6 @@ int IF_ADD_HL::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	//std::cout << "ADD_HL" << std::endl;
 	int currentCycles = 8;
 
-	//TODO : VERIFY THE INVERTED REGISTER PROBLEM
 	switch (opcode & 0b00110000)
 	{
 		case 0b00000000:
@@ -847,7 +846,6 @@ int IF_FLOW_JR::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		case 0b00001000:
 			if ((registers.m_registers[7] & 0b01000000) == 0b01000000)
 			{
-				std::cout << "JZ to : " << std::hex << registers.PC + e << "\nat PC : " << static_cast<int>(registers.PC) << std::endl;
 				registers.PC += e;
 				currentCycles += 4;
 			}
@@ -1087,12 +1085,20 @@ int IF_FLOW_RET::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 	if (condition)
 	{
 		uint16_t value = mmu.Read(registers.SP++) + (mmu.Read(registers.SP++) << 8);
+		if (registers.SP < 0xFF80)
+		{
+			throw std::runtime_error("Stack Pointer out of bounds on RET instruction");
+		}
 		registers.PC = value;
 		currentCycles += 4;
 	}
 	else
 	{
 		registers.SP += 2;
+		if (registers.SP < 0xFF80)
+		{
+			throw std::runtime_error("Stack Pointer out of bounds on RET instruction");
+		}
 	}
 
 	if (interruptEnable)
@@ -1407,6 +1413,10 @@ int IF_INC_DEC::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 			break;
 		case 0b00110000:
 			registers.SP += _res;
+			if (registers.SP < 0xFF80)
+			{
+				throw std::runtime_error("Stack Pointer out of bounds on RET instruction");
+			}
 			break;
 		}
 		return currentCycles;
@@ -1506,6 +1516,10 @@ int IF_PUSH_POP::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		if ((opcode & 0b00000100) == 0b00000000) 
 		{
 			uint16_t value = mmu.Read(registers.SP++) + (mmu.Read(registers.SP++) << 8);
+			if (registers.SP < 0xFF80)
+			{
+				throw std::runtime_error("Stack Pointer out of bounds on RET instruction");
+			}
 			registers.CB = GETINVERTED16(value);
 		}
 		else 
@@ -1519,6 +1533,10 @@ int IF_PUSH_POP::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		if ((opcode & 0b00000100) == 0b00000000)
 		{
 			uint16_t value = mmu.Read(registers.SP++) + (mmu.Read(registers.SP++) << 8);
+			if (registers.SP < 0xFF80)
+			{
+				throw std::runtime_error("Stack Pointer out of bounds on RET instruction");
+			}
 			registers.ED = GETINVERTED16(value);
 		}
 		else
@@ -1532,6 +1550,10 @@ int IF_PUSH_POP::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		if ((opcode & 0b00000100) == 0b00000000)
 		{
 			uint16_t value = mmu.Read(registers.SP++) + (mmu.Read(registers.SP++) << 8);
+			if (registers.SP < 0xFF80)
+			{
+				throw std::runtime_error("Stack Pointer out of bounds on RET instruction");
+			}
 			registers.LH = GETINVERTED16(value);
 		}
 		else
@@ -1545,6 +1567,10 @@ int IF_PUSH_POP::Execute(uint8_t opcode, MMU& mmu, Registers& registers)
 		if ((opcode & 0b00000100) == 0b00000000)
 		{
 			uint16_t value = mmu.Read(registers.SP++) + (mmu.Read(registers.SP++) << 8);
+			if (registers.SP < 0xFF80)
+			{
+				throw std::runtime_error("Stack Pointer out of bounds on RET instruction");
+			}
 			registers.FA = GETINVERTED16(value);
 		}
 		else

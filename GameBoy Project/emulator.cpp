@@ -110,6 +110,9 @@ void Emulator::operator()()
         
         lastFrame = std::chrono::high_resolution_clock::now();
         Execute();
+
+        m_cpu.ForceWrite(0xFF42, 0);
+        
         if (!Render()) return;
     }
 }
@@ -126,7 +129,7 @@ void Emulator::Execute()
     while (cyclesThisUpdate < MAXCYCLES)
     {
         int cycles = m_cpu.Execute();
-
+        
         if (cycles == -1)
         {
             m_isRunning = false;
@@ -345,31 +348,33 @@ int Emulator::DoInterupts()
 }
 
 int Emulator::ServiceInterupt(int interrupt)
-{
-    //if (m_cpu.m_registers.PC >= 0x0100 || m_cpu.Read(0xFF50) != 0)// If not in bootrom
+{/*
+    if (m_cpu.m_registers.PC < 0x0100 && m_cpu.ForceRead(0xFF50) == 0) // If is booting up
     {
-        m_cpu.m_registers.IME = false;
-    }
+        return 0;
+    }*/
+    
+    m_cpu.m_registers.IME = false;
     uint8_t req = m_cpu.Read(0xFF0F) ;
     req = req & ~(1 << interrupt);
     m_cpu.Write(0xFF0F,req) ;
-
+    
     /// we must save the current execution address by pushing it onto the stack
     m_cpu.Push(m_cpu.m_registers.PC);
 
     switch (interrupt)
     {
     case 0:
-        m_cpu.m_registers.PC = 0x40 - 1;
+        m_cpu.m_registers.PC = 0x40;
         break;
     case 1:
-        m_cpu.m_registers.PC = 0x48 - 1;
+        m_cpu.m_registers.PC = 0x48;
         break;
     case 2:
-        m_cpu.m_registers.PC = 0x50 - 1;
+        m_cpu.m_registers.PC = 0x50;
         break;
     case 4:
-        m_cpu.m_registers.PC = 0x60 - 1;
+        m_cpu.m_registers.PC = 0x60;
         break;
     }
     return 20;
