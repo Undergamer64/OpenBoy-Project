@@ -28,8 +28,8 @@ public:
 
 	void LoadCartridge(const std::string& filepath);
 
-	void UpdateTimers(int cycles);
-	void UpdateGraphics(int cycles);
+	void UpdateTimers();
+	void UpdateGraphics();
 	void SetLCDStatus();
 
 	bool IsLCDEnabled();
@@ -45,7 +45,7 @@ public:
 
 	void DebugSlowDown();
 
-	void DoDividerRegister(int cycles);
+	void DoDividerRegister();
 
 	bool Render();
 };

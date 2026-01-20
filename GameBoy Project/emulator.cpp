@@ -122,33 +122,36 @@ void Emulator::Execute()
         return;
     }
     
-    int cyclesThisUpdate = 0;
+    int cyclesThisUpdate = 0; // cycles in T-cycles (1 M-cycle = 4 T-cycles)
     
     while (cyclesThisUpdate < MAXCYCLES)
     {
-        int cycles = m_cpu.Execute();
+
+        if (cyclesThisUpdate % 4 == 0)// only tick cpu every 4 t-cycles (or every 1 m-cycle)
+        {
+            int errorCode = m_cpu.Tick();
         
-        if (cycles == -1)
-        {
-            m_isRunning = false;
-            std::cout << "Emulation Stopped !" << std::endl;
-            break;
-        }
-        if (cycles == -2)
-        {
-            m_isRunning = false;
-            std::cout << "Forced Exit !" << std::endl;
-            break;
+            if (errorCode == -1)
+            {
+                m_isRunning = false;
+                std::cout << "Emulation Stopped !" << std::endl;
+                break;
+            }
+            if (errorCode == -2)
+            {
+                m_isRunning = false;
+                std::cout << "Forced Exit !" << std::endl;
+                break;
+            }
         }
 
-        cyclesThisUpdate += cycles;
-        UpdateTimers(cycles);
-        UpdateGraphics(cycles); 
-        cyclesThisUpdate += DoInterupts();
+        UpdateTimers();
+        UpdateGraphics();
 
-#if _DEBUG
-        //DebugSlowDown();
-#endif
+        // TODO : intergrate interrupts properly in the cpu tick function
+        //cyclesThisUpdate += DoInterupts();
+        
+        cyclesThisUpdate++;
     }
 }
 
@@ -161,14 +164,14 @@ void Emulator::DebugSlowDown()
     }
 }
 
-void Emulator::UpdateTimers(int cycles)
+void Emulator::UpdateTimers()
 {
-    DoDividerRegister(cycles);
+    DoDividerRegister();
 
     // the clock must be enabled to update the clock
     if (IsClockEnabled())
     {
-        m_TimerCounter -= cycles ;
+        m_TimerCounter --;
 
         // enough cpu clock cycles have happened to update the timer
         if (m_TimerCounter <= 0)
@@ -190,13 +193,13 @@ void Emulator::UpdateTimers(int cycles)
     }
 }
 
-void Emulator::UpdateGraphics(int cycles)
+void Emulator::UpdateGraphics()
 {
     SetLCDStatus();
 
     if (IsLCDEnabled())
     {
-        m_scanlineCounter -= cycles ;
+        m_scanlineCounter --;
     }
     else
     {
@@ -377,9 +380,9 @@ int Emulator::ServiceInterupt(int interrupt)
     return 20;
 }
 
-void Emulator::DoDividerRegister(int cycles)
+void Emulator::DoDividerRegister()
 {
-    m_DividerCounter += cycles;
+    m_DividerCounter ++;
     if (m_DividerCounter >= 255)
     {
         m_DividerCounter = 0;

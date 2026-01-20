@@ -50,13 +50,13 @@ int main()
     emulator.m_cpu += std::make_unique<IF_CB_Prefix>();
     emulator.m_cpu += std::make_unique<IF_FLOW_JR>();
     emulator.m_cpu += std::make_unique<IF_LD_r8_imm8>();
-    emulator.m_cpu += std::make_unique<IF_LD_ADR_r>();
+    emulator.m_cpu += std::make_unique<IF_LD_ADRC_r>();
     emulator.m_cpu += std::make_unique<IF_INC_DEC>();
     emulator.m_cpu += std::make_unique<IF_LD_r_r>();
     emulator.m_cpu += std::make_unique<IF_LD_ADRIMM_r>();
     emulator.m_cpu += std::make_unique<IF_LD_rA_memory>();
     emulator.m_cpu += std::make_unique<IF_FLOW_CALL>();
-    emulator.m_cpu += std::make_unique<IF_PUSH_POP>();
+    emulator.m_cpu += std::make_unique<IF_POP>();
     emulator.m_cpu += std::make_unique<IF_ROTATE>();
     emulator.m_cpu += std::make_unique<IF_FLOW_RET>();
     /*
