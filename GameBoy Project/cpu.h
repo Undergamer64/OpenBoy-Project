@@ -30,6 +30,7 @@ class CPU
 
 	uint8_t m_currentOpcode;
 	InstructionFamily* m_currentInstruction;
+	bool m_isCBPrefix = false;
 
 public:
 	Registers m_registers;

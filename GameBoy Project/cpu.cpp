@@ -73,6 +73,11 @@ uint8_t CPU::GetCurrentInstruction()
 
 int CPU::Tick()
 {
+	if (m_currentOpcode == 0xCB)
+	{
+		m_isCBPrefix = true;
+		m_currentInstruction = nullptr;
+	}
 	if (m_currentInstruction == nullptr) //Fetch new instruction
 	{
 		if (m_registers.PC > 258  && Read(0xFF50) == 0) // booting overflow
@@ -112,6 +117,7 @@ int CPU::Tick()
 	if (m_currentInstruction->Tick(m_currentOpcode, m_mmu, m_registers))
 	{
 		m_currentInstruction = nullptr;
+		m_isCBPrefix = false;
 	}
 	return 0;
 };
@@ -122,7 +128,7 @@ InstructionFamily* CPU::GetInstructionFamily(uint8_t opcode)
 	{
 		if (f->IsValid(opcode))
 		{
-			return f;
+			return f.get();
 		}
 	}
 	return nullptr;

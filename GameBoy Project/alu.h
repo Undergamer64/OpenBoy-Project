@@ -9,11 +9,12 @@ struct Registers;
 class InstructionFamily
 {
 protected:
-	int m_step = 0;
+	int m_currentCycle = 0;
 	uint8_t m_8bitRegister = 0;
 	uint16_t m_16bitRegister = 0;
 	
 public:
+	bool m_isCBPrefix = false;
 	virtual bool IsValid(uint8_t opcode) = 0;
 	virtual bool Tick(uint8_t opcode, MMU& mmu, Registers& registers) = 0;
 };
@@ -178,6 +179,17 @@ public:
 
 #pragma region CB Prefix Instructions
 
+class IF_CB_Rotate final
+	: public InstructionFamily
+{
+public:
+	bool m_isCBPrefix = true;
+	
+	bool IsValid(uint8_t opcode) override;
+
+	bool Tick(uint8_t _, MMU& mmu, Registers& registers) override;
+};
+/*
 class IF_CB_Prefix final
 	: public InstructionFamily
 {
@@ -185,7 +197,7 @@ public:
 	bool IsValid(uint8_t opcode) override;
 
 	bool Tick(uint8_t _, MMU& mmu, Registers& registers) override;
-};
+};*/
 
 #pragma endregion
 
@@ -236,16 +248,3 @@ public:
 
 #pragma endregion
 
-#pragma region Custom Instruction
-
-class IF_Finish final //Deprecated
-	: public InstructionFamily
-{
-public:
-
-	bool IsValid(uint8_t opcode) override;
-
-	bool Tick(uint8_t opcode, MMU& mmu, Registers& registers) override;
-};
-
-#pragma endregion

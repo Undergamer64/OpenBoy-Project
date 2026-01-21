@@ -8,9 +8,9 @@
 #define TMC 0xFF07
 
 #if _DEBUG
-static int MAXCYCLES = CLOCKSPEED / 59.73f; //Debug
+static int MAXCYCLES = CLOCKSPEED / 59.7275f; //Debug
 #else
-static int MAXCYCLES = CLOCKSPEED / 59.73f; // (number of cycles / frame rate)
+static int MAXCYCLES = CLOCKSPEED / 59.7275f; // (number of cycles / frame rate)
 #endif
 
 Emulator::Emulator(MMU& mmu, ALU& alu)
@@ -103,9 +103,9 @@ void Emulator::operator()()
             t = std::chrono::high_resolution_clock::now();
             
 #if _DEBUG
-        } while (std::chrono::duration_cast<std::chrono::milliseconds>(t - lastFrame).count() < (1.f/59.73f) * 1000); 
+        } while (std::chrono::duration_cast<std::chrono::milliseconds>(t - lastFrame).count() < (1.f/59.7275f) * 1000); 
 #else
-        } while (std::chrono::duration_cast<std::chrono::milliseconds>(t - lastFrame).count() < (1.f/59.73f) * 1000); 
+        } while (std::chrono::duration_cast<std::chrono::milliseconds>(t - lastFrame).count() < (1.f/59.7275f) * 1000); 
 #endif
         
         lastFrame = std::chrono::high_resolution_clock::now();
