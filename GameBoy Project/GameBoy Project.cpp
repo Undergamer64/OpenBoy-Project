@@ -62,7 +62,7 @@ int main()
     emulator.m_cpu += std::make_unique<IF_ROTATE>();
     /*
     emulator.m_cpu += std::make_unique<IF_AR_8BIT>();
-    emulator.m_cpu += std::make_unique<IF_CB_Prefix>();
+    emulator.m_cpu += std::make_unique<IF_CB_PREFIX>();
     emulator.m_cpu += std::make_unique<IF_ADD_HL>();
     */
     

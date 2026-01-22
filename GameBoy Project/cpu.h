@@ -51,7 +51,7 @@ public:
 
 	void Push(uint16_t address);
 
-	uint8_t GetCurrentInstruction();
+	bool GetNextInstruction();
 
 	std::stringstream DumpBoot(bool pointer = false);
 	

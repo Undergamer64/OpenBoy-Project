@@ -43,15 +43,13 @@ bool IF_LD_r16_imm16::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 {
 	switch (m_currentCycle)
 	{
-	case 0: //Fetch wait
-		break;
-	case 1:
+	case 0:
 		m_8bitRegister = PCREAD8();
 		break;
-	case 2:
+	case 1:
 		m_16bitRegister = m_8bitRegister + (PCREAD8() << 8);
 		break;
-	case 3:
+	case 2:
 		switch (opcode & 0b00110000)
 		{
 		case 0b00000000:
@@ -87,14 +85,14 @@ bool IF_LD_r8_imm8::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 {
 	switch (m_currentCycle)
 	{
-	case 0://Fetch wait
+	case 0:
+		m_8bitRegister = PCREAD8();
 		break;
-	case 1: // if HL
+	case 1:
 		if ((opcode & 0b00111000) == 0b0011000) 
 		{
-			m_8bitRegister = PCREAD8();
-			m_currentCycle++;
-			return false; //Take 1 extra cycle for HL
+			MMUWRITE8(HL, m_8bitRegister);
+			break; //Take 1 extra cycle for HL
 		}
 
 		if ((opcode & 0b00111000) == 0b00111000)
@@ -107,8 +105,7 @@ bool IF_LD_r8_imm8::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 		}
 		m_currentCycle = 0;
 		return true;
-	case 2: // if HL
-		MMUWRITE8(HL, m_8bitRegister);
+	case 2: // if HL consume extra cycle (because the address bus changes from HL to PC)
 		m_currentCycle = 0;
 		return true;
 	}
@@ -129,9 +126,7 @@ bool IF_LD_rA_memory::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 {
 	switch (m_currentCycle)
 	{
-	case 0: //Fetch wait
-		break;
-	case 1:
+	case 0:
 		switch (opcode & 0b00011000) 
 		{
 		case 0b00000000:
@@ -141,10 +136,25 @@ bool IF_LD_rA_memory::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 			MMUWRITE8(DE, registers.m_registers[6]);
 			break;
 		case 0b00010000:
-			registers.m_registers[6] = MMUREAD8(CB);
+			m_8bitRegister = MMUREAD8(CB);
 			break;
 		case 0b00011000:
-			registers.m_registers[6] = MMUREAD8(ED);
+			m_8bitRegister = MMUREAD8(ED);
+			break;
+		}
+		break;
+	case 1:
+		switch (opcode & 0b00011000) 
+		{
+		case 0b00000000:
+		case 0b00001000:
+			//consume 1 cycle because of changing address bus from BC/DE to PC
+			break;
+		case 0b00010000:
+			registers.m_registers[6] = m_8bitRegister;
+			break;
+		case 0b00011000:
+			registers.m_registers[6] = m_8bitRegister;
 			break;
 		}
 		
@@ -169,9 +179,7 @@ bool IF_LD_rA_rHL::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 {
 	switch (m_currentCycle)
 	{
-	case 0: //Fetch wait
-		break;
-	case 1:
+	case 0:
 		switch (opcode & 0b00011000) 
 		{
 		case 0b00000000:
@@ -180,7 +188,7 @@ bool IF_LD_rA_rHL::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 			WRITE16(LH, GETINVERTED16(HL + 1)); //inc HL
 			break;
 		case 0b00001000:
-			registers.m_registers[6] = MMUREAD8(LH);
+			m_8bitRegister = MMUREAD8(LH);
 	
 			WRITE16(LH, GETINVERTED16(HL + 1)); //inc HL
 			break;
@@ -190,9 +198,24 @@ bool IF_LD_rA_rHL::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 			WRITE16(LH, GETINVERTED16(HL - 1)); //dec HL
 			break;
 		case 0b00011000:
-			registers.m_registers[6] = MMUREAD8(LH);
+			m_8bitRegister = MMUREAD8(LH);
 	
 			WRITE16(LH, GETINVERTED16(HL - 1)); //dec HL
+			break;
+		}
+		break;
+	case 1:
+		switch (opcode & 0b00011000) 
+		{
+		case 0b00000000:
+			break;
+		case 0b00001000:
+			registers.m_registers[6] = m_8bitRegister;
+			break;
+		case 0b00010000:
+			break;
+		case 0b00011000:
+			registers.m_registers[6] = m_8bitRegister;
 			break;
 		}
 		m_currentCycle = 0;
@@ -219,12 +242,12 @@ bool IF_LD_r_r::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 	switch (m_currentCycle)
 	{
 	case 0:
-		if ((opcode & 0b00111000) == 0b00110000 || (opcode & 0b00000111) == 0b00000110)
+		if ((opcode & 0b00000111) == 0b00000110) // if source is (HL)
 		{
-			m_currentCycle++;
-			return false; //Take 1 extra cycle for HL
+			m_8bitRegister = MMUREAD8(LH);
+			break; //Take 1 extra cycle for HL (MMUREAD)
 		}
-	
+
 		if ((opcode & 0b00000111) == 0b00000111)
 		{
 			m_8bitRegister = registers.m_registers[6];
@@ -233,6 +256,13 @@ bool IF_LD_r_r::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 		{
 			m_8bitRegister = registers.m_registers[(opcode & 0b00000111)];
 		}
+
+		if ((opcode & 0b00111000) == 0b00110000) // if dest is (HL)
+		{
+			MMUWRITE8(HL, m_8bitRegister);
+			break; //Take 1 extra cycle for HL (bus change)
+		}
+
 
 		if ((opcode & 0b00111000) == 0b00111000)
 		{
@@ -246,30 +276,21 @@ bool IF_LD_r_r::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 		m_currentCycle = 0;
 		return true;
 	case 1: // if HL involved (as source or dest)
-		if ((opcode & 0b00000111) == 0b00000110)
+
+		if ((opcode & 0b00000111) == 0b00000110) // if source is (HL)
 		{
-			m_8bitRegister = MMUREAD8(LH);
-		}
-		else if ((opcode & 0b00000111) == 0b00000111)
-		{
-			m_8bitRegister = registers.m_registers[6];
-		}
-		else
-		{
-			m_8bitRegister = registers.m_registers[(opcode & 0b00000111)];
-		}
-		
-		if ((opcode & 0b00111000) == 0b00110000)
-		{
-			MMUWRITE8(HL, m_8bitRegister);
-		}
-		else if ((opcode & 0b00111000) == 0b00111000)
-		{
-			registers.m_registers[6] = m_8bitRegister;
+			if ((opcode & 0b00111000) == 0b00111000)
+			{
+				registers.m_registers[6] = m_8bitRegister;
+			}
+			else
+			{
+				registers.m_registers[(opcode & 0b00111000)>>3] = m_8bitRegister;
+			}
 		}
 		else
 		{
-			registers.m_registers[(opcode & 0b00111000)>>3] = m_8bitRegister;
+			// consume 1 cycle
 		}
 		
 		m_currentCycle = 0;
@@ -293,10 +314,10 @@ bool IF_LD_SP_HL::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 {
 	switch (m_currentCycle)
 	{
-	case 0: //Fetch wait
+	case 0:
+		registers.SP = HL;
 		break;
 	case 1:
-		registers.SP = HL;
 		m_currentCycle = 0;
 		return true;
 	}
@@ -318,27 +339,66 @@ bool IF_LD_ADRC_r::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 {
 	switch (m_currentCycle)
 	{
-	case 0: //Fetch wait
-		break;
-	case 1:
+	case 0:
 		switch (opcode & 0b00011000)
 		{
 		case 0b00000000:
 			mmu.Write(0xFF00 + registers.m_registers[1], registers.m_registers[6]);
 			break;
 		case 0b00001000:
-			m_16bitRegister = PCREAD16();
-			mmu.Write(m_16bitRegister, registers.m_registers[6]);
+			m_8bitRegister = PCREAD8();
 			break;
 		case 0b00010000:
-			registers.m_registers[6] = mmu.Read(0xFF00 + registers.m_registers[1]);
+			m_8bitRegister = mmu.Read(0xFF00 + registers.m_registers[1]);
 			break;
 		case 0b00011000:
-			m_16bitRegister = PCREAD16();
-			registers.m_registers[6] = mmu.Read(m_16bitRegister);
+			m_8bitRegister = PCREAD8();
+			break;
+		}	
+		break;
+	case 1:
+		switch (opcode & 0b00011000)
+		{
+		case 0b00000000:
+			//consume 1 cycle
+			
+			m_currentCycle = 0;
+			return true;
+		case 0b00001000:
+			
+			m_16bitRegister = m_8bitRegister + (PCREAD8() << 8);
+			break;
+		case 0b00010000:
+			
+			registers.m_registers[6] = m_8bitRegister;
+			
+			m_currentCycle = 0;
+			return true;
+		case 0b00011000:
+			
+			m_16bitRegister = m_8bitRegister + (PCREAD8() << 8);
 			break;
 		}	
 
+		break;
+	case 2:
+		
+		if ((opcode & 0b00010000) == 0b00000000)
+		{
+			mmu.Write(m_16bitRegister, registers.m_registers[6]);
+		}
+		else
+		{
+			m_8bitRegister = mmu.Read(m_16bitRegister);
+		}
+		break;
+	case 3:
+		
+		if ((opcode & 0b00010000) == 0b00010000)
+		{
+			registers.m_registers[6] = m_8bitRegister;
+		}
+		
 		m_currentCycle = 0;
 		return true;
 	}
@@ -360,21 +420,30 @@ bool IF_LD_ADRIMM_r::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 {
 	switch (m_currentCycle)
 	{
-	case 0: //Fetch wait
-		break;
-	case 1:
+	case 0:
 		m_8bitRegister = PCREAD8();
 		break;
-	case 2:
+	case 1:
 		switch (opcode & 0b00010000)
 		{
 		case 0b00000000:
 			mmu.Write(0xFF00 + m_8bitRegister, registers.m_registers[6]);
 			break;
 		case 0b00010000:
-			registers.m_registers[6] = mmu.Read(0xFF00 + m_8bitRegister);
+			m_8bitRegister = mmu.Read(0xFF00 + m_8bitRegister);
 			break;
 		}	
+		break;
+	case 2:
+		switch (opcode & 0b00010000)
+		{
+		case 0b00000000:
+			//consume 1 cycle
+			break;
+		case 0b00010000:
+			registers.m_registers[6] = m_8bitRegister;
+			break;
+		}
 		
 		m_currentCycle = 0;
 		return true;
@@ -389,6 +458,8 @@ bool IF_LD_ADRIMM_r::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 #pragma endregion
 
 #pragma region Arithmetique Instruction
+
+//NOT DONE YET
 
 #pragma region IF_AR_8BIT
 bool IF_AR_8BIT::IsValid(uint8_t opcode) 
@@ -913,50 +984,53 @@ bool IF_FLOW_JR::IsValid(uint8_t opcode)
 
 bool IF_FLOW_JR::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 {
-	bool condition = false;
 	switch (m_currentCycle)
 	{
 	case 0: //Fetch wait
-		break;
-	case 1:
+
 		m_8bitRegister = PCREAD8(); // get the offset THEN check if condition is true
 
+		m_condition = false;
 		if ((opcode & 0b11100111) == 0b00100000)//JR with condition
 		{
 			switch (opcode & 0b00011000)
 			{
 			case 0b00000000:
-				condition = (registers.m_registers[7] & 0b01000000) == 0b00000000;
+				m_condition = (registers.m_registers[7] & 0b01000000) == 0b00000000;
 				break;
 			case 0b00001000:
-				condition = (registers.m_registers[7] & 0b01000000) == 0b01000000;
+				m_condition = (registers.m_registers[7] & 0b01000000) == 0b01000000;
 				break;
 			case 0b00010000:
-				condition = (registers.m_registers[7] & 0b00000001) == 0b00000000;
+				m_condition = (registers.m_registers[7] & 0b00000001) == 0b00000000;
 				break;
 			case 0b00011000:
-				condition = (registers.m_registers[7] & 0b00000001) == 0b00000001;
+				m_condition = (registers.m_registers[7] & 0b00000001) == 0b00000001;
 				break;
 			}
 		}
 		else if ((opcode & 0b11111111) == 0b00011000)//Always JR
 		{
-			condition = true;
-		}
-
-		if (condition) //If condition is true, proceed to execute the jump
-		{
-			break;
+			m_condition = true;
 		}
 		
-		m_currentCycle = 0;
-		return true;
-	case 2: //Execute the jump
+		break;
+	case 1:
+		if (!m_condition) //If condition is false, stop
+		{
+			m_currentCycle = 0;
+			return true;
+		}
+
+		//Execute the jump
 		int8_t offset = static_cast<int8_t>(m_8bitRegister);
 		registers.PC = static_cast<uint16_t>(
 			static_cast<int32_t>(registers.PC) + offset
 		);
 		
+		break;
+	case 2: 
+		//consume 1 cycle
 		m_currentCycle = 0;
 		return true;
 	}
@@ -976,59 +1050,62 @@ bool IF_FLOW_JP::IsValid(uint8_t opcode)
 
 bool IF_FLOW_JP::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 {
-	bool condition = false;
 	switch (m_currentCycle)
 	{
-	case 0: //Fetch wait or direct jump to HL
-
+	case 0: //Directly jump to HL or get the address from the next 2 bytes
+		m_condition = false;
 		if ((opcode & 0b11111111) == 0b11101001)
 		{
 			registers.PC = HL;
 			m_currentCycle = 0;
 			return true;
 		}
-		break;
-	case 1:
-		
 		m_8bitRegister = PCREAD8();
 		break;
-	case 2:
-		
-		m_16bitRegister = PCREAD16();
+	case 1:
+		m_16bitRegister = m_8bitRegister + (PCREAD8() << 8);
 
-		if ((opcode & 0b11111111) == 0b11000011)
+		if ((opcode & 0b11111111) == 0b11000011) //check condition if any
 		{
-			condition = true;
+			m_condition = true;
 		}
 		else if ((opcode & 0b11100111) == 0b11000010)
 		{
 			switch (opcode & 0b00011000)
 			{
 			case 0b00000000:
-				condition = ((registers.m_registers[7] & 0b01000000) != 0b01000000);
+				m_condition = ((registers.m_registers[7] & 0b01000000) != 0b01000000);
 				break;
 			case 0b00001000:
-				condition = ((registers.m_registers[7] & 0b01000000) == 0b01000000);
+				m_condition = ((registers.m_registers[7] & 0b01000000) == 0b01000000);
 				break;
 			case 0b00010000:
-				condition = ((registers.m_registers[7] & 0b00000001) != 0b00000001);
+				m_condition = ((registers.m_registers[7] & 0b00000001) != 0b00000001);
 				break;
 			case 0b00011000:
-				condition = ((registers.m_registers[7] & 0b00000001) == 0b00000001);
+				m_condition = ((registers.m_registers[7] & 0b00000001) == 0b00000001);
 				break;
 			}
 		}
 		
-		if (condition)
+		break;
+	case 2:
+		if ((opcode & 0b11100110) == 0b11000010)//If JP with condition
 		{
-			break;
+			if (!m_condition) //If condition is false, stop
+			{
+				m_currentCycle = 0;
+				return true;
+			}
 		}
+		
+		registers.PC = m_16bitRegister; // Execute the jump
 
 		m_currentCycle = 0;
 		return true;
 	case 3:
 
-		registers.PC = m_16bitRegister;
+		//consume 1 cycle
 		m_currentCycle = 0;
 		return true;
 	}
@@ -1048,74 +1125,72 @@ bool IF_FLOW_CALL::IsValid(uint8_t opcode)
 
 bool IF_FLOW_CALL::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 {
-	bool condition = false;
 	switch (m_currentCycle)
 	{
-	case 0: //Fetch wait
-		break;
-	case 1:
-		
+	case 0:
+		m_condition = false;
 		m_8bitRegister = PCREAD8();
 		break;
-	case 2:
+	case 1:
 		
 		m_16bitRegister = m_8bitRegister + (PCREAD8() << 8);
 
 		if (opcode == 0b11001101)
 		{
-			condition = true;
+			m_condition = true;
 		}
 		else
 		{
 			switch (opcode & 0b00111000)
 			{
 			case 0b00000000:
-				condition = ((registers.m_registers[7] & 0b01000000) != 0b01000000);
+				m_condition = ((registers.m_registers[7] & 0b01000000) != 0b01000000);
 				break;
 			case 0b00001000:
-				condition = ((registers.m_registers[7] & 0b01000000) == 0b01000000);
+				m_condition = ((registers.m_registers[7] & 0b01000000) == 0b01000000);
 				break;
 			case 0b00010000:
-				condition = ((registers.m_registers[7] & 0b00000001) != 0b00000001);
+				m_condition = ((registers.m_registers[7] & 0b00000001) != 0b00000001);
 				break;
 			case 0b00011000:
-				condition = ((registers.m_registers[7] & 0b00000001) == 0b00000001);
+				m_condition = ((registers.m_registers[7] & 0b00000001) == 0b00000001);
 				break;
 			case 0b00100000:
-				condition = ((registers.m_registers[7] & 0b00000100) != 0b00000100);
+				m_condition = ((registers.m_registers[7] & 0b00000100) != 0b00000100);
 				break;
 			case 0b00101000:
-				condition = ((registers.m_registers[7] & 0b00000100) == 0b00000100);
+				m_condition = ((registers.m_registers[7] & 0b00000100) == 0b00000100);
 				break;
 			case 0b00110000:
-				condition = ((registers.m_registers[7] & 0b10000000) != 0b10000000);
+				m_condition = ((registers.m_registers[7] & 0b10000000) != 0b10000000);
 				break;
 			case 0b00111000:
-				condition = ((registers.m_registers[7] & 0b10000000) == 0b10000000);
+				m_condition = ((registers.m_registers[7] & 0b10000000) == 0b10000000);
 				break;
 			}
 		}
+		
+		break;
+	case 2:
 
-		if (condition)
+		if (m_condition)
 		{
-			break;
+			m_currentCycle = 0;
+			return true;
 		}
 
-		m_currentCycle = 0;
-		return true;
-	case 3:
-		
 		registers.SP--;
-		break;
-	case 4:
+	case 3:
 		
 		MMUWRITE8(registers.SP, (registers.PC & 0xFF00) >> 8);
 		registers.SP--;
 		break;
-	case 5:
+	case 4:
 		
 		MMUWRITE8(registers.SP, registers.PC & 0x00FF);
 		registers.PC = m_16bitRegister;
+		break;
+	case 5:
 		
 		m_currentCycle = 0;
 		return true;
@@ -1139,10 +1214,7 @@ bool IF_FLOW_RET::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 	bool condition = false;
 	switch (m_currentCycle)
 	{
-	case 0: //Fetch wait
-		break;
-	case 1:
-		
+	case 0:
 		if ((opcode & 0b11101111) != 0b11001001)//RET with condition
 		{
 			switch (opcode & 0b00011000)
@@ -1160,23 +1232,23 @@ bool IF_FLOW_RET::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 				condition = ((registers.m_registers[7] & 0b00000001) == 0b00000001);
 				break;
 			}
-
-			if (condition)
+		}
+		m_currentCycle++;//RET without condition takes 1 cycle less than RET with condition
+	case 1:
+		
+		if ((opcode & 0b11101111) != 0b11001001)//RET with condition
+		{
+			if (!condition)
 			{
-				break;
+				m_currentCycle = 0;
+				return true;
 			}
-
-			m_currentCycle = 0;
-			return true;
 		}
 
-		m_currentCycle++;//RET without condition takes 1 cycle less than RET with condition
-	case 2:
-		
 		m_8bitRegister = mmu.Read(registers.SP);
 		registers.SP++;
 		break;
-	case 3:
+	case 2:
 		
 		m_16bitRegister = m_8bitRegister + (mmu.Read(registers.SP) << 8);
 		registers.SP++;
@@ -1185,15 +1257,16 @@ bool IF_FLOW_RET::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 			throw std::runtime_error("Stack Pointer out of bounds on RET instruction");
 		}
 		break;
-	case 4:
-
+	case 3:
+		
 		registers.PC = m_16bitRegister;
-
 		if ((opcode & 0b11111111) == 0b11011001) // RETI instruction
 		{
 			registers.IME = true;
 		}
-		
+		break;
+	case 4:
+		//consume 1 cycle
 		m_currentCycle = 0;
 		return true;
 	}
@@ -1267,139 +1340,139 @@ bool IF_ROTATE::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 
 #pragma region CB Prefix Instructions
 
-bool IF_CB_Rotate::IsValid(uint8_t opcode)
+//NOT DONE YET
+
+bool IF_CB_PREFIX::IsValid(uint8_t opcode)
+{
+	return opcode == 0xCB;
+}
+
+bool IF_CB_PREFIX::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
+{
+	//empty to eat 1 cycle for CB prefix
+	return true;
+}
+
+#pragma region IF_CB_Rotate
+
+bool IF_CB_ROTATE::IsValid(uint8_t opcode)
 {
 	return (opcode & 0b11100000) == 0b00000000;
 }
 
-bool IF_CB_Rotate::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
+bool IF_CB_ROTATE::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 {
 	//TODO : cyclify this function properly (currently instant)
-	
-	if ((opcode & 0b00000111) != 0b0110) 
+
+	switch (m_currentCycle)
 	{
-		uint8_t* _r_num; 
-		if ((opcode & 0b00000111) == 0b0111)
+	case 0:
+
+		//if not HL
+		if ((opcode & 0b00000111) != 0b0110) 
 		{
-			_r_num = &registers.m_registers[0b00000110];
-		}
-		else
-		{
-			_r_num = &registers.m_registers[(opcode & 0b00000111)];
-		}
-		if ((opcode & 0b00001000) == 0b00000000)// Left
-		{
-			if ((opcode & 0b00010000) == 0b00010000)
+			uint8_t* _r_num; 
+			if ((opcode & 0b00000111) == 0b0111)
 			{
-				uint8_t _temp_carry = (registers.m_registers[7] & 0b00000001);
-				registers.m_registers[7] &= ~0b00000001;
-				registers.m_registers[7] |= (*_r_num & 0b10000000) >> 7; //Flag C
-				*_r_num = *_r_num << 1;
-				if ((opcode & 0b00100000) == 0b00000000)
-				{
-					*_r_num += (_temp_carry);
-				}
+				_r_num = &registers.m_registers[0b00000110];
 			}
 			else
 			{
+				_r_num = &registers.m_registers[(opcode & 0b00000111)];
+			}
+			if ((opcode & 0b00001000) == 0b00000000)// Left
+			{
+				uint8_t _temp_carry;
+				if ((opcode & 0b00010000) == 0b00010000)
+				{
+					_temp_carry = (registers.m_registers[7] & 0b00000001);
+				}
+				else
+				{
+					_temp_carry = (*_r_num & 0b10000000) >> 7;
+				}
+				uint8_t result = (*_r_num << 1) + _temp_carry;
+				
 				registers.m_registers[7] &= ~0b00000001;
 				registers.m_registers[7] |= (*_r_num & 0b10000000) >> 7; //Flag C
-				*_r_num = (*_r_num << 1);
-				if ((opcode & 0b00100000) == 0b00000000)
-				{
-					*_r_num += ((*_r_num & 0b10000000) >> 7);
-				}
+				*_r_num = result;
 			}
-		}
-		else if ((opcode & 0b00001000) == 0b00001000)// Right
-		{
-			if ((opcode & 0b00010000) == 0b00010000)
+			else if ((opcode & 0b00001000) == 0b00001000)// Right
 			{
-				uint8_t _temp_carry = (registers.m_registers[7] & 0b00000001);
+				uint8_t _temp_carry;
+				if ((opcode & 0b00010000) == 0b00010000)
+				{
+					_temp_carry = (registers.m_registers[7] & 0b00000001) << 7;
+				}
+				else
+				{
+					_temp_carry = (*_r_num & 0b10000000);
+				}
+
+				uint8_t result = (*_r_num >> 1) + _temp_carry;
+				
 				registers.m_registers[7] &= ~0b00000001;
 				registers.m_registers[7] |= (*_r_num & 0b00000001); //Flag C
-				*_r_num = (*_r_num >> 1);
-				if ((opcode & 0b00100000) == 0b00000000)
-				{
-					*_r_num += (_temp_carry << 7);
-				}
+				*_r_num = result;
 			}
-			else
-			{
-				registers.m_registers[7] &= ~0b00000001;
-				registers.m_registers[7] |= (*_r_num & 0b00000001); //Flag C
-				*_r_num = (*_r_num >> 1);
-				if ((opcode & 0b00100000) == 0b00000000)
-				{
-					*_r_num += ((*_r_num & 0b00000001) << 7);
-				}
-			}
-		}
 #pragma region Flags
 
-		registers.m_registers[7] &= ~0b10000000; //Flag s (negatif)
+			registers.m_registers[7] &= ~0b10000000; //Flag s (negatif)
 
-		if (_r_num == 0) //Flag Z (zero)
-		{
-			registers.m_registers[7] |= 0b01000000;
-		}
-		else
-		{
-			registers.m_registers[7] &= ~0b01000000;
-		}
-
-		registers.m_registers[7] &= ~0b00010000; //Flag H reset
-#pragma endregion
-	}
-	else 
-	{
-		if ((opcode & 0b00001000) == 0b00000000)// Left
-		{
-			if ((opcode & 0b00010000) == 0b00010000)
+			if (_r_num == 0) //Flag Z (zero)
 			{
-				uint8_t _temp_carry = (registers.m_registers[7] & 0b00000001);
-				mmu.Write(HL, mmu.Read(HL) & 0b11111110);
-				registers.m_registers[7] |= (mmu.Read(HL) & 0b10000000) >> 7; //Flag C
-				mmu.Write(HL, (mmu.Read(HL) << 1));
-				if ((opcode & 0b00100000) == 0b00000000)
-				{
-					mmu.Write(HL, mmu.Read(HL) + (_temp_carry));
-				}
+				registers.m_registers[7] |= 0b01000000;
 			}
 			else
 			{
-				registers.m_registers[7] &= 0b11111110;
-				registers.m_registers[7] |= (mmu.Read(HL) & 0b10000000) >> 7; //Flag C
-				mmu.Write(HL, (mmu.Read(HL) << 1));
-				if ((opcode & 0b00100000) == 0b00000000)
-				{
-					mmu.Write(HL, mmu.Read(HL) + ((mmu.Read(HL) & 0b10000000) >> 7));
-				}
+				registers.m_registers[7] &= ~0b01000000;
 			}
+
+			registers.m_registers[7] &= ~0b00010000; //Flag H reset
+#pragma endregion
+
+			m_currentCycle = 0;
+			return true;
+		}
+
+		m_8bitRegister = mmu.Read(HL);
+		break;
+	case 1:
+
+		if ((opcode & 0b00001000) == 0b00000000)// Left
+		{
+			uint8_t _temp_carry;
+
+			if ((opcode & 0b00100000) == 0b00000000) // if not circular
+			{
+				_temp_carry = (registers.m_registers[7] & 0b00000001);
+			}
+			else // circular
+			{
+				_temp_carry = (m_8bitRegister & 0b00000001);
+			}
+			
+			uint8_t result = (m_8bitRegister << 1) + _temp_carry;
+			mmu.Write(HL, result);
+			registers.m_registers[7] |= (m_8bitRegister & 0b10000000) >> 7; //Flag C
 		}
 		else // Right
 		{
-			if ((opcode & 0b00010000) == 0b00010000)
+			uint8_t _temp_carry;
+			if ((opcode & 0b00100000) == 0b00000000) // if not circular
 			{
-				uint8_t _temp_carry = (registers.m_registers[7] & 0b00000001);
-				registers.m_registers[7] &= 0b11111110;
-				registers.m_registers[7] |= (mmu.Read(HL) & 0b00000001); //Flag C
-				mmu.Write(HL, mmu.Read(HL) >> 1);
-				if ((opcode & 0b00100000) == 0b00000000)
-				{
-					mmu.Write(HL, mmu.Read(HL) + (_temp_carry << 7));
-				}
+				_temp_carry = (registers.m_registers[7] & 0b00000001) << 7;
 			}
-			else
+			else // circular
 			{
-				registers.m_registers[7] &= 0b11111110;
-				registers.m_registers[7] |= (mmu.Read(HL) & 0b00000001); //Flag C
-				mmu.Write(HL, (mmu.Read(HL) >> 1));
-				if ((opcode & 0b00100000) == 0b00000000)
-				{
-					mmu.Write(HL, mmu.Read(HL) + ((mmu.Read(HL) & 0b00000001) << 7));
-				}
+				_temp_carry = (m_8bitRegister & 0b10000000);
 			}
+
+			uint8_t result = (m_8bitRegister >> 1) + _temp_carry;
+				
+			registers.m_registers[7] &= 0b11111110;
+			registers.m_registers[7] |= (m_8bitRegister & 0b00000001); //Flag C
+			mmu.Write(HL, result);
 		}
 #pragma region Flags
 
@@ -1416,45 +1489,124 @@ bool IF_CB_Rotate::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 
 		registers.m_registers[7] &= ~0b00010000; //Flag H reset
 #pragma endregion
+		
+		break;
+	case 2:
+		//consume 1 cycle
+		m_currentCycle = 0;
+		return true;
+	}
+	
+	m_currentCycle++;
+	return false;
+}
+
+#pragma endregion
+
+#pragma region IF_CB_BIT
+
+bool IF_CB_BIT::IsValid(uint8_t opcode)
+{
+	return (opcode & 0b11000000) == 0b01000000;
+}
+
+bool IF_CB_BIT::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
+{
+	switch (m_currentCycle)
+	{
+	case 0:
+		if ((opcode & 0b00000111) == 0b0110)
+		{
+			m_8bitRegister = mmu.Read(HL);
+			break;
+		}
+
+		m_8bitRegister = registers.m_registers[(opcode & 0b00000111)];
+		m_currentCycle++;
+		//if not HL, fall through
+	case 1:
+
+		registers.m_registers[7] |= 0b00010000; //Set H flag
+		registers.m_registers[7] &= ~0b10000000; //Reset S flag
+
+		int _offset_bit = (opcode & 0b00111000) >> 3;
+
+		if ((m_8bitRegister & (0b00000001 << _offset_bit)) == 0)
+		{
+			registers.m_registers[7] |= 0b01000000; //Set Z flag
+		}
+		else
+		{
+			registers.m_registers[7] &= ~0b01000000; //Reset Z flag
+		}
+
+		m_currentCycle = 0;
+		return true;
+	}
+
+	m_currentCycle++;
+	return false;
+}
+
+#pragma endregion
+
+#pragma region IF_CB_RES_SET
+
+bool IF_CB_RES_SET::IsValid(uint8_t opcode)
+{
+	return opcode == 0xCB;
+}
+
+bool IF_CB_RES_SET::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
+{
+	switch (m_currentCycle)
+	{
+	case 0:
+		int _offset_bit = (opcode & 0b00111000) >> 3;
+
+		if ((opcode & 0b00000111) == 0b0110) //If HL
+		{
+			m_8bitRegister = mmu.Read(HL);
+		}
+		else
+		{
+			m_8bitRegister = registers.m_registers[(opcode & 0b00000111)];
+		}//TODO : FIX THAT
+
+		if ((opcode & 0b01000000) == 0b01000000)
+		{
+			registers.m_registers[(opcode & 0b00000111)] |= (0b00000001 << _offset_bit);
+		}
+		else 
+		{
+			uint8_t _res = (0b00000001 << _offset_bit);
+			registers.m_registers[(opcode & 0b00000111)] &= !_res;
+		}
+		if (registers.m_registers[(opcode & 0b00000111)] == 0b0110)
+		{
+			currentCycles += 4;
+		}
+		break;
 	}
 }
 
+#pragma endregion
+
 /*
-bool IF_CB_Prefix::IsValid(uint8_t opcode)
+bool IF_CB_PREFIX::IsValid(uint8_t opcode)
 {
 	return opcode == 0xCB;
 }
 
 
-bool IF_CB_Prefix::Tick(uint8_t _, MMU& mmu, Registers& registers)
+bool IF_CB_PREFIX::Tick(uint8_t _, MMU& mmu, Registers& registers)
 {
 	//std::cout << "CB" << std::endl;
 	int currentCycles = 4;
 
 	uint8_t opcode = PCREAD8();
 	
-	if ((opcode & 0b11000000) == 0b01000000) //BIT
-	{
-		registers.m_registers[7] |= 0b00010000;
-		registers.m_registers[7] &= ~0b10000000;
-
-		int _offset_bit = (opcode & 0b00111000) >> 3;
-
-			
-		if ((registers.m_registers[(opcode & 0b00000111)] & (0b00000001 << _offset_bit)) == 0)
-		{
-			registers.m_registers[7] |= 0b01000000;
-		}
-		else
-		{
-			registers.m_registers[7] &= ~0b01000000;
-		}
-		if (registers.m_registers[(opcode & 0b00000111)] == 0b0110) 
-		{
-			currentCycles += 4;
-		}
-	}
-	else if ((opcode & 0b11000000) == 0b11000000 || (opcode & 0b11000000) == 0b10000000) //SET RESET
+	if ((opcode & 0b11000000) == 0b11000000 || (opcode & 0b11000000) == 0b10000000) //SET RESET
 	{
 		int _offset_bit = (opcode & 0b00111000) >> 3;
 
@@ -1490,7 +1642,6 @@ bool IF_INC_DEC::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 	switch (m_currentCycle)
 	{
 	case 0: // Increase/Decrease directly register or get HL value 
-
 		if ((opcode & 0b11000111) == 0b00000011) // using 16 bit registers
 		{
 			int D = (opcode & 0b00001000) >> 3;
@@ -1519,8 +1670,7 @@ bool IF_INC_DEC::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 				registers.SP += _res;
 				break;
 			}
-			m_currentCycle = 0;
-			return true;
+			break;
 		}
 		
 		if ((opcode & 0b11000110) == 0b00000100 && (opcode & 0b00111000) != 0b00110000) // using 8 bit registers and not HL
@@ -1589,12 +1739,17 @@ bool IF_INC_DEC::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 			m_currentCycle = 0;
 			return true;
 		}
-		break;
-	case 1: // If HL is involved
-
+		
 		m_8bitRegister = MMUREAD8(LH); // get HL value
 		break;
-	case 2: // Increase/Decrease HL value
+	case 1: // If HL is involved or 16 bit
+
+		if ((opcode & 0b11000111) == 0b00000011) // using 16 bit registers
+		{
+			//consume 1 cycle
+			m_currentCycle = 0;
+			return true;
+		}
 		
 		int D = (opcode & 0b00000001);
 		int _res;
@@ -1649,6 +1804,9 @@ bool IF_INC_DEC::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 #pragma endregion
 #pragma endregion
 		
+		break;
+	case 2:
+		//consume 1 cycle
 		m_currentCycle = 0;
 		return true;
 	}
@@ -1671,13 +1829,11 @@ bool IF_POP::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 {
 	switch (m_currentCycle)
 	{
-	case 0: //Fetch wait
-		break;
-	case 1:
+	case 0:
 		m_8bitRegister = mmu.Read(registers.SP);
 		registers.SP++;
 		break;
-	case 2:
+	case 1:
 		m_16bitRegister = m_8bitRegister + (mmu.Read(registers.SP) << 8);
 		registers.SP++;
 		if (registers.SP < 0xFF80) //Stack Pointer overflow check
@@ -1685,7 +1841,7 @@ bool IF_POP::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 			throw std::runtime_error("Stack Pointer out of bounds on POP instruction");
 		}
 		break;
-	case 3:
+	case 2:
 		switch (opcode & 0b00110000)
 		{
 		case 0b00000000:
@@ -1722,11 +1878,9 @@ bool IF_PUSH::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 	switch (m_currentCycle)
 	{
 	case 0: //Fetch wait
-		break;
-	case 1:
 		registers.SP--;
 		break;
-	case 2:
+	case 1:
 		switch (opcode & 0b00110000)
 		{
 		case 0b00000000:
@@ -1747,7 +1901,7 @@ bool IF_PUSH::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 			break;
 		}
 		break;
-	case 3:
+	case 2:
 		switch (opcode & 0b00110000)
 		{
 		case 0b00000000:
@@ -1763,6 +1917,8 @@ bool IF_PUSH::Tick(uint8_t opcode, MMU& mmu, Registers& registers)
 			MMUWRITE8(registers.SP, static_cast<uint8_t>(AF & 0x00FF));
 			break;
 		}
+		break;
+	case 3:
 
 		m_currentCycle = 0;
 		return true;

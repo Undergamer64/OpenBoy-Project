@@ -12,11 +12,12 @@ protected:
 	int m_currentCycle = 0;
 	uint8_t m_8bitRegister = 0;
 	uint16_t m_16bitRegister = 0;
+	bool m_condition = false;
 	
 public:
-	bool m_isCBPrefix = false;
 	virtual bool IsValid(uint8_t opcode) = 0;
 	virtual bool Tick(uint8_t opcode, MMU& mmu, Registers& registers) = 0;
+	virtual bool IsCBInstruction() { return false; }
 };
 
 class ALU 
@@ -179,25 +180,47 @@ public:
 
 #pragma region CB Prefix Instructions
 
-class IF_CB_Rotate final
+class IF_CB_PREFIX final
 	: public InstructionFamily
 {
 public:
-	bool m_isCBPrefix = true;
-	
 	bool IsValid(uint8_t opcode) override;
 
 	bool Tick(uint8_t _, MMU& mmu, Registers& registers) override;
 };
-/*
-class IF_CB_Prefix final
+
+class IF_CB_ROTATE final
 	: public InstructionFamily
 {
 public:
 	bool IsValid(uint8_t opcode) override;
 
 	bool Tick(uint8_t _, MMU& mmu, Registers& registers) override;
-};*/
+
+	bool IsCBInstruction() override { return true; }
+};
+
+class IF_CB_BIT final
+	: public InstructionFamily
+{
+public:
+	bool IsValid(uint8_t opcode) override;
+
+	bool Tick(uint8_t _, MMU& mmu, Registers& registers) override;
+
+	bool IsCBInstruction() override { return true; }
+};
+
+class IF_CB_RES_SET final
+	: public InstructionFamily
+{
+public:
+	bool IsValid(uint8_t opcode) override;
+
+	bool Tick(uint8_t _, MMU& mmu, Registers& registers) override;
+
+	bool IsCBInstruction() override { return true; }
+};
 
 #pragma endregion
 

@@ -66,67 +66,75 @@ std::stringstream CPU::DumpBoot(bool pointer)
 	return ss;
 }
 
-uint8_t CPU::GetCurrentInstruction()
-{
-	return Read(m_registers.PC);
-}
-
 int CPU::Tick()
 {
-	if (m_currentOpcode == 0xCB)
+	if (m_currentInstruction == nullptr) //Fetch instruction (should only happen on first instruction)
 	{
-		m_isCBPrefix = true;
-		m_currentInstruction = nullptr;
-	}
-	if (m_currentInstruction == nullptr) //Fetch new instruction
-	{
-		if (m_registers.PC > 258  && Read(0xFF50) == 0) // booting overflow
-		{
-			std::cout << "PC overflow while booting" << std::endl;
-			std::cout << std::hex << static_cast<int>(m_registers.PC) << std::endl;
-			return -2;
-		}
-		
-		m_debugAddresses.push_back(m_registers.PC);
+		bool success = GetNextInstruction();
 
-		m_currentOpcode = GetCurrentInstruction();
-		m_currentInstruction = GetInstructionFamily(m_currentOpcode);
-
-		//Remove instructions that are too old
-		while (m_debugAddresses.size() > 5)
+		if (!success)
 		{
-			m_debugAddresses.erase(m_debugAddresses.begin());
-		}
-
-		if (m_currentInstruction == nullptr)
-		{
-			m_registers.PC = m_debugAddresses.back();
-			std::cout << "Error : No Valide Instruction Family For Value 0x"
-				<< std::hex
-				<< static_cast<int>(m_currentOpcode)
-				<< " At PC 0x"
-				<< static_cast<int>(m_registers.PC)
-				<< std::endl;
-		
 			return -1;
 		}
-		
-		m_registers.PC++;
 	}
-
+	
 	if (m_currentInstruction->Tick(m_currentOpcode, m_mmu, m_registers))
 	{
-		m_currentInstruction = nullptr;
-		m_isCBPrefix = false;
+		m_isCBPrefix = (m_currentOpcode == 0xCB); //if last instruction was CB prefix
+		
+		bool success = GetNextInstruction(); //Fetch is done at the same time as the previous instruction ends
+
+		if (!success)
+		{
+			return -1;
+		}
 	}
 	return 0;
-};
+}
+
+bool CPU::GetNextInstruction()
+{
+	if (m_registers.PC > 258  && Read(0xFF50) == 0) // booting overflow
+	{
+		std::cout << "PC overflow while booting" << std::endl;
+		std::cout << std::hex << static_cast<int>(m_registers.PC) << std::endl;
+		return false;
+	}
+	
+	m_debugAddresses.push_back(m_registers.PC);
+
+	m_currentOpcode = Read(m_registers.PC);
+	m_currentInstruction = GetInstructionFamily(m_currentOpcode);
+
+	//Remove instructions that are too old
+	while (m_debugAddresses.size() > 5)
+	{
+		m_debugAddresses.erase(m_debugAddresses.begin());
+	}
+
+	if (m_currentInstruction == nullptr)
+	{
+		m_registers.PC = m_debugAddresses.back();
+		std::cout << "Error : No Valide Instruction Family For Value 0x"
+			<< std::hex
+			<< static_cast<int>(m_currentOpcode)
+			<< " At PC 0x"
+			<< static_cast<int>(m_registers.PC)
+			<< std::endl;
+		
+		return false;
+	}
+
+	m_registers.PC++;
+	
+	return true;
+}
 
 InstructionFamily* CPU::GetInstructionFamily(uint8_t opcode)
 {
 	for (auto& f : m_alu.m_instructionFamilies)
 	{
-		if (f->IsValid(opcode))
+		if (f->IsCBInstruction() == m_isCBPrefix && f->IsValid(opcode))
 		{
 			return f.get();
 		}
