@@ -43,17 +43,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9a1d1a47-0276-46f2-9e12-f857ee8a843b" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/BootRom.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/BootRom.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cartidge.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cartridge.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cartidge.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cartridge.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameBoy Project.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/GameBoy Project.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameBoy Project.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/GameBoy Project.vcxproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cpu.h" beforeDir="false" afterPath="$PROJECT_DIR$/cpu.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/emulator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/emulator.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/emulator.h" beforeDir="false" afterPath="$PROJECT_DIR$/emulator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mmu.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/mmu.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mmu.h" beforeDir="false" afterPath="$PROJECT_DIR$/mmu.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ppu.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/ppu.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -107,7 +98,7 @@
     "git-widget-placeholder": "SFML-fix",
     "last_opened_file_path": "C:/Users/Utilisateur/Documents/GitHub/GameBoy-Project/GameBoy Project/cmake-build-debug/bin",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "editor.preferences.fonts.default",
+    "settings.editor.selected.configurable": "CMakeSettings",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -218,7 +209,7 @@
       <updated>1769178455192</updated>
       <workItem from="1769178456255" duration="193000" />
       <workItem from="1769178697560" duration="3282000" />
-      <workItem from="1769182565077" duration="534000" />
+      <workItem from="1769182565077" duration="1066000" />
     </task>
     <servers />
   </component>
