@@ -4,7 +4,7 @@
 #include <memory>
 #include <cstdint>
 
-#include "Cartidge.h"
+#include "Cartridge.h"
 
 
 struct Registers

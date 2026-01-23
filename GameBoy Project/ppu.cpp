@@ -63,6 +63,7 @@ PPU::PPU(MMU& mmu) :
     m_screenSprite(m_screenTexture),
     m_mmu(mmu)
 {
+    m_framebuffer.fill(0);
     m_screenTexture.setSmooth(false);
     m_window.setVerticalSyncEnabled(false);
     m_debugWindow.setVerticalSyncEnabled(false);
@@ -185,6 +186,9 @@ void PPU::RenderDebug(CPU cpu, bool isRunning = true)
     m_debugRom->setCharacterSize(16);
 
     std::stringstream ur;
+
+    ur << "----- BOOTROM DEBUG INFO -----\n";
+
     if (cpu.m_registers.PC < 0x0100 && m_mmu.Read(0xFF50) == 0) // If is booting up
     {
         ur << cpu.DumpBoot(true).str();
@@ -215,6 +219,7 @@ void PPU::RenderDebug(CPU cpu, bool isRunning = true)
     ur << "WX : " << std::hex << static_cast<int>(m_mmu.Read(0xFF4B)) << "\n";
     
     ur << "\nLast executed instructions:\n";
+
     int count = 0;
     for (auto it = cpu.m_debugAddresses.rbegin(); it != cpu.m_debugAddresses.rend() && count < 5; ++it, ++count)
     {
@@ -231,11 +236,14 @@ void PPU::RenderDebug(CPU cpu, bool isRunning = true)
     }
     
     m_debugRom->setString(ur.str());
-    
+
     m_window.draw(*m_debugBackground);
     m_window.draw(*m_debugRom);
 
     std::stringstream ss;
+
+    ss << "     NINTENDO LOGO DUMP\n\n";
+
     for (int i = 0x8010; i < 0x9100; i++)
     {
         if (i == cpu.m_registers.PC)

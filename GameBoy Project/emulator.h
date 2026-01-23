@@ -1,5 +1,5 @@
 #pragma once
-#include "Cartidge.h"
+#include "Cartridge.h"
 #include "cpu.h"
 #include "ppu.h"
 
@@ -9,7 +9,7 @@ class ALU;
 class Emulator
 {
 public:
-	Cartidge m_cartidge;
+	Cartridge m_cartidge;
 	bool m_isRunning = true;
 	
 	int m_scanlineCounter = 456;
