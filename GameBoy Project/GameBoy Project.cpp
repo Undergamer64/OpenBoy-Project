@@ -45,14 +45,17 @@ int main()
 
 #pragma region OpcodeDef
     emulator.m_cpu += std::make_unique<IF_LD_r16_imm16>();
+    emulator.m_cpu += std::make_unique<IF_ARR>();
     emulator.m_cpu += std::make_unique<IF_LD_rA_rHL>();
+    emulator.m_cpu += std::make_unique<IF_CB_PREFIX>();
+    emulator.m_cpu += std::make_unique<IF_CB_BIT>();
+    emulator.m_cpu += std::make_unique<IF_FLOW_JR>();
     emulator.m_cpu += std::make_unique<IF_LD_r8_imm8>();
     emulator.m_cpu += std::make_unique<IF_LD_ADRC_r>();
-    emulator.m_cpu += std::make_unique<IF_FLOW_JR>();
+    emulator.m_cpu += std::make_unique<IF_INC_DEC>();
     emulator.m_cpu += std::make_unique<IF_LD_r_r>();
     emulator.m_cpu += std::make_unique<IF_LD_ADRIMM_r>();
     emulator.m_cpu += std::make_unique<IF_LD_rA_memory>();
-    emulator.m_cpu += std::make_unique<IF_INC_DEC>();
     emulator.m_cpu += std::make_unique<IF_FLOW_CALL>();
     emulator.m_cpu += std::make_unique<IF_POP>();
     emulator.m_cpu += std::make_unique<IF_LD_SP_HL>();
@@ -60,11 +63,11 @@ int main()
     emulator.m_cpu += std::make_unique<IF_FLOW_JP>();
     emulator.m_cpu += std::make_unique<IF_DI_EI>();
     emulator.m_cpu += std::make_unique<IF_ROTATE>();
-    /*
-    emulator.m_cpu += std::make_unique<IF_AR_8BIT>();
-    emulator.m_cpu += std::make_unique<IF_CB_PREFIX>();
     emulator.m_cpu += std::make_unique<IF_ADD_HL>();
-    */
+    emulator.m_cpu += std::make_unique<IF_PUSH>();
+    emulator.m_cpu += std::make_unique<IF_CB_RES_SET>();
+    emulator.m_cpu += std::make_unique<IF_CB_ROTATE>();
+
     
     //emulator.m_cpu += std::make_unique<IF_Finish>(); Deprecated
     

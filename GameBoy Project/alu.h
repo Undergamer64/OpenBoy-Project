@@ -105,7 +105,7 @@ public:
 
 #pragma region Arithmetique Instructions
 
-class IF_AR_8BIT final
+class IF_ARR final
 	: public InstructionFamily
 {
 public:

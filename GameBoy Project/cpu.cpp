@@ -68,6 +68,7 @@ std::stringstream CPU::DumpBoot(bool pointer)
 
 int CPU::Tick()
 {
+	ForceWrite(0xFF42, 0);
 	if (m_currentInstruction == nullptr) //Fetch instruction (should only happen on first instruction)
 	{
 		bool success = GetNextInstruction();
