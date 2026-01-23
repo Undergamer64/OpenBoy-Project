@@ -66,58 +66,86 @@ std::stringstream CPU::DumpBoot(bool pointer)
 	return ss;
 }
 
-uint8_t CPU::GetCurrentInstruction()
+int CPU::Tick()
 {
-	return Read(m_registers.PC);
+	ForceWrite(0xFF42, 0);
+	if (m_currentInstruction == nullptr) //Fetch instruction (should only happen on first instruction)
+	{
+		bool success = GetNextInstruction();
+
+		if (!success)
+		{
+			return -1;
+		}
+	}
+	
+	if (m_currentInstruction->Tick(m_currentOpcode, m_mmu, m_registers))
+	{
+		m_isCBPrefix = (m_currentOpcode == 0xCB); //if last instruction was CB prefix
+		
+		bool success = GetNextInstruction(); //Fetch is done at the same time as the previous instruction ends
+
+		if (!success)
+		{
+			return -1;
+		}
+	}
+	return 0;
 }
 
-int CPU::Execute()
+bool CPU::GetNextInstruction()
 {
+	if (m_registers.PC > 258  && Read(0xFF50) == 0) // booting overflow
+	{
+		std::cout << "PC overflow while booting" << std::endl;
+		std::cout << std::hex << static_cast<int>(m_registers.PC) << std::endl;
+		return false;
+	}
+	
 	m_debugAddresses.push_back(m_registers.PC);
+
+	m_currentOpcode = Read(m_registers.PC);
+	m_currentInstruction = GetInstructionFamily(m_currentOpcode);
 
 	//Remove instructions that are too old
 	while (m_debugAddresses.size() > 5)
 	{
 		m_debugAddresses.erase(m_debugAddresses.begin());
 	}
-	
-	uint8_t opcode = GetCurrentInstruction();
-	m_registers.PC++;
-	
-	if (m_registers.PC > 258  && Read(0xFF50) == 0) // booting overflow
+
+	if (m_currentInstruction == nullptr)
 	{
-		std::cout << "PC overflow while booting" << std::endl;
-		std::cout << std::hex << static_cast<int>(m_registers.PC) << std::endl;
-		return -2;
+		m_registers.PC = m_debugAddresses.back();
+		std::cout << "Error : No Valide Instruction Family For Value 0x"
+			<< std::hex
+			<< static_cast<int>(m_currentOpcode)
+			<< " At PC 0x"
+			<< static_cast<int>(m_registers.PC)
+			<< std::endl;
+		
+		return false;
 	}
 
+	m_registers.PC++;
+	
+	return true;
+}
+
+InstructionFamily* CPU::GetInstructionFamily(uint8_t opcode)
+{
 	for (auto& f : m_alu.m_instructionFamilies)
 	{
-		if (f == std::nullptr_t()) 
+		if (f->IsCBInstruction() == m_isCBPrefix && f->IsValid(opcode))
 		{
-			std::cout << "Error : Null Pointer For Instruction Family !";
-			continue;
-		}
-		if (f->IsValid(opcode)) 
-		{
-			int cycles = f->Execute(opcode, m_mmu, m_registers);
-			return cycles;
+			return f.get();
 		}
 	}
-	m_registers.PC = m_debugAddresses.back();
-	std::cout << "Error : No Valide Instruction Family For Value 0x"
-		<< std::hex
-		<< static_cast<int>(opcode)
-		<< " At PC 0x"
-		<< static_cast<int>(m_registers.PC)
-		<< std::endl;
-	
-	return -1;
-};
+	return nullptr;
+}
 
 int CPU::operator()() 
 {
-	return Execute();
+	return Tick();
 }
 
 void CPU::Write(uint16_t address, uint8_t value)

@@ -64,12 +64,8 @@ PPU::PPU(MMU& mmu) :
     m_mmu(mmu)
 {
     m_screenTexture.setSmooth(false);
-    
-    m_window.setFramerateLimit(60);
-    m_window.setVerticalSyncEnabled(true);
-
-    m_debugWindow.setFramerateLimit(60);
-    m_debugWindow.setVerticalSyncEnabled(true);
+    m_window.setVerticalSyncEnabled(false);
+    m_debugWindow.setVerticalSyncEnabled(false);
     
     sf::Vector2u size = sf::VideoMode::getDesktopMode().size;
     unsigned int ratio = std::min((size.x) / GB_W / 2, size.y / GB_H) - 1;
@@ -205,7 +201,7 @@ void PPU::RenderDebug(CPU cpu, bool isRunning = true)
     ur << "H" << " : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.m_registers.m_registers[4]) << "\n";
     ur << "L" << " : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.m_registers.m_registers[5]) << "\n";
     ur << "IME : " << (cpu.m_registers.IME ? "true" : "false") << "\n";
-    ur << "Current instruction : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.GetCurrentInstruction()) << "\n";
+    ur << "Current instruction : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.Read(cpu.m_registers.PC)) << "\n";
     ur << "\n";
 
     ur << "LY : " << std::dec << static_cast<int>(m_mmu.Read(0xFF44)) << "\n";

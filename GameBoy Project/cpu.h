@@ -28,6 +28,10 @@ class CPU
 	using InstrFamilyPtr = std::unique_ptr<InstructionFamily>;
 	ALU& m_alu;
 
+	uint8_t m_currentOpcode;
+	InstructionFamily* m_currentInstruction;
+	bool m_isCBPrefix = false;
+
 public:
 	Registers m_registers;
 	int m_TimerCounter = 1024;
@@ -47,11 +51,12 @@ public:
 
 	void Push(uint16_t address);
 
-	uint8_t GetCurrentInstruction();
+	bool GetNextInstruction();
 
 	std::stringstream DumpBoot(bool pointer = false);
 	
-	int Execute();
+	int Tick();
+	InstructionFamily* GetInstructionFamily(uint8_t opcode);
 
 	int operator()();
 
