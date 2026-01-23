@@ -4,14 +4,14 @@
 #include <cstdint>
 #include <map>
 #include "BootRom.h"
-#include "Cartidge.h"
+#include "Cartridge.h"
 
 class MemoryBase;
 
 class MMU 
 {
 	std::map<uint16_t, MemoryBase*> m_allMaps;
-    Cartidge m_cartidge;
+    Cartridge m_cartidge;
     
 public:
 	MemoryBase& m_bootRom;

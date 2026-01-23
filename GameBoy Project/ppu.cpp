@@ -63,6 +63,7 @@ PPU::PPU(MMU& mmu) :
     m_screenSprite(m_screenTexture),
     m_mmu(mmu)
 {
+    m_framebuffer.fill(0);
     m_screenTexture.setSmooth(false);
     m_window.setVerticalSyncEnabled(false);
     m_debugWindow.setVerticalSyncEnabled(false);
@@ -88,7 +89,7 @@ PPU::PPU(MMU& mmu) :
     );
 
     
-    if (!m_font.openFromFile("EarlyGameBoy.ttf"))
+    if (!m_font.openFromFile("Jersey10-Regular.ttf"))
     {
         m_window.close();
         m_debugWindow.close();
@@ -231,7 +232,7 @@ void PPU::RenderDebug(CPU cpu, bool isRunning = true)
     }
     
     m_debugRom->setString(ur.str());
-    
+
     m_window.draw(*m_debugBackground);
     m_window.draw(*m_debugRom);
 

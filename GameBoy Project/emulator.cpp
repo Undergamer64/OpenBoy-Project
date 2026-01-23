@@ -14,7 +14,7 @@ static int MAXCYCLES = CLOCKSPEED / 59.7275f; // (number of cycles / frame rate)
 #endif
 
 Emulator::Emulator(MMU& mmu, ALU& alu)
-    : m_cartidge(Cartidge())
+    : m_cartidge(Cartridge())
       , m_cpu(mmu, alu)
       , m_ppu(mmu)
 {

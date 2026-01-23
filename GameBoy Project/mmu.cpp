@@ -16,7 +16,7 @@ MMU::MMU(BootRom& bootRom)
 
 void MMU::LoadCartridge(const std::string& filepath)
 {
-    m_cartidge = Cartidge(filepath);
+    m_cartidge = Cartridge(filepath);
 	
 	// Load the first 0x8000 bytes of the cartridge into memory
     for (size_t address = 0; address < 0x8000; address++)
@@ -64,7 +64,7 @@ void MMU::Map(MemoryBase* mem, uint16_t address)
 		m_allMaps[address] = mem;
 	}
 	else {
-		throw std::exception("This address is already mapped");
+		throw std::runtime_error("Memory address already mapped !");
 	}
 }
 
