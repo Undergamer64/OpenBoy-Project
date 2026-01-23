@@ -1,8 +1,7 @@
 #pragma once
 #include "alu.h"
-#include "ram.h"
+#include "./ram.h"
 #include <memory>
-#include <cstdint>
 
 #include "Cartridge.h"
 

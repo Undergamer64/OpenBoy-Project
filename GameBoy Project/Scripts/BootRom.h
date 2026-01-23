@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ram.h"
+#include "./ram.h"
 
 #include <array>
 #include <cstdint>

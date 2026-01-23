@@ -1,6 +1,6 @@
-#include "alu.h"
-#include "cpu.h"
-#include "mmu.h"
+#include "./alu.h"
+#include "./cpu.h"
+#include "./mmu.h"
 
 #define PCREAD8() ([&]() { \
 	return mmu.Read(registers.PC++); })()

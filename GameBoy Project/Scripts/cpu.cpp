@@ -1,9 +1,8 @@
-#include "cpu.h"
-
 #include <iomanip>
 #include <sstream>
 
-#include "mmu.h"
+#include "./cpu.h"
+#include "./mmu.h"
 
 #define CLOCKSPEED 4194304
 #define TIMA 0xFF05

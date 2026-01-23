@@ -43,22 +43,23 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9a1d1a47-0276-46f2-9e12-f857ee8a843b" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../.idea/.idea.GameBoy Project/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/.idea.GameBoy Project/.idea/.name" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/.idea.GameBoy Project/.idea/copilot.data.migration.agent.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/.idea.GameBoy Project/.idea/copilot.data.migration.ask.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/.idea.GameBoy Project/.idea/copilot.data.migration.ask2agent.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/.idea.GameBoy Project/.idea/copilot.data.migration.edit.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/.idea.GameBoy Project/.idea/encodings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/.idea.GameBoy Project/.idea/indexLayout.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/.idea.GameBoy Project/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.idea/.idea.GameBoy Project/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GameBoy Project.sln" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameBoy Project.vcxproj" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameBoy Project.vcxproj.filters" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Square.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../vcpkg.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/BootRom.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/BootRom.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BootRom.h" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/BootRom.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cartridge.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/Cartridge.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cartridge.h" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/Cartridge.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GameBoy Project.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/GameBoy Project.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/alu.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/alu.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/alu.h" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/alu.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cpu.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/cpu.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cpu.h" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/cpu.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/emulator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/emulator.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/emulator.h" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/emulator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mmu.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/mmu.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mmu.h" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/mmu.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ppu.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/ppu.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ppu.h" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/ppu.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ram.h" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/ram.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -119,8 +120,16 @@
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\Utilisateur\Documents\GitHub\GameBoy-Project\GameBoy Project\cmake-build-debug\bin" />
     </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Utilisateur\Documents\GitHub\GameBoy-Project\GameBoy Project\Scripts" />
+    </key>
   </component>
   <component name="RunManager" selected="CMake Application.GameBoyProject">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="FLAC" type="CMakeRunConfiguration" factoryName="Application" folderName="Dependencies" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="GameBoyProject" TARGET_NAME="FLAC" CONFIG_NAME="Debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -218,7 +227,7 @@
       <workItem from="1769178456255" duration="193000" />
       <workItem from="1769178697560" duration="3282000" />
       <workItem from="1769182565077" duration="1066000" />
-      <workItem from="1769184376347" duration="7000" />
+      <workItem from="1769184376347" duration="130000" />
     </task>
     <servers />
   </component>
