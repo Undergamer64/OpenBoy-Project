@@ -1,7 +1,7 @@
 #pragma once
 #include "Cartridge.h"
 #include "cpu.h"
-#include "ppu.h"
+#include "./ppu.h"
 
 class MMU;
 class ALU;

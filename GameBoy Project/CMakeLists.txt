@@ -17,14 +17,14 @@ FetchContent_MakeAvailable(SFML)
 
 # Add the executable
 add_executable(${PROJECT_NAME} 
-        GameBoy\ Project.cpp
-        alu.cpp
-        BootRom.cpp
-        Cartridge.cpp
-        cpu.cpp
-        emulator.cpp
-        mmu.cpp
-        ppu.cpp
+        "Scripts/GameBoy Project.cpp"
+        Scripts/alu.cpp
+        Scripts/BootRom.cpp
+        Scripts/Cartridge.cpp
+        Scripts/cpu.cpp
+        Scripts/emulator.cpp
+        Scripts/mmu.cpp
+        Scripts/ppu.cpp
 )
 
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)

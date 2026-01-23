@@ -1,4 +1,4 @@
-﻿#include "Cartridge.h"
+﻿#include "./Cartridge.h"
 
 #include <fstream>
 #include <iostream>
