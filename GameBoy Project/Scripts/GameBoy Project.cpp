@@ -4,8 +4,8 @@
 #include "BootRom.h"
 #include "cpu.h"
 #include "emulator.h"
-#include "mmu.h"
-#include "ram.h"
+#include "./mmu.h"
+#include "./ram.h"
 
 int main()
 {

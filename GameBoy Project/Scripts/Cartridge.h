@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 
-#include "ram.h"
+#include "./ram.h"
 
 class Cartridge
     : public MemoryBase
