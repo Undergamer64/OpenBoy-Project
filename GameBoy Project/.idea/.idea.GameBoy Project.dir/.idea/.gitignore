@@ -1,11 +1,11 @@
-﻿# Default ignored files
+# Default ignored files
 /shelf/
 /workspace.xml
 # Rider ignored files
 /contentModel.xml
-/projectSettingsUpdater.xml
-/modules.xml
 /.idea.GameBoy Project.iml
+/modules.xml
+/projectSettingsUpdater.xml
 # Editor-based HTTP Client requests
 /httpRequests/
 # Datasource local storage ignored files

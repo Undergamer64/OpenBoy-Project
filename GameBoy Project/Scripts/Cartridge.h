@@ -2,15 +2,15 @@
 #include <string>
 #include <vector>
 
-#include "ram.h"
+#include "./ram.h"
 
-class Cartidge
-    : MemoryBase
+class Cartridge
+    : public MemoryBase
 {
     std::vector<uint8_t> data;
 public:
-    Cartidge();
-    Cartidge(const std::string& filepath);
+    Cartridge();
+    Cartridge(const std::string& filepath);
 
     size_t  Size() const override;
     uint8_t Read(uint16_t address) const override;

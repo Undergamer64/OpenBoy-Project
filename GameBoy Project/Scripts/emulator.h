@@ -1,15 +1,16 @@
 #pragma once
-#include "RAM.h"
-#include "mmu.h"
-#include "alu.h"
+#include "Cartridge.h"
 #include "cpu.h"
-#include "Cartidge.h"
-#include "ppu.h"
+#include "./ppu.h"
+
+class MMU;
+class ALU;
 
 class Emulator
 {
 public:
-	Cartidge m_cartidge;
+	Cartridge m_cartidge;
+	bool m_isRunning = true;
 	
 	int m_scanlineCounter = 456;
 	int m_TimerCounter = 1024;
@@ -17,16 +18,18 @@ public:
 	
 	Emulator(MMU& mmu, ALU& alu);
 	~Emulator();
-
-	PPU m_ppu;
+    
+    PPU m_ppu;
 	CPU m_cpu;
+    
+    void SkipBootRom();
 	
 	void Map(MemoryBase* mem, uint16_t address);
 
 	void LoadCartridge(const std::string& filepath);
 
-	void UpdateTimers(int cycles);
-	void UpdateGraphics(int cycles);
+	void UpdateTimers();
+	void UpdateGraphics();
 	void SetLCDStatus();
 
 	bool IsLCDEnabled();
@@ -37,9 +40,12 @@ public:
 	int DoInterupts();
 	int ServiceInterupt(int interrupt);
 
-	bool operator()();
+	void operator()();
+	void Execute();
 
 	void DebugSlowDown();
 
-	void DoDividerRegister(int cycles);
+	void DoDividerRegister();
+
+	bool Render();
 };

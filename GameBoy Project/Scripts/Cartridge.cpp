@@ -1,11 +1,11 @@
-﻿#include "Cartidge.h"
+﻿#include "./Cartridge.h"
 
 #include <fstream>
 #include <iostream>
 
-Cartidge::Cartidge() = default;
+Cartridge::Cartridge() = default;
 
-Cartidge::Cartidge(const std::string& filepath)
+Cartridge::Cartridge(const std::string& filepath)
 {
     std::ifstream ifs(filepath, std::ios::binary | std::ios::ate);
     if (ifs.good()) 
@@ -19,6 +19,7 @@ Cartidge::Cartidge(const std::string& filepath)
             std::cout << std::to_string(ifs.gcount()) << " failure" << std::endl;
         }
         ifs.close();
+        std::cout << "Successfully loaded cartridge: " << filepath << " (0x" << std::hex << size << " bytes)" << std::endl;
     }
     else 
     {
@@ -27,20 +28,21 @@ Cartidge::Cartidge(const std::string& filepath)
         {
             data[i] = 0xFF;
         }
+        std::cout << "Failed to load cartridge: " << filepath << std::endl;
     }
 }
 
-size_t Cartidge::Size() const
+size_t Cartridge::Size() const
 {
     return data.size();
 }
 
-uint8_t Cartidge::Read(uint16_t address) const
+uint8_t Cartridge::Read(uint16_t address) const
 {
-    if (address < Cartidge::Size()) {
+    if (address < Cartridge::Size()) {
         return data[address];
     }
     return 0;
 }
 
-void Cartidge::Write(uint16_t address, uint8_t value){ }
+void Cartridge::Write(uint16_t address, uint8_t value){ }

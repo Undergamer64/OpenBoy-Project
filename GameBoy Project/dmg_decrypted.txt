@@ -29,6 +29,7 @@
     ld a, %11_11_11_00
     
     ldh [rBGP], a
+    
     ld de, HeaderLogo
     
     

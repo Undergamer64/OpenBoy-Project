@@ -1,5 +1,8 @@
 #include "mmu.h"
-#include "ram.h"
+
+#include <iomanip>
+
+#include "./ram.h"
 
 #define CLOCKSPEED 4194304
 #define TIMA 0xFF05
@@ -11,13 +14,57 @@ MMU::MMU(BootRom& bootRom)
 {
 }
 
+void MMU::LoadCartridge(const std::string& filepath)
+{
+    m_cartidge = Cartridge(filepath);
+	
+	// Load the first 0x8000 bytes of the cartridge into memory
+    for (size_t address = 0; address < 0x8000; address++)
+    {
+	    Write(address, m_cartidge.Read(address));
+    }
+	
+#if _DEBUG
+    //std::cout << "Cartridge content :" << std::endl;
+
+	//DebugDumpMemory(&m_cartidge);
+#endif
+}
+
+void MMU::DebugDumpMemory(MemoryBase* mem)
+{
+	if (!mem)
+	{
+		std::cout << "Memory is null !" << std::endl;
+		return;
+	}
+	
+	std::cout << "Memory" << std::endl;
+	
+	for (size_t address = 0; address < mem->Size(); address++)
+	{
+		std::cout << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(mem->Read(address)) << " ";
+
+		if ((address + 1) % 0x0010 == 0)
+		{
+			std::cout << "\n";
+		}
+	}
+	
+	for (int i = 0; i < 20; i++)
+	{
+		std::cout << "--";
+	}
+	std::cout << std::endl;
+}
+
 void MMU::Map(MemoryBase* mem, uint16_t address) 
 {
 	if (!m_allMaps.contains(address)) {
 		m_allMaps[address] = mem;
 	}
 	else {
-		throw std::exception("This address is already mapped");
+		throw std::runtime_error("Memory address already mapped !");
 	}
 }
 
@@ -28,7 +75,7 @@ uint8_t MMU::Read(uint16_t address)
 	{
 		return m_bootRom.Read(address);
 	}
-	
+    
 	for (auto [startAddr, mem] : m_allMaps) 
 	{
 		uint16_t endAddr = startAddr + mem->Size();

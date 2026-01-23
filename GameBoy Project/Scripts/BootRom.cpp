@@ -1,4 +1,4 @@
-#include "BootRom.h"
+#include "./BootRom.h"
 
 #include <iostream>
 #include <fstream>
@@ -17,7 +17,7 @@ BootRom::BootRom(const std::string& filepath)
 	}
 	else 
 	{
-		throw std::exception("BootRom is Invalid !");
+		throw std::runtime_error("Failed to open boot rom file: " + filepath);
 	}
 };
 
