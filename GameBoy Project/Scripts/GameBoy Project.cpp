@@ -9,7 +9,7 @@
 
 int main()
 {
-    BootRom bootRom("dmg_boot.bin");
+    BootRom bootRom("Assets/dmg_boot.bin");
     
     MMU mmu(bootRom);
     ALU alu;
@@ -73,8 +73,8 @@ int main()
     
 #pragma endregion
 
-    emulator.LoadCartridge("Tetris.gb");
-    //emulator.LoadCartridge("Tetoris.gb");
+    emulator.LoadCartridge("Assets/Tetris.gb");
+    //emulator.LoadCartridge("Assets/Tetoris.gb"); //test invalid rom
     
     //emulator.SkipBootRom();
 
