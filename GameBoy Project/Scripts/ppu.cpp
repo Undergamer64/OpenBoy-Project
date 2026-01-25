@@ -89,7 +89,7 @@ PPU::PPU(MMU& mmu) :
     );
 
     
-    if (!m_font.openFromFile("EarlyGameBoy.ttf"))
+    if (!m_font.openFromFile("Assets/EarlyGameBoy.ttf"))
     {
         m_window.close();
         m_debugWindow.close();
