@@ -11,14 +11,12 @@ static int MAXCYCLES = CLOCKSPEED / 59.7275f; //Debug
 
 Emulator::Emulator(MMU& mmu, ALU& alu)
     : m_cartidge(Cartridge())
-      , m_cpu(mmu, alu)
       , m_ppu(mmu)
+      , m_cpu(mmu, alu)
 {
 }
 
-Emulator::~Emulator()
-{
-}
+Emulator::~Emulator() = default;
 
 void Emulator::SkipBootRom()
 {
@@ -26,6 +24,7 @@ void Emulator::SkipBootRom()
     
     m_cpu.m_registers.PC = 0x101;
     m_cpu.m_registers.SP = 0xFFFE;
+    m_cpu.m_registers.IME = true;
     m_cpu.m_registers.m_registers[0] = 0x01; // A
     m_cpu.m_registers.m_registers[1] = 0xB0; // F
     m_cpu.m_registers.m_registers[2] = 0x13; // B
@@ -146,8 +145,7 @@ void Emulator::Execute()
     }
 }
 
-void Emulator::DebugSlowDown()
-{
+void Emulator::DebugSlowDown() const {
     if (m_cpu.m_registers.PC == 0x6a)
     {
         MAXCYCLES = 1;
@@ -339,12 +337,7 @@ int Emulator::DoInterupts()
 }
 
 int Emulator::ServiceInterupt(int interrupt)
-{/*
-    if (m_cpu.m_registers.PC < 0x0100 && m_cpu.ForceRead(0xFF50) == 0) // If is booting up
-    {
-        return 0;
-    }*/
-    
+{
     m_cpu.m_registers.IME = false;
     uint8_t req = m_cpu.Read(0xFF0F) ;
     req = req & ~(1 << interrupt);
@@ -366,6 +359,8 @@ int Emulator::ServiceInterupt(int interrupt)
         break;
     case 4:
         m_cpu.m_registers.PC = 0x60;
+        break;
+    default:
         break;
     }
     return 20;

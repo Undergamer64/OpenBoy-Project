@@ -39,17 +39,12 @@
   <component name="CMakeSettings">
     <configurations>
       <configuration PROFILE_NAME="Debug" ENABLED="true" CONFIG_NAME="Debug" />
+      <configuration PROFILE_NAME="Release" ENABLED="true" CONFIG_NAME="Release" />
     </configurations>
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9a1d1a47-0276-46f2-9e12-f857ee8a843b" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/EarlyGameBoy.ttf" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/EarlyGameBoy.ttf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Jersey10-Regular.ttf" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Jersey10-Regular.ttf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Scripts/GameBoy Project.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/GameBoy Project.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Scripts/ppu.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/ppu.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Tetris.gb" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Tetris.gb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dmg_boot.bin" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/dmg_boot.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Scripts/alu.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/alu.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -105,7 +100,7 @@
     "RunOnceActivity.west.config.association.type.startup.service": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
-    "git-widget-placeholder": "SFML-fix",
+    "git-widget-placeholder": "CPU-ALU-Refacto",
     "last_opened_file_path": "C:/Users/Utilisateur/Documents/GitHub/GameBoy-Project/GameBoy Project/cmake-build-debug/bin",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",

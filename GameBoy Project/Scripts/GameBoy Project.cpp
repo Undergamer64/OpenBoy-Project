@@ -67,6 +67,7 @@ int main()
     emulator.m_cpu += std::make_unique<IF_PUSH>();
     emulator.m_cpu += std::make_unique<IF_CB_RES_SET>();
     emulator.m_cpu += std::make_unique<IF_CB_ROTATE>();
+    emulator.m_cpu += std::make_unique<IF_CPL>();
 
     
     //emulator.m_cpu += std::make_unique<IF_Finish>(); Deprecated
@@ -76,7 +77,7 @@ int main()
     emulator.LoadCartridge("Assets/Tetris.gb");
     //emulator.LoadCartridge("Assets/Tetoris.gb"); //test invalid rom
     
-    //emulator.SkipBootRom();
+    emulator.SkipBootRom();
 
     emulator();
   

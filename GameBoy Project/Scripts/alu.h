@@ -123,6 +123,15 @@ public:
 	bool Tick(uint8_t opcode, MMU& mmu, Registers& registers) override;
 };
 
+class IF_CPL final
+	: public InstructionFamily
+{
+public:
+	bool IsValid(uint8_t opcode) override;
+
+	bool Tick(uint8_t opcode, MMU& mmu, Registers& registers) override;
+};
+
 #pragma endregion
 
 #pragma region Flow Instructions

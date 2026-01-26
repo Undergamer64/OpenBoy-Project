@@ -43,7 +43,7 @@ public:
 	void operator()();
 	void Execute();
 
-	void DebugSlowDown();
+	void DebugSlowDown() const;
 
 	void DoDividerRegister();
 
