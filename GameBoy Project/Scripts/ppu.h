@@ -23,6 +23,9 @@ class PPU
     sf::Texture m_screenTexture;
     sf::Sprite m_screenSprite;
 
+    uint8_t m_currentPixel;
+    int m_graphicPenalty;
+
     MMU& m_mmu;
 
     bool IsWindowOpen();
@@ -36,7 +39,7 @@ public:
 
     bool RenderScreen();
 
-    void DrawScanLine(uint8_t currentLine);
+    void DrawCurrentPixel(uint8_t currentLine, int currentDot);
 
     void RenderDebug(CPU cpu, bool isRunning);
     sf::Color GetPixelColor(int y, int x);

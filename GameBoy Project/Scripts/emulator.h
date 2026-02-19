@@ -12,7 +12,7 @@ public:
 	Cartridge m_cartidge;
 	bool m_isRunning = true;
 	
-	int m_scanlineCounter = 456;
+	int m_dotInScanline = 456;
 	int m_TimerCounter = 1024;
 	int m_DividerCounter = 0;
 	

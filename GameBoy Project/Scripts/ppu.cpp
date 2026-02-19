@@ -171,14 +171,20 @@ bool PPU::RenderScreen()
     return true;
 }
 
-void PPU::DrawScanLine(uint8_t currentLine)
+void PPU::DrawCurrentPixel(uint8_t currentLine, int currentDot)
 {
-    uint8_t control = m_mmu.Read(0xFF40);
-    if ((control & 1) == 1)
-        RenderTiles(control);
+    if (m_graphicPenalty > 0) //wait 1 dot per graphic penalty
+    {
+        m_graphicPenalty--;
+        return;
+    }
 
-    if ((control >> 1 & 1) == 1)
-        RenderSprites(control);
+    uint8_t lcdControl = m_mmu.Read(0xFF40);
+    if ((lcdControl & 1) == 1)
+        RenderTiles(lcdControl);
+
+    if ((lcdControl >> 1 & 1) == 1)
+        RenderSprites(lcdControl);
 }
 
 void PPU::RenderDebug(CPU cpu, bool isRunning = true)
@@ -355,17 +361,25 @@ void PPU::RenderTiles(uint8_t lcdControl)
     if (usingWindow == false)
     {
         if ((lcdControl >> 3 & 1) == 1)
+        {
             backgroundMemory = 0x9C00;
+        }
         else
+        {
             backgroundMemory = 0x9800;
+        }
     }
     else
     {
         // which window memory?
         if ((lcdControl >> 6 & 1) == 1)
+        {
             backgroundMemory = 0x9C00;
+        }
         else
+        {
             backgroundMemory = 0x9800;
+        }
     }
 
     uint8_t yPos;
@@ -373,130 +387,131 @@ void PPU::RenderTiles(uint8_t lcdControl)
     // yPos is used to calculate which of 32 vertical tiles the
     // current scanline is drawing
     if (!usingWindow)
+    {
         yPos = scrollY + scanline;
+    }
     else
+    {
         yPos = scanline - windowY;
+    }
 
     // which of the 8 vertical pixels of the current
     // tile is the scanline on?
     uint16_t tileRow = (static_cast<uint8_t>(yPos / 8)*32);
 
-    // time to start drawing the GB_W horizontal pixels
-    // for this scanline
-    for (int pixel = 0; pixel < GB_W; pixel++)
+    uint8_t xPos = m_currentPixel + scrollX;
+
+    // translate the current x pos to window space if necessary
+    if (usingWindow)
     {
-        uint8_t xPos = pixel + scrollX;
-
-        // translate the current x pos to window space if necessary
-        if (usingWindow)
+        if (m_currentPixel >= windowX)
         {
-            if (pixel >= windowX)
-            {
-                xPos = pixel - windowX;
-            }
+            xPos = m_currentPixel - windowX;
         }
-
-        // which of the 32 horizontal tiles does this xPos fall within?
-        uint16_t tileCol = (xPos/8);
-
-        //TODO : find how to integrate SIGNED_WORD
-        int16_t tileNum;
-
-        // get the tile identity number. Remember it can be signed
-        // or unsigned
-        uint16_t tileAddress = backgroundMemory+tileRow+tileCol;
-        if(unsig)
-        {
-            tileNum = m_mmu.Read(tileAddress);
-        }
-        else
-        {
-            //TODO : find how to integrate SIGNED_BYTE
-            tileNum = static_cast<int8_t>(m_mmu.Read(tileAddress));
-        }
-
-        // deduce where this tile identifier is in memory.
-        uint16_t tileLocation = tileData;
-
-        if (unsig)
-        {
-            tileLocation += (tileNum * 16);
-        }
-        else
-        {
-            tileLocation += ((tileNum+128) *16);
-        }
-
-        // find the correct vertical line we're on of the
-        // tile to get the tile data
-        //from in memory
-        uint8_t line = yPos % 8;
-        line *= 2; // each vertical line takes up two bytes of memory
-        uint8_t data1 = m_mmu.Read(tileLocation + line);
-        uint8_t data2 = m_mmu.Read(tileLocation + line + 1);
-
-        // pixel 0 in the tile is bit 7 of data 1 and data2.
-        // Pixel 1 is bit 6 etc..
-        int colourBit = xPos % 8;
-        colourBit -= 7;
-        colourBit *= -1;
-
-        // combine data 2 and data 1 to get the color id for this pixel
-        // in the tile
-        int colourNum = data2 >> colourBit & 1;
-        colourNum <<= 1;
-        colourNum |= data1 >> colourBit & 1;
-
-        // now we have the color id get the actual
-        // color from palette 0xFF47
-        uint8_t col = m_mmu.Read(0xFF47) >> colourNum * 2 & 0b11;
-        
-        int red;
-        int green;
-        int blue;
-
-        // setup the RGB values
-        switch(col)
-        {
-        case WHITE:
-            red = 255;
-            green = 255;
-            blue = 255;
-            break;
-        case LIGHT_GRAY:
-            red = 0xCC;
-            green = 0xCC;
-            blue = 0xCC;
-            break;
-        case DARK_GRAY:
-            red = 0x77;
-            green = 0x77;
-            blue = 0x77;
-            break;
-        default:
-            red = 0;
-            green = 0;
-            blue = 0;
-            break;
-        }
-
-        // safety check to make sure what im about
-        // to set is in the 160x144 bounds
-        if ((scanline<0)||(scanline>143)||(pixel<0)||(pixel>159))
-        {
-            std::cerr << "PPU::RenderTiles: scanline is out of bounds" << std::endl;
-            continue;
-        }
-
-        sf::Color currentColor = GetPixelColor(scanline, pixel);
-        SetPixelColor(scanline, pixel,sf::Color(red, green, blue));
-        /*
-        if (m_screenData[scanline][pixel]->getFillColor() != currentColor)
-        {
-            std::cout << "Pixel at (" << pixel << "," << scanline << ") set to color " 
-                      << "R:" << red << " G:" << green << " B:" << blue << std::endl;
-        }*/
     }
+
+    // which of the 32 horizontal tiles does this xPos fall within?
+    uint16_t tileCol = (xPos/8);
+
+    //TODO : find how to integrate SIGNED_WORD
+    int16_t tileNum;
+
+    // get the tile identity number. Remember it can be signed
+    // or unsigned
+    uint16_t tileAddress = backgroundMemory+tileRow+tileCol;
+    if(unsig)
+    {
+        tileNum = m_mmu.Read(tileAddress);
+    }
+    else
+    {
+        //TODO : find how to integrate SIGNED_BYTE
+        tileNum = static_cast<int8_t>(m_mmu.Read(tileAddress));
+    }
+
+    // deduce where this tile identifier is in memory.
+    uint16_t tileLocation = tileData;
+
+    if (unsig)
+    {
+        tileLocation += (tileNum * 16);
+    }
+    else
+    {
+        tileLocation += ((tileNum+128) *16);
+    }
+
+    // find the correct vertical line we're on of the
+    // tile to get the tile data
+    //from in memory
+    uint8_t line = yPos % 8;
+    line *= 2; // each vertical line takes up two bytes of memory
+    uint8_t data1 = m_mmu.Read(tileLocation + line);
+    uint8_t data2 = m_mmu.Read(tileLocation + line + 1);
+
+    // pixel 0 in the tile is bit 7 of data 1 and data2.
+    // Pixel 1 is bit 6 etc..
+    int colourBit = xPos % 8;
+    colourBit -= 7;
+    colourBit *= -1;
+
+    // combine data 2 and data 1 to get the color id for this pixel
+    // in the tile
+    int colourNum = data2 >> colourBit & 1;
+    colourNum <<= 1;
+    colourNum |= data1 >> colourBit & 1;
+
+    // now we have the color id get the actual
+    // color from palette 0xFF47
+    uint8_t col = m_mmu.Read(0xFF47) >> colourNum * 2 & 0b11;
+
+    int red;
+    int green;
+    int blue;
+
+    // setup the RGB values
+    switch(col)
+    {
+    case WHITE:
+        red = 255;
+        green = 255;
+        blue = 255;
+        break;
+    case LIGHT_GRAY:
+        red = 0xCC;
+        green = 0xCC;
+        blue = 0xCC;
+        break;
+    case DARK_GRAY:
+        red = 0x77;
+        green = 0x77;
+        blue = 0x77;
+        break;
+    default:
+        red = 0;
+        green = 0;
+        blue = 0;
+        break;
+    }
+
+    // sanity check to make sure what im about
+    // to set is in the 160x144 bounds
+    if ((scanline<0)||(scanline>143)||(m_currentPixel<0)||(m_currentPixel>159))
+    {
+        std::cerr << "PPU::RenderTiles: scanline is out of bounds" << std::endl;
+        return;
+    }
+
+    //sf::Color currentColor = GetPixelColor(scanline, m_currentPixel);
+
+    SetPixelColor(scanline, m_currentPixel,sf::Color(red, green, blue));
+
+    /*
+    if (m_screenData[scanline][m_currentPixel]->getFillColor() != currentColor)
+    {
+        std::cout << "Pixel at (" << m_currentPixel << "," << scanline << ") set to color "
+                  << "R:" << red << " G:" << green << " B:" << blue << std::endl;
+    }*/
 }
 
 void PPU::RenderSprites(uint8_t lcdControl)

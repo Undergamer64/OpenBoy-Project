@@ -116,7 +116,6 @@ void Emulator::Execute()
     
     while (cyclesThisUpdate < MAXCYCLES)
     {
-
         if (cyclesThisUpdate % 4 == 0)// only tick cpu every 4 t-cycles (or every 1 m-cycle)
         {
             int errorCode = m_cpu.Tick();
@@ -188,36 +187,36 @@ void Emulator::UpdateGraphics()
 
     if (IsLCDEnabled())
     {
-        m_scanlineCounter --;
+        m_dotInScanline++;
     }
     else
     {
         return;
     }
-    
-    if (m_scanlineCounter <= 0)
-    {
-        // time to move onto next scanline
-        uint8_t currentLine = m_cpu.Read(0xFF44) + 1;
-        
-        //std::cout << static_cast<int>(currentLine) << std::endl;
-        m_cpu.Write(0xFF44, currentLine);
 
-        m_scanlineCounter = 456;
-        
-        if (currentLine == 144)// we have entered vertical blank period
-        {
-            RequestInterupt(0);
-        }
-        
-        else if (currentLine > 153)// if gone past scanline 153 reset to 0
-        {
-            m_cpu.Write(0xFF44, 0);
-        }
-        else if (currentLine < 144)// draw the current scanline
-        {
-            m_ppu.DrawScanLine(currentLine);
-        }
+    if (m_dotInScanline > 456)
+    {
+        m_dotInScanline = 0;
+        // time to move onto next scanline
+        m_cpu.Write(0xFF44, m_cpu.Read(0xFF44) + 1);
+    }
+
+    uint8_t mode = m_cpu.Read(0xFF41) & 3;
+
+    if (mode == 0 || mode == 2) // During H-Blank or V-Blank, wait (either as setup or simply waiting)
+    {
+        return;
+    }
+
+    uint8_t currentLine = m_cpu.Read(0xFF44);
+
+    if (currentLine > 153)// if gone past scanline 153 reset to 0
+    {
+        m_cpu.Write(0xFF44, 0);
+    }
+    else if (currentLine < 144)// draw the current scanline (and not in V_Blank, tho it shouldn't happen here)
+    {
+        m_ppu.DrawCurrentPixel(currentLine, m_dotInScanline);
     }
 }
 
@@ -227,7 +226,7 @@ void Emulator::SetLCDStatus()
     if (!IsLCDEnabled())
     {
         // set the mode to 1 during lcd disabled and reset scanline
-        m_scanlineCounter = 456 ;
+        m_dotInScanline = 0;
         m_cpu.Write(0xFF44, 0);
         status &= 252 ;
         status |= 0b01;
@@ -239,28 +238,26 @@ void Emulator::SetLCDStatus()
     uint8_t currentmode = status & 0x3 ;
 
     uint8_t mode = 0 ;
-    bool reqInt = false ;
     
     if (currentline >= 144)// in vblank so set mode to 1
     {
         mode = 1;
         status |= 0b01;
         status &= ~0b10;
-        reqInt = status & (1 << 4);
     }
     else
     {
-        int mode2bounds = 456-80;
-        int mode3bounds = mode2bounds - 172;
+        /*
+        int mode2bounds = 80;
+        int mode3bounds = mode2bounds + 172;
 
-        if (m_scanlineCounter >= mode2bounds) // mode 2
+        if (m_dotInScanline < mode2bounds) // mode 2
         {
             mode = 2;
             status |= 0b10;
             status &= ~0b01;
-            reqInt = status & (1 << 5);
         }
-        else if(m_scanlineCounter >= mode3bounds) // mode 3
+        else if(m_dotInScanline >= mode3bounds) // mode 3
         {
             mode = 3;
             status |= 0b10;
@@ -269,18 +266,11 @@ void Emulator::SetLCDStatus()
         else // mode 0
         {
             mode = 0;
-            status &= ~0b10;
-            status &= ~0b01;
-            reqInt = status & (1 << 3);
-        }
+            status &= ~0b11;
+        }*/
     }
     
-    if (reqInt && (mode != currentmode)) // just entered a new mode so request interrupt
-    {
-        RequestInterupt(1);
-    }
-    
-    if (currentline == m_cpu.Read(0xFF45)) // check the coincidence flag
+    if (currentline == m_cpu.Read(0xFF45)) // check LYC = LY and set bit 2 of status accordingly
     {
         status |= 0b100;
         if (status & (1 << 6))
