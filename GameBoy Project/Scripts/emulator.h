@@ -1,9 +1,9 @@
 #pragma once
 #include "Cartridge.h"
 #include "cpu.h"
-#include "./ppu.h"
+#include "mmu.h"
+#include "ppu.h"
 
-class MMU;
 class ALU;
 
 class Emulator
@@ -11,8 +11,7 @@ class Emulator
 public:
 	Cartridge m_cartidge;
 	bool m_isRunning = true;
-	
-	int m_dotInScanline = 456;
+
 	int m_TimerCounter = 1024;
 	int m_DividerCounter = 0;
 	
@@ -29,14 +28,12 @@ public:
 	void LoadCartridge(const std::string& filepath);
 
 	void UpdateTimers();
-	void UpdateGraphics();
-	void SetLCDStatus();
-
-	bool IsLCDEnabled();
+    void CheckLYFlag();
+    void SetLCDStatus();
 
 	bool IsClockEnabled();
-	
-	void RequestInterupt(int interrupt);
+
+	void RequestInterrupt(int interrupt);
 	int DoInterupts();
 	int ServiceInterupt(int interrupt);
 

@@ -135,7 +135,11 @@ void Emulator::Execute()
         }
 
         UpdateTimers();
-        UpdateGraphics();
+
+        //had to organize it like that because of cyclic dependencies
+        m_ppu.SetLCDStatus();
+        CheckLYFlag();
+        m_ppu.UpdateGraphics();
 
         // TODO : intergrate interrupts properly in the cpu tick function
         //cyclesThisUpdate += DoInterupts();
@@ -171,7 +175,7 @@ void Emulator::UpdateTimers()
             if (m_cpu.Read(TIMA) == 255)
             {
                 m_cpu.Write(TIMA,m_cpu.Read(TMA)) ;
-                RequestInterupt(2) ;
+                RequestInterrupt(2) ;
             }
             else
             {
@@ -181,101 +185,16 @@ void Emulator::UpdateTimers()
     }
 }
 
-void Emulator::UpdateGraphics()
+void Emulator::CheckLYFlag()
 {
-    SetLCDStatus();
-
-    if (IsLCDEnabled())
-    {
-        m_dotInScanline++;
-    }
-    else
-    {
-        return;
-    }
-
-    if (m_dotInScanline > 456)
-    {
-        m_dotInScanline = 0;
-        // time to move onto next scanline
-        m_cpu.Write(0xFF44, m_cpu.Read(0xFF44) + 1);
-    }
-
-    uint8_t mode = m_cpu.Read(0xFF41) & 3;
-
-    if (mode == 0 || mode == 2) // During H-Blank or V-Blank, wait (either as setup or simply waiting)
-    {
-        return;
-    }
-
-    uint8_t currentLine = m_cpu.Read(0xFF44);
-
-    if (currentLine > 153)// if gone past scanline 153 reset to 0
-    {
-        m_cpu.Write(0xFF44, 0);
-    }
-    else if (currentLine < 144)// draw the current scanline (and not in V_Blank, tho it shouldn't happen here)
-    {
-        m_ppu.DrawCurrentPixel(currentLine, m_dotInScanline);
-    }
-}
-
-void Emulator::SetLCDStatus()
-{
-    uint8_t status = m_cpu.Read(0xFF41) ;
-    if (!IsLCDEnabled())
-    {
-        // set the mode to 1 during lcd disabled and reset scanline
-        m_dotInScanline = 0;
-        m_cpu.Write(0xFF44, 0);
-        status &= 252 ;
-        status |= 0b01;
-        m_cpu.Write(0xFF41,status) ;
-        return ;
-    }
-
-    uint8_t currentline = m_cpu.Read(0xFF44) ;
-    uint8_t currentmode = status & 0x3 ;
-
-    uint8_t mode = 0 ;
-    
-    if (currentline >= 144)// in vblank so set mode to 1
-    {
-        mode = 1;
-        status |= 0b01;
-        status &= ~0b10;
-    }
-    else
-    {
-        /*
-        int mode2bounds = 80;
-        int mode3bounds = mode2bounds + 172;
-
-        if (m_dotInScanline < mode2bounds) // mode 2
-        {
-            mode = 2;
-            status |= 0b10;
-            status &= ~0b01;
-        }
-        else if(m_dotInScanline >= mode3bounds) // mode 3
-        {
-            mode = 3;
-            status |= 0b10;
-            status |= 0b01;
-        }
-        else // mode 0
-        {
-            mode = 0;
-            status &= ~0b11;
-        }*/
-    }
-    
-    if (currentline == m_cpu.Read(0xFF45)) // check LYC = LY and set bit 2 of status accordingly
+    uint8_t status = m_cpu.Read(0xFF41);
+    uint8_t currentLine = m_cpu.Read(0xFF44) ;
+    if (currentLine == m_cpu.Read(0xFF45)) // check LYC = LY and set bit 2 of status accordingly
     {
         status |= 0b100;
         if (status & (1 << 6))
         {
-            RequestInterupt(1);
+            RequestInterrupt(1);
         }
     }
     else
@@ -285,17 +204,12 @@ void Emulator::SetLCDStatus()
     m_cpu.Write(0xFF41,status);
 }
 
-bool Emulator::IsLCDEnabled()
-{
-    return m_cpu.Read(0xFF40) >> 7;
-}
-
 bool Emulator::IsClockEnabled()
 {
     return (m_cpu.Read(TMC) & 0b00000100) != 0;
 }
 
-void Emulator::RequestInterupt(int interrupt)
+void Emulator::RequestInterrupt(const int interrupt)
 {
     uint8_t req = m_cpu.Read(0xFF0F);
     req |= (1 << interrupt);
@@ -332,7 +246,7 @@ int Emulator::ServiceInterupt(int interrupt)
     uint8_t req = m_cpu.Read(0xFF0F) ;
     req = req & ~(1 << interrupt);
     m_cpu.Write(0xFF0F,req) ;
-    
+
     /// we must save the current execution address by pushing it onto the stack
     m_cpu.Push(m_cpu.m_registers.PC);
 

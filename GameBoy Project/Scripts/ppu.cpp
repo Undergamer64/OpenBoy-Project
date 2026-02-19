@@ -171,6 +171,94 @@ bool PPU::RenderScreen()
     return true;
 }
 
+void PPU::UpdateGraphics()
+{
+    if (m_mmu.Read(0xFF40) >> 7)
+    {
+        m_dotInScanline++;
+    }
+    else
+    {
+        return;
+    }
+
+    if (m_dotInScanline > 456)
+    {
+        m_dotInScanline = 0;
+        // time to move onto next scanline
+        m_mmu.Write(0xFF44, m_mmu.Read(0xFF44) + 1);
+    }
+
+    uint8_t mode = m_mmu.Read(0xFF41) & 3;
+
+    if (mode == 0 || mode == 2) // During H-Blank or V-Blank, wait (either as setup or simply waiting)
+    {
+        return;
+    }
+
+    uint8_t currentLine = m_mmu.Read(0xFF44);
+
+    if (currentLine > 153)// if gone past scanline 153 reset to 0
+    {
+        m_mmu.Write(0xFF44, 0);
+    }
+    else if (currentLine < 144)// draw the current scanline (and not in V_Blank, tho it shouldn't happen here)
+    {
+        DrawCurrentPixel(currentLine, m_dotInScanline);
+    }
+}
+
+void PPU::SetLCDStatus()
+{
+    uint8_t status = m_mmu.Read(0xFF41);
+    if (!m_mmu.Read(0xFF40) >> 7)
+    {
+        // set the mode to 1 during lcd disabled and reset scanline
+        m_dotInScanline = 0;
+        m_mmu.Write(0xFF44, 0);
+        status &= 252 ;
+        status |= 0b01;
+        m_mmu.Write(0xFF41,status) ;
+        return ;
+    }
+
+    uint8_t currentLine = m_mmu.Read(0xFF44) ;
+    uint8_t currentMode = status & 0x3 ;
+
+    uint8_t mode = 0 ;
+
+    if (currentLine >= 144)// in vblank so set mode to 1
+    {
+        mode = 1;
+        status |= 0b01;
+        status &= ~0b10;
+    }
+    else
+    {
+        /*
+        int mode2bounds = 80;
+        int mode3bounds = mode2bounds + 172;
+
+        if (m_dotInScanline < mode2bounds) // mode 2
+        {
+            mode = 2;
+            status |= 0b10;
+            status &= ~0b01;
+        }
+        else if(m_dotInScanline >= mode3bounds) // mode 3
+        {
+            mode = 3;
+            status |= 0b10;
+            status |= 0b01;
+        }
+        else // mode 0
+        {
+            mode = 0;
+            status &= ~0b11;
+        }*/
+    }
+}
+
 void PPU::DrawCurrentPixel(uint8_t currentLine, int currentDot)
 {
     if (m_graphicPenalty > 0) //wait 1 dot per graphic penalty
@@ -287,7 +375,7 @@ void PPU::RenderDebug(CPU cpu, bool isRunning = true)
     m_debugWindow.draw(*m_debugText);
 }
 
-sf::Color PPU::GetPixelColor(int y, int x)
+sf::Color PPU::GetPixelColor(int y, int x) const
 {
     sf::Color color;
     int index = (y * GB_W + x) * 4;

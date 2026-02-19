@@ -32,17 +32,20 @@ class PPU
 
     void ScrollScreen(float delta);
 public:
+    int m_dotInScanline = 456;
 
     PPU(MMU& mmu);
     void RecalculateDebugScreenSize();
     void RecalculateScreenSize();
 
     bool RenderScreen();
+    void UpdateGraphics();
+    void SetLCDStatus();
 
     void DrawCurrentPixel(uint8_t currentLine, int currentDot);
 
     void RenderDebug(CPU cpu, bool isRunning);
-    sf::Color GetPixelColor(int y, int x);
+    sf::Color GetPixelColor(int y, int x) const;
     void SetPixelColor(int y, int x, sf::Color color);
     void Display();
     void Clear();

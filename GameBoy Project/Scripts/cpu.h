@@ -21,7 +21,6 @@ class InstructionFamily;
 
 class CPU 
 {
-	MMU& m_mmu;
 	bool m_debugSkip = true;
 	
 	using InstrFamilyPtr = std::unique_ptr<InstructionFamily>;
@@ -32,6 +31,7 @@ class CPU
 	bool m_isCBPrefix = false;
 
 public:
+	MMU& m_mmu;
 	Registers m_registers;
 	int m_TimerCounter = 1024;
 
