@@ -35,7 +35,7 @@ public:
 
 	void RequestInterrupt(int interrupt);
 	int DoInterupts();
-	int ServiceInterupt(int interrupt);
+	int ServiceInterrupt(int interrupt);
 
 	void operator()();
 	void Execute();

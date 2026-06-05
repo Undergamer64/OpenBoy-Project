@@ -231,7 +231,7 @@ int Emulator::DoInterupts()
                     if ((enabled & (1 << i)) != 0)
                     {
                         //std::cout << "Servicing Interrupt " << i << std::endl;
-                        return ServiceInterupt(i);
+                        return ServiceInterrupt(i);
                     }
                 }
             }
@@ -240,7 +240,7 @@ int Emulator::DoInterupts()
     return 0;
 }
 
-int Emulator::ServiceInterupt(int interrupt)
+int Emulator::ServiceInterrupt(int interrupt)
 {
     m_cpu.m_registers.IME = false;
     uint8_t req = m_cpu.Read(0xFF0F) ;
