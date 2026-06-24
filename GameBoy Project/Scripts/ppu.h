@@ -9,6 +9,7 @@ static constexpr int GB_H = 144;
 
 class PPU
 {
+#pragma region SFML
     sf::RenderWindow m_window;
     sf::Font m_font;
     sf::Text* m_debugRom;
@@ -19,12 +20,14 @@ class PPU
     
     //std::vector<std::vector<sf::RectangleShape*>> m_screenData;
 
-    std::array<uint8_t, GB_W * GB_H * 4> m_framebuffer;
     sf::Texture m_screenTexture;
     sf::Sprite m_screenSprite;
+#pragma endregion
+
+    std::array<uint8_t, GB_W * GB_H * 4> m_framebuffer;
 
     uint8_t m_currentPixel;
-    int m_graphicPenalty;
+    uint8_t m_graphicPenalty;
 
     MMU& m_mmu;
 

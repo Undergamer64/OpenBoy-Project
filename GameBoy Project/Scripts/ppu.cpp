@@ -15,6 +15,8 @@ enum
     BLACK = 0b11
 };
 
+#define SCANLINEADDR 0xFF44
+
 bool PPU::IsWindowOpen()
 {
     while (const std::optional<sf::Event> event = m_window.pollEvent())
@@ -158,123 +160,6 @@ void PPU::RecalculateScreenSize()
     }
 }
 
-bool PPU::RenderScreen()
-{
-    if (!IsWindowOpen()) return false;
-
-    //Render the game here
-    
-    m_screenTexture.update(m_framebuffer.data());
-
-    m_window.draw(m_screenSprite);
-    
-    return true;
-}
-
-void PPU::UpdateGraphics()
-{
-    if (m_mmu.Read(0xFF40) >> 7)
-    {
-        m_dotInScanline++;
-    }
-    else
-    {
-        return;
-    }
-
-    if (m_dotInScanline > 456)
-    {
-        m_dotInScanline = 0;
-        // time to move onto next scanline
-        m_mmu.Write(0xFF44, m_mmu.Read(0xFF44) + 1);
-    }
-
-    uint8_t mode = m_mmu.Read(0xFF41) & 3;
-
-    if (mode == 0 || mode == 2) // During H-Blank or V-Blank, wait (either as setup or simply waiting)
-    {
-        return;
-    }
-
-    uint8_t currentLine = m_mmu.Read(0xFF44);
-
-    if (currentLine > 153)// if gone past scanline 153 reset to 0
-    {
-        m_mmu.Write(0xFF44, 0);
-    }
-    else if (currentLine < 144)// draw the current scanline (and not in V_Blank, tho it shouldn't happen here)
-    {
-        DrawCurrentPixel(currentLine, m_dotInScanline);
-    }
-}
-
-void PPU::SetLCDStatus()
-{
-    uint8_t status = m_mmu.Read(0xFF41);
-    if (!m_mmu.Read(0xFF40) >> 7)
-    {
-        // set the mode to 1 during lcd disabled and reset scanline
-        m_dotInScanline = 0;
-        m_mmu.Write(0xFF44, 0);
-        status &= 252 ;
-        status |= 0b01;
-        m_mmu.Write(0xFF41,status) ;
-        return ;
-    }
-
-    uint8_t currentLine = m_mmu.Read(0xFF44) ;
-    uint8_t currentMode = status & 0x3 ;
-
-    uint8_t mode = 0 ;
-
-    if (currentLine >= 144)// in vblank so set mode to 1
-    {
-        mode = 1;
-        status |= 0b01;
-        status &= ~0b10;
-    }
-    else
-    {
-        /*
-        int mode2bounds = 80;
-        int mode3bounds = mode2bounds + 172;
-
-        if (m_dotInScanline < mode2bounds) // mode 2
-        {
-            mode = 2;
-            status |= 0b10;
-            status &= ~0b01;
-        }
-        else if(m_dotInScanline >= mode3bounds) // mode 3
-        {
-            mode = 3;
-            status |= 0b10;
-            status |= 0b01;
-        }
-        else // mode 0
-        {
-            mode = 0;
-            status &= ~0b11;
-        }*/
-    }
-}
-
-void PPU::DrawCurrentPixel(uint8_t currentLine, int currentDot)
-{
-    if (m_graphicPenalty > 0) //wait 1 dot per graphic penalty
-    {
-        m_graphicPenalty--;
-        return;
-    }
-
-    uint8_t lcdControl = m_mmu.Read(0xFF40);
-    if ((lcdControl & 1) == 1)
-        RenderTiles(lcdControl);
-
-    if ((lcdControl >> 1 & 1) == 1)
-        RenderSprites(lcdControl);
-}
-
 void PPU::RenderDebug(CPU cpu, bool isRunning = true)
 {
     m_debugRom->setCharacterSize(16);
@@ -302,7 +187,7 @@ void PPU::RenderDebug(CPU cpu, bool isRunning = true)
     ur << "Current instruction : 0x" << std::hex << std::uppercase << static_cast<int>(cpu.Read(cpu.m_registers.PC)) << "\n";
     ur << "\n";
 
-    ur << "LY : " << std::dec << static_cast<int>(m_mmu.Read(0xFF44)) << "\n";
+    ur << "LY : " << std::dec << static_cast<int>(m_mmu.Read(SCANLINEADDR)) << "\n";
     ur << "LCDC : 0b" << std::bitset<8>(m_mmu.Read(0xFF40)) << "\n";
     ur << "STAT : 0b" << std::bitset<8>(m_mmu.Read(0xFF41)) << "\n";
 
@@ -311,7 +196,7 @@ void PPU::RenderDebug(CPU cpu, bool isRunning = true)
 
     ur << "WY : " << std::hex << static_cast<int>(m_mmu.Read(0xFF4A)) << "\n";
     ur << "WX : " << std::hex << static_cast<int>(m_mmu.Read(0xFF4B)) << "\n";
-    
+
     ur << "\nLast executed instructions:\n";
 
     int count = 0;
@@ -328,7 +213,7 @@ void PPU::RenderDebug(CPU cpu, bool isRunning = true)
     {
         ur << "\n   Paused";
     }
-    
+
     m_debugRom->setString(ur.str());
 
     m_window.draw(*m_debugBackground);
@@ -364,13 +249,13 @@ void PPU::RenderDebug(CPU cpu, bool isRunning = true)
         }
 
         //ss << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(opcode);
-        
+
         if ((i + 1) % 16 == 0)
         {
             ss << "\n";
         }
     }
-    
+
     m_debugText->setString(ss.str());
     m_debugWindow.draw(*m_debugText);
 }
@@ -407,6 +292,116 @@ void PPU::Clear()
     m_debugWindow.clear();
 }
 
+bool PPU::RenderScreen()
+{
+    if (!IsWindowOpen()) return false;
+
+    //Render the game here
+    
+    m_screenTexture.update(m_framebuffer.data());
+
+    m_window.draw(m_screenSprite);
+    
+    return true;
+}
+
+void PPU::SetLCDStatus()
+{
+    uint8_t status = m_mmu.Read(0xFF41);
+    if (!m_mmu.Read(0xFF40) >> 7)
+    {
+        // set the mode to 1 if lcd disabled and reset scanline
+        m_dotInScanline = 0;
+        m_mmu.Write(SCANLINEADDR, 0);
+        status &= 252 ;
+        status |= 0b01;
+        m_mmu.Write(0xFF41,status);
+        return;
+    }
+
+    uint8_t currentLine = m_mmu.Read(SCANLINEADDR) ;
+
+    if (currentLine >= 144)// in vblank so set mode to 1
+    {
+        status |= 0b01;
+        status &= ~0b10;
+    }
+    else
+    {
+        int mode2bounds = 80;
+        int mode3bounds = mode2bounds + 172;
+
+        if (m_dotInScanline < mode2bounds) // mode 2 (first 80 dots to scan)
+        {
+            status |= 0b10;
+            status &= ~0b01;
+        }
+        else if(m_dotInScanline - m_graphicPenalty < mode3bounds) // mode 3 (between 172 and 289 dots to draw)
+        {
+            status |= 0b11;
+        }
+        else // mode 0 (376 dots - mode 3 duration to wait)
+        {
+            status &= ~0b11;
+        }
+    }
+
+    m_mmu.Write(0xFF41,status);
+}
+
+void PPU::UpdateGraphics()
+{
+    if (m_mmu.Read(0xFF40) >> 7)
+    {
+        m_dotInScanline++;
+    }
+    else
+    {
+        return;
+    }
+
+    if (m_dotInScanline > 456)
+    {
+        m_dotInScanline = 0;
+        // time to move onto next scanline
+        m_mmu.Write(SCANLINEADDR, m_mmu.Read(SCANLINEADDR) + 1);
+    }
+
+    uint8_t mode = m_mmu.Read(0xFF41) & 3;
+
+    if (mode == 0 || mode == 2) // During H-Blank or V-Blank, wait (either as setup or simply waiting)
+    {
+        return;
+    }
+
+    uint8_t currentLine = m_mmu.Read(SCANLINEADDR);
+
+    if (currentLine > 153)// if gone past scanline 153 reset to 0
+    {
+        m_mmu.Write(SCANLINEADDR, 0);
+    }
+    else if (currentLine < 144)// draw the current scanline (and not in V_Blank)
+    {
+        DrawCurrentPixel(currentLine, m_dotInScanline);
+    }
+}
+
+void PPU::DrawCurrentPixel(uint8_t currentLine, int currentDot)
+{
+    if (m_graphicPenalty > 0) //wait 1 dot per graphic penalty
+    {
+        m_graphicPenalty--;
+        return;
+    }
+
+    uint8_t lcdControl = m_mmu.Read(0xFF40);
+    if ((lcdControl & 1) == 1)
+        RenderTiles(lcdControl);
+
+    if ((lcdControl >> 1 & 1) == 1)
+        RenderSprites(lcdControl);
+}
+
 void PPU::RenderTiles(uint8_t lcdControl)
 {
     uint16_t tileData;
@@ -419,7 +414,7 @@ void PPU::RenderTiles(uint8_t lcdControl)
     uint8_t windowY = m_mmu.Read(0xFF4A);
     uint8_t windowX = m_mmu.Read(0xFF4B) - 7;
     
-    uint8_t scanline = m_mmu.Read(0xFF44);
+    uint8_t scanline = m_mmu.Read(SCANLINEADDR);
 
     bool usingWindow = false;
 
@@ -620,7 +615,7 @@ void PPU::RenderSprites(uint8_t lcdControl)
         bool yFlip = (attributes >> 6 & 1) == 1;
         bool xFlip = (attributes >> 5 & 1) == 1;
 
-        int scanline = m_mmu.Read(0xFF44);
+        int scanline = m_mmu.Read(SCANLINEADDR);
 
         int ysize = 8;
         if (use8x16)
@@ -663,9 +658,9 @@ void PPU::RenderSprites(uint8_t lcdControl)
                 uint16_t colourAddress = (attributes >> 4 & 1) == 1 ? 0xFF49:0xFF48;
                 uint8_t col = m_mmu.Read(colourAddress) >> colourNum * 2 & 0b11;
 
-                // // white is transparent for sprites.
-                // if (col == WHITE)
-                //   continue;
+                // white is transparent for sprites.
+                if (col == WHITE)
+                  continue;
 
                 int red = 0;
                 int green = 0;
